@@ -1,0 +1,55 @@
+import SwiftUI
+
+struct HeaderBar: View {
+    @EnvironmentObject var appState: AppState
+    
+    var body: some View {
+        HStack {
+            // App icon and title
+            HStack(spacing: 8) {
+                Image(systemName: "sparkle")
+                    .foregroundColor(appState.currentTheme.accentColor)
+                
+                Text("Gemini HUD")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(appState.currentTheme.foregroundColor)
+            }
+            
+            Spacer()
+            
+            // Status indicators
+            HStack(spacing: 12) {
+                // Connection status
+                Circle()
+                    .fill(appState.isConnected ? Color.green : Color.red)
+                    .frame(width: 6, height: 6)
+                
+                // Token usage
+                HStack(spacing: 4) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 10))
+                    Text("2.3k")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .foregroundColor(appState.currentTheme.foregroundColor.opacity(0.8))
+                
+                // Response time
+                HStack(spacing: 4) {
+                    Text("12ms")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .foregroundColor(appState.currentTheme.foregroundColor.opacity(0.8))
+                
+                // Window controls
+                Button(action: { NSApp.hide(nil) }) {
+                    Image(systemName: "minus.circle")
+                        .font(.system(size: 12))
+                        .foregroundColor(appState.currentTheme.foregroundColor.opacity(0.6))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 12)
+        .background(appState.currentTheme.backgroundColor.opacity(0.5))
+    }
+}
