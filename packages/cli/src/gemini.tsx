@@ -163,6 +163,18 @@ export async function main() {
       }
     }
   }
+  
+  // Check if running in IPC mode
+  const argv = process.argv;
+  const ipcMode = argv.includes('--ipc');
+  
+  if (ipcMode) {
+    // Start IPC server
+    const { startIPCServer } = await import('./ipc/ipcServer.js');
+    await startIPCServer(config);
+    return;
+  }
+  
   let input = config.getQuestion();
   const startupWarnings = await getStartupWarnings();
 

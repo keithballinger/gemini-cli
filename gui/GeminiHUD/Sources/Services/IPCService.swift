@@ -84,13 +84,16 @@ class IPCService: ObservableObject {
         
         // Configure process
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["node", cliPath, "--mode", "ipc"]
+        process.arguments = ["node", cliPath, "--ipc"]
         process.standardInput = inputPipe
         process.standardOutput = outputPipe
         process.standardError = errorPipe
         
         // Set environment
         process.environment = ProcessInfo.processInfo.environment
+        
+        // Set working directory to user's home or current directory
+        process.currentDirectoryURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
         
         // Set up output handling
         outputPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
