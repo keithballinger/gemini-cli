@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ConversationView: View {
     @EnvironmentObject var appState: AppState
-    @ObservedObject var viewModel = HUDViewModel()
+    @ObservedObject var viewModel = HUDViewModel.shared
     
     var body: some View {
         ScrollViewReader { proxy in

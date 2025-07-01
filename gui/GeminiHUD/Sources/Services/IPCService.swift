@@ -14,11 +14,32 @@ class IPCService: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     init() {
-        startProcess()
+        // Don't auto-start for now, will implement proper CLI integration later
+        // startProcess()
     }
     
     deinit {
         stopProcess()
+    }
+    
+    private func findCLIPath() -> String {
+        // Try to find the CLI in various locations
+        let possiblePaths = [
+            "../../../dist/index.js",
+            "../../../../dist/index.js",
+            "/usr/local/lib/gemini-cli/dist/index.js",
+            "\(NSHomeDirectory())/.gemini/cli/dist/index.js"
+        ]
+        
+        for path in possiblePaths {
+            let fullPath = URL(fileURLWithPath: path).path
+            if FileManager.default.fileExists(atPath: fullPath) {
+                return fullPath
+            }
+        }
+        
+        // Default fallback
+        return "../../../dist/index.js"
     }
     
     private func startProcess() {
@@ -38,12 +59,18 @@ class IPCService: ObservableObject {
               let outputPipe = outputPipe,
               let errorPipe = errorPipe else { return }
         
+        // Find the CLI executable path
+        let cliPath = findCLIPath()
+        
         // Configure process
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["node", "../../../dist/index.js", "--mode", "ipc"]
+        process.arguments = ["node", cliPath, "--mode", "ipc"]
         process.standardInput = inputPipe
         process.standardOutput = outputPipe
         process.standardError = errorPipe
+        
+        // Set environment
+        process.environment = ProcessInfo.processInfo.environment
         
         // Set up output handling
         outputPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct HUDView: View {
-    @StateObject private var viewModel = HUDViewModel()
+    @StateObject private var viewModel = HUDViewModel.shared
     @EnvironmentObject var appState: AppState
     
     var body: some View {
@@ -38,8 +38,15 @@ struct HUDView: View {
                         ConversationView()
                             .frame(maxHeight: .infinity)
                         
-                        InputField()
-                            .frame(height: 40)
+                        HStack {
+                            InputField()
+                                .frame(height: 40)
+                            
+                            if appState.isVoiceInputActive {
+                                VoiceInputIndicator()
+                                    .padding(.leading, 8)
+                            }
+                        }
                     }
                     .padding(12)
                 }

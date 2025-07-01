@@ -2,11 +2,12 @@ import SwiftUI
 import AppKit
 
 class WindowManager: ObservableObject {
-    private var hudWindow: HUDWindow?
+    var hudWindow: HUDWindow?
+    weak var appState: AppState?
     
     func showHUD() {
         if hudWindow == nil {
-            hudWindow = HUDWindow()
+            hudWindow = HUDWindow(appState: appState)
         }
         hudWindow?.makeKeyAndOrderFront(nil)
     }
@@ -25,7 +26,11 @@ class WindowManager: ObservableObject {
 }
 
 class HUDWindow: NSPanel {
-    init() {
+    weak var appState: AppState?
+    
+    init(appState: AppState?) {
+        self.appState = appState
+        
         let screenRect = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 800, height: 600)
         let windowRect = NSRect(
             x: screenRect.midX - 400,
@@ -62,7 +67,11 @@ class HUDWindow: NSPanel {
     }
     
     private func setupContentView() {
-        contentView = NSHostingView(rootView: HUDView())
+        if let appState = appState {
+            contentView = NSHostingView(rootView: HUDView().environmentObject(appState))
+        } else {
+            contentView = NSHostingView(rootView: HUDView())
+        }
     }
     
     override var canBecomeKey: Bool { true }

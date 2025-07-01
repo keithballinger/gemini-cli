@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct InputField: View {
-    @ObservedObject var viewModel = HUDViewModel()
+    @ObservedObject var viewModel = HUDViewModel.shared
     @EnvironmentObject var appState: AppState
     @FocusState private var isFocused: Bool
     
