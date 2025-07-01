@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HeaderBar: View {
     @EnvironmentObject var appState: AppState
+    @ObservedObject var viewModel = HUDViewModel.shared
     
     var body: some View {
         HStack {
@@ -13,6 +14,12 @@ struct HeaderBar: View {
                 Text("Gemini HUD")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(appState.currentTheme.foregroundColor)
+                
+                if !viewModel.isConnected {
+                    Text("(Offline)")
+                        .font(.system(size: 10))
+                        .foregroundColor(.orange)
+                }
             }
             
             Spacer()
@@ -21,7 +28,7 @@ struct HeaderBar: View {
             HStack(spacing: 12) {
                 // Connection status
                 Circle()
-                    .fill(appState.isConnected ? Color.green : Color.red)
+                    .fill(viewModel.isConnected ? Color.green : Color.red)
                     .frame(width: 6, height: 6)
                 
                 // Token usage

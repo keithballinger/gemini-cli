@@ -3,7 +3,7 @@ import Foundation
 struct Message: Identifiable, Codable {
     let id: String
     let role: Role
-    let content: String
+    var content: String
     let timestamp: Date
     var tools: [ToolCall]?
     

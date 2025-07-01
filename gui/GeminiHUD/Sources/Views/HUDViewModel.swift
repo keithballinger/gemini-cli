@@ -9,16 +9,98 @@ class HUDViewModel: ObservableObject {
     @Published var messages: [Message] = []
     @Published var inputText = ""
     @Published var isProcessing = false
+    @Published var isConnected = false
+    @Published var connectionError: String?
     
     private var cancellables = Set<AnyCancellable>()
     private let ipcService = IPCService()
+    private var currentStreamMessage: Message?
     
     private init() {
         setupBindings()
     }
     
     private func setupBindings() {
-        // TODO: Bind to IPC service
+        // Monitor connection status
+        ipcService.$isConnected
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$isConnected)
+        
+        // Monitor errors
+        ipcService.$lastError
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] error in
+                self?.connectionError = error?.localizedDescription
+            }
+            .store(in: &cancellables)
+        
+        // Handle stream events
+        ipcService.streamEvents
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] event in
+                self?.handleStreamEvent(event)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func handleStreamEvent(_ event: IPCStreamEvent) {
+        switch event.type {
+        case .messageChunk:
+            if case .messageChunk(let chunk) = event.data {
+                handleMessageChunk(chunk)
+            }
+        case .toolApprovalRequest:
+            if case .toolApproval(let request) = event.data {
+                handleToolApprovalRequest(request)
+            }
+        case .toolExecutionStart:
+            if case .toolStart(let info) = event.data {
+                handleToolExecutionStart(info)
+            }
+        case .toolExecutionEnd:
+            if case .toolEnd(let info) = event.data {
+                handleToolExecutionEnd(info)
+            }
+        case .error:
+            if case .error(let message) = event.data {
+                handleStreamError(message)
+            }
+        }
+    }
+    
+    private func handleMessageChunk(_ chunk: String) {
+        if currentStreamMessage == nil {
+            currentStreamMessage = Message(
+                id: UUID().uuidString,
+                role: .assistant,
+                content: "",
+                timestamp: Date()
+            )
+            messages.append(currentStreamMessage!)
+        }
+        
+        if let index = messages.firstIndex(where: { $0.id == currentStreamMessage?.id }) {
+            messages[index].content += chunk
+        }
+    }
+    
+    private func handleToolApprovalRequest(_ request: ToolApprovalRequest) {
+        // TODO: Show tool approval UI
+        print("Tool approval requested: \(request)")
+    }
+    
+    private func handleToolExecutionStart(_ info: ToolExecutionInfo) {
+        // TODO: Show tool execution indicator
+        print("Tool execution started: \(info)")
+    }
+    
+    private func handleToolExecutionEnd(_ info: ToolExecutionInfo) {
+        // TODO: Update tool execution status
+        print("Tool execution ended: \(info)")
+    }
+    
+    private func handleStreamError(_ message: String) {
+        connectionError = message
     }
     
     func sendMessage() {
@@ -35,8 +117,48 @@ class HUDViewModel: ObservableObject {
         let query = inputText
         inputText = ""
         isProcessing = true
+        currentStreamMessage = nil
         
-        // Mock response for now
+        if isConnected {
+            // Use real IPC service
+            Task { @MainActor in
+                do {
+                    let result = try await ipcService.sendMessage(query)
+                    
+                    // If not streaming, add the complete message
+                    if currentStreamMessage == nil {
+                        let assistantMessage = Message(
+                            id: UUID().uuidString,
+                            role: .assistant,
+                            content: result.response,
+                            timestamp: Date(),
+                            tools: result.tools?.map { toolCall in
+                                ToolCall(
+                                    name: toolCall.name,
+                                    parameters: toolCall.parameters,
+                                    approved: toolCall.approved
+                                )
+                            }
+                        )
+                        messages.append(assistantMessage)
+                    }
+                    
+                    isProcessing = false
+                } catch {
+                    connectionError = error.localizedDescription
+                    isProcessing = false
+                    
+                    // Fall back to mock response
+                    sendMockResponse(for: query)
+                }
+            }
+        } else {
+            // Use mock response
+            sendMockResponse(for: query)
+        }
+    }
+    
+    private func sendMockResponse(for query: String) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             guard let self = self else { return }
             
@@ -51,6 +173,10 @@ class HUDViewModel: ObservableObject {
             self.messages.append(assistantMessage)
             self.isProcessing = false
         }
+    }
+    
+    func connectToIPC() {
+        ipcService.start()
     }
     
     private func generateMockResponse(for query: String) -> String {

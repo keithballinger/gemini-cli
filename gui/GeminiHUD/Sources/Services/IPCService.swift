@@ -4,6 +4,7 @@ import Combine
 class IPCService: ObservableObject {
     @Published var isConnected = false
     @Published var lastError: Error?
+    @Published var currentStatus: StatusResult?
     
     private var process: Process?
     private var inputPipe: Pipe?
@@ -12,14 +13,33 @@ class IPCService: ObservableObject {
     
     private var messageQueue = DispatchQueue(label: "com.gemini.hud.ipc", qos: .userInitiated)
     private var cancellables = Set<AnyCancellable>()
+    private var pendingRequests: [String: (IPCResponse) -> Void] = [:]
+    private let responseSubject = PassthroughSubject<IPCResponse, Never>()
+    private let streamEventSubject = PassthroughSubject<IPCStreamEvent, Never>()
+    
+    var streamEvents: AnyPublisher<IPCStreamEvent, Never> {
+        streamEventSubject.eraseToAnyPublisher()
+    }
     
     init() {
-        // Don't auto-start for now, will implement proper CLI integration later
-        // startProcess()
+        setupBindings()
     }
     
     deinit {
         stopProcess()
+    }
+    
+    private func setupBindings() {
+        // Handle responses
+        responseSubject
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] response in
+                if let handler = self?.pendingRequests[response.id] {
+                    handler(response)
+                    self?.pendingRequests.removeValue(forKey: response.id)
+                }
+            }
+            .store(in: &cancellables)
     }
     
     private func findCLIPath() -> String {
@@ -102,18 +122,78 @@ class IPCService: ObservableObject {
         }
     }
     
+    func start() {
+        messageQueue.async { [weak self] in
+            self?.startProcess()
+        }
+    }
+    
     private func stopProcess() {
         outputPipe?.fileHandleForReading.readabilityHandler = nil
         errorPipe?.fileHandleForReading.readabilityHandler = nil
         process?.terminate()
         process = nil
         isConnected = false
+        currentStatus = nil
     }
     
-    func sendMessage(_ message: IPCMessage) {
+    // MARK: - Public API
+    
+    func sendMessage(_ message: String, context: MessageContext? = nil) async throws -> MessageResult {
+        let request = IPCRequest(
+            id: UUID().uuidString,
+            method: .sendMessage,
+            params: .sendMessage(SendMessageParams(message: message, context: context))
+        )
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            sendRequest(request) { response in
+                if let error = response.error {
+                    continuation.resume(throwing: IPCServiceError.serverError(error.message))
+                } else if case .message(let result) = response.result {
+                    continuation.resume(returning: result)
+                } else {
+                    continuation.resume(throwing: IPCServiceError.invalidResponse)
+                }
+            }
+        }
+    }
+    
+    func getStatus() async throws -> StatusResult {
+        let request = IPCRequest(
+            id: UUID().uuidString,
+            method: .getStatus,
+            params: .getStatus
+        )
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            sendRequest(request) { response in
+                if let error = response.error {
+                    continuation.resume(throwing: IPCServiceError.serverError(error.message))
+                } else if case .status(let result) = response.result {
+                    continuation.resume(returning: result)
+                } else {
+                    continuation.resume(throwing: IPCServiceError.invalidResponse)
+                }
+            }
+        }
+    }
+    
+    private func sendRequest(_ request: IPCRequest, completion: @escaping (IPCResponse) -> Void) {
+        pendingRequests[request.id] = completion
+        
         messageQueue.async { [weak self] in
             guard let inputPipe = self?.inputPipe,
-                  let data = try? JSONEncoder().encode(message) else { return }
+                  let data = try? JSONEncoder().encode(request) else {
+                DispatchQueue.main.async {
+                    completion(IPCResponse(
+                        id: request.id,
+                        result: nil,
+                        error: IPCError(code: -1, message: "Failed to encode request")
+                    ))
+                }
+                return
+            }
             
             inputPipe.fileHandleForWriting.write(data)
             inputPipe.fileHandleForWriting.write("\n".data(using: .utf8)!)
@@ -121,41 +201,53 @@ class IPCService: ObservableObject {
     }
     
     private func handleOutput(_ data: Data) {
-        guard let response = try? JSONDecoder().decode(IPCResponse.self, from: data) else { return }
+        // Try to parse as JSON lines
+        let lines = String(data: data, encoding: .utf8)?.split(separator: "\n") ?? []
         
-        DispatchQueue.main.async {
-            // TODO: Handle response
-            print("Received response: \(response)")
+        for line in lines {
+            guard let lineData = line.data(using: .utf8) else { continue }
+            
+            // Try to parse as response
+            if let response = try? JSONDecoder().decode(IPCResponse.self, from: lineData) {
+                responseSubject.send(response)
+            }
+            // Try to parse as stream event
+            else if let event = try? JSONDecoder().decode(IPCStreamEvent.self, from: lineData) {
+                streamEventSubject.send(event)
+            }
         }
     }
     
     private func handleError(_ data: Data) {
         guard let errorString = String(data: data, encoding: .utf8) else { return }
         
-        DispatchQueue.main.async {
-            print("IPC Error: \(errorString)")
+        DispatchQueue.main.async { [weak self] in
+            self?.lastError = IPCServiceError.processError(errorString)
         }
     }
 }
 
-struct IPCMessage: Codable {
-    let id: String
-    let method: String
-    let params: [String: String]
-}
+// MARK: - Error Types
 
-struct IPCResponse: Codable {
-    let id: String
-    let result: IPCResult?
-    let error: IPCError?
-}
-
-struct IPCResult: Codable {
-    let response: String
-    let tools: [String]?
-}
-
-struct IPCError: Codable {
-    let code: Int
-    let message: String
+enum IPCServiceError: LocalizedError {
+    case notConnected
+    case invalidResponse
+    case serverError(String)
+    case processError(String)
+    case timeout
+    
+    var errorDescription: String? {
+        switch self {
+        case .notConnected:
+            return "IPC service is not connected"
+        case .invalidResponse:
+            return "Invalid response from server"
+        case .serverError(let message):
+            return "Server error: \(message)"
+        case .processError(let message):
+            return "Process error: \(message)"
+        case .timeout:
+            return "Request timed out"
+        }
+    }
 }
