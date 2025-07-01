@@ -39,9 +39,13 @@ class HotCornersManager: ObservableObject {
     private var cornerWindows: [HotCorner: NSWindow] = [:]
     private var eventMonitor: Any?
     weak var appState: AppState?
+    private var statsWindowManager: StatsWindowManager?
+    private var historyWindowManager: ConversationHistoryWindowManager?
     
     init(appState: AppState? = nil) {
         self.appState = appState
+        self.statsWindowManager = StatsWindowManager(appState: appState)
+        self.historyWindowManager = ConversationHistoryWindowManager(appState: appState)
         setupCornerWindows()
         startMonitoring()
     }
@@ -141,13 +145,11 @@ class HotCornersManager: ObservableObject {
     }
     
     private func showStatsDashboard() {
-        // TODO: Implement stats dashboard
-        print("Show stats dashboard")
+        statsWindowManager?.showStats()
     }
     
     private func showConversationHistory() {
-        // TODO: Implement conversation history
-        print("Show conversation history")
+        historyWindowManager?.showHistory()
     }
 }
 
