@@ -43,6 +43,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Request accessibility permissions if needed
         KeyboardShortcutManager.requestAccessibilityPermissions()
+        
+        // Try to connect to IPC after a short delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            HUDViewModel.shared.connectToIPC()
+        }
     }
     
     private func setupStatusBar() {
@@ -57,6 +62,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "Show HUD", action: #selector(showHUD), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Hide HUD", action: #selector(hideHUD), keyEquivalent: ""))
+        menu.addItem(NSMenuItem.separator())
+        
+        // Connection status
+        let connectionItem = NSMenuItem(title: HUDViewModel.shared.isConnected ? "Disconnect from CLI" : "Connect to CLI", 
+                                      action: #selector(toggleConnection), 
+                                      keyEquivalent: "")
+        menu.addItem(connectionItem)
+        
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "New Conversation", action: #selector(newConversation), keyEquivalent: "n"))
         menu.addItem(NSMenuItem.separator())
@@ -92,5 +105,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     @objc private func showPreferences() {
         // TODO: Show preferences window
+    }
+    
+    @objc private func toggleConnection() {
+        if HUDViewModel.shared.isConnected {
+            // TODO: Add disconnect functionality to IPC service
+            print("Disconnect not yet implemented")
+        } else {
+            HUDViewModel.shared.connectToIPC()
+        }
+        
+        // Update menu
+        setupStatusBar()
     }
 }
