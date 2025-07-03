@@ -136,6 +136,13 @@ class HUDViewModel: ObservableObject {
         isConnected = true
     }
     
+    func changeWorkingDirectory(_ path: String) async throws {
+        // This method would need to be implemented in the CLI service
+        // For now, we'll just log the request
+        print("HUDViewModel: Request to change working directory to: \(path)")
+        // TODO: Implement in SimpleCLIService
+    }
+    
     private func generateMockResponse(for query: String) -> String {
         let lowercased = query.lowercased()
         

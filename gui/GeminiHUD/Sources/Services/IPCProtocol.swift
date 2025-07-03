@@ -9,6 +9,7 @@ enum IPCMethod: String, Codable {
     case getHistory = "history.get"
     case clearConversation = "conversation.clear"
     case setApprovalMode = "config.setApprovalMode"
+    case changeWorkingDirectory = "config.changeWorkingDirectory"
 }
 
 // MARK: - Request/Response Models
@@ -55,6 +56,8 @@ struct IPCRequest {
             dict["params"] = [String: Any]()
         case .setApprovalMode(let p):
             dict["params"] = ["mode": p.mode]
+        case .changeWorkingDirectory(let p):
+            dict["params"] = ["path": p.path]
         }
         
         return try JSONSerialization.data(withJSONObject: dict, options: [])
@@ -68,6 +71,7 @@ enum IPCParams: Codable {
     case getHistory(GetHistoryParams)
     case clearConversation
     case setApprovalMode(SetApprovalModeParams)
+    case changeWorkingDirectory(ChangeWorkingDirectoryParams)
     
     enum CodingKeys: String, CodingKey {
         case type, data
@@ -94,6 +98,9 @@ enum IPCParams: Codable {
         case "setApprovalMode":
             let params = try container.decode(SetApprovalModeParams.self, forKey: .data)
             self = .setApprovalMode(params)
+        case "changeWorkingDirectory":
+            let params = try container.decode(ChangeWorkingDirectoryParams.self, forKey: .data)
+            self = .changeWorkingDirectory(params)
         default:
             throw DecodingError.dataCorruptedError(forKey: .type, in: container, debugDescription: "Unknown type: \(type)")
         }
@@ -118,6 +125,9 @@ enum IPCParams: Codable {
             try container.encode("clearConversation", forKey: .type)
         case .setApprovalMode(let params):
             try container.encode("setApprovalMode", forKey: .type)
+            try container.encode(params, forKey: .data)
+        case .changeWorkingDirectory(let params):
+            try container.encode("changeWorkingDirectory", forKey: .type)
             try container.encode(params, forKey: .data)
         }
     }
@@ -146,6 +156,10 @@ struct GetHistoryParams: Codable {
 
 struct SetApprovalModeParams: Codable {
     let mode: String // "auto", "manual", "never"
+}
+
+struct ChangeWorkingDirectoryParams: Codable {
+    let path: String
 }
 
 // MARK: - Response Models

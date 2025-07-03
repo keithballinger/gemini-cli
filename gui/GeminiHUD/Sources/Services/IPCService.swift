@@ -16,6 +16,7 @@ class IPCService: ObservableObject {
     private var pendingRequests: [String: CheckedContinuation<IPCResult?, Error>] = [:]
     private var pendingMessageRequests: [String: CheckedContinuation<MessageResult, Error>] = [:]
     private var pendingStatusRequests: [String: CheckedContinuation<StatusResult, Error>] = [:]
+    private var pendingVoidRequests: [String: CheckedContinuation<Void, Error>] = [:]
     private let responseSubject = PassthroughSubject<IPCResponse, Never>()
     private let streamEventSubject = PassthroughSubject<IPCStreamEvent, Never>()
     
@@ -87,6 +88,17 @@ class IPCService: ObservableObject {
                 continuation.resume(returning: result)
             } else {
                 continuation.resume(throwing: IPCServiceError.invalidResponse)
+            }
+        }
+        
+        // Handle void requests
+        if let continuation = pendingVoidRequests[response.id] {
+            pendingVoidRequests.removeValue(forKey: response.id)
+            
+            if let error = response.error {
+                continuation.resume(throwing: IPCServiceError.serverError(error.message))
+            } else {
+                continuation.resume(returning: ())
             }
         }
     }
@@ -284,6 +296,23 @@ class IPCService: ObservableObject {
         }
     }
     
+    func changeWorkingDirectory(_ path: String) async throws {
+        guard isConnected else {
+            throw IPCServiceError.notConnected
+        }
+        
+        let request = IPCRequest(
+            id: UUID().uuidString,
+            method: .changeWorkingDirectory,
+            params: .changeWorkingDirectory(ChangeWorkingDirectoryParams(path: path))
+        )
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            pendingVoidRequests[request.id] = continuation
+            sendRequest(request)
+        }
+    }
+    
     private func sendRequest(_ request: IPCRequest) {
         guard isConnected else {
             DispatchQueue.main.async { [weak self] in
@@ -332,6 +361,10 @@ class IPCService: ObservableObject {
         }
         if let continuation = pendingStatusRequests[requestId] {
             pendingStatusRequests.removeValue(forKey: requestId)
+            continuation.resume(throwing: error)
+        }
+        if let continuation = pendingVoidRequests[requestId] {
+            pendingVoidRequests.removeValue(forKey: requestId)
             continuation.resume(throwing: error)
         }
     }
