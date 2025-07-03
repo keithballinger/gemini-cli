@@ -506,7 +506,8 @@ export class IPCServer extends EventEmitter {
     
     // Call the onConfirm handler from the tool's confirmation details
     if (pendingToolCall.confirmationDetails && pendingToolCall.confirmationDetails.onConfirm) {
-      const outcome = approved ? 'approved' : 'rejected';
+      // Use the correct ToolConfirmationOutcome enum values
+      const outcome = approved ? 'proceed_once' : 'cancel';
       pendingToolCall.confirmationDetails.onConfirm(outcome);
     }
     
