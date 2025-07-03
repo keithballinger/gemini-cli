@@ -37,13 +37,17 @@ struct HeaderBar: View {
                         Button(action: {
                             viewModel.setToolApprovalMode(mode)
                         }) {
-                            HStack {
-                                Image(systemName: mode.icon)
-                                Text(mode.displayName)
-                                if viewModel.toolApprovalMode == mode {
-                                    Spacer()
-                                    Image(systemName: "checkmark")
+                            Label {
+                                HStack {
+                                    Text(mode.displayName)
+                                    if viewModel.toolApprovalMode == mode {
+                                        Spacer()
+                                        Image(systemName: "checkmark")
+                                            .font(.system(size: 10))
+                                    }
                                 }
+                            } icon: {
+                                Image(systemName: mode.icon)
                             }
                         }
                     }
@@ -53,6 +57,8 @@ struct HeaderBar: View {
                             .font(.system(size: 11))
                         Text(viewModel.toolApprovalMode == .yolo ? "Auto" : "Ask")
                             .font(.system(size: 11, weight: .medium))
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 9))
                     }
                     .foregroundColor(appState.currentTheme.foregroundColor.opacity(0.8))
                     .padding(.horizontal, 8)
@@ -61,6 +67,7 @@ struct HeaderBar: View {
                     .cornerRadius(4)
                 }
                 .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
                 .fixedSize()
                 
                 // Token usage

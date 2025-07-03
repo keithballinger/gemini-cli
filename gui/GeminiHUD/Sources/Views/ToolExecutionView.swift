@@ -23,6 +23,10 @@ struct ToolExecutionView: View {
                 statusView
             }
             
+            // Show a divider line for visual separation
+            Divider()
+                .foregroundColor(appState.currentTheme.borderColor.opacity(0.5))
+            
             // Parameters (if any)
             if !toolExecution.parameters.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {

@@ -1,34 +1,39 @@
-7/3/25, 2:56:48 AM PDT: SimpleCLIService: Initialized
-7/3/25, 2:56:49 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
-7/3/25, 2:56:50 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 3:27:25 AM PDT: SimpleCLIService: Initialized
+7/3/25, 3:27:26 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 3:27:27 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
 
-7/3/25, 2:56:50 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
-7/3/25, 2:56:50 AM PDT: Parsed JSON: ["result": {
+7/3/25, 3:27:27 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 3:27:27 AM PDT: Parsed JSON: ["id": init, "result": {
     data =     {
         connected = 1;
         model = "gemini-2.5-pro";
         workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
     };
     type = status;
-}, "id": init]
-7/3/25, 2:56:50 AM PDT: IPC Response: status
-7/3/25, 2:56:50 AM PDT: IPC Connected: ["data": {
+}]
+7/3/25, 3:27:27 AM PDT: IPC Response: status
+7/3/25, 3:27:27 AM PDT: IPC Connected: ["type": status, "data": {
     connected = 1;
     model = "gemini-2.5-pro";
     workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
-}, "type": status]
-7/3/25, 2:56:53 AM PDT: Sending request with ID: 32772821-964E-45EA-85ED-02755268EA2F for message: yo
-7/3/25, 2:56:56 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"Hi."}
+}]
+7/3/25, 3:27:34 AM PDT: Sending request with ID: DF871AC2-F710-4CB3-8E01-89D45E881E0B for message: yo gemini! hiwya doing?
+7/3/25, 3:27:37 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"Hello! I'm ready to help."}
 
-7/3/25, 2:56:56 AM PDT: Processing line: {"type":"message.chunk","data":"Hi."}
-7/3/25, 2:56:56 AM PDT: Parsed JSON: ["data": Hi., "type": message.chunk]
-7/3/25, 2:56:56 AM PDT: Message chunk received: Hi.
-7/3/25, 2:56:58 AM PDT: CLI Raw Output: {"id":"32772821-964E-45EA-85ED-02755268EA2F","result":{"type":"message","data":{"response":"Hi.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+7/3/25, 3:27:37 AM PDT: Processing line: {"type":"message.chunk","data":"Hello! I'm ready to help."}
+7/3/25, 3:27:37 AM PDT: Parsed JSON: ["data": Hello! I'm ready to help., "type": message.chunk]
+7/3/25, 3:27:37 AM PDT: Message chunk received: Hello! I'm ready to help.
+7/3/25, 3:27:37 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" What can I do for you?"}
 
-7/3/25, 2:56:58 AM PDT: Processing line: {"id":"32772821-964E-45EA-85ED-02755268EA2F","result":{"type":"message","data":{"response":"Hi.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
-7/3/25, 2:56:58 AM PDT: Parsed JSON: ["result": {
+7/3/25, 3:27:37 AM PDT: Processing line: {"type":"message.chunk","data":" What can I do for you?"}
+7/3/25, 3:27:37 AM PDT: Parsed JSON: ["type": message.chunk, "data":  What can I do for you?]
+7/3/25, 3:27:37 AM PDT: Message chunk received:  What can I do for you?
+7/3/25, 3:27:38 AM PDT: CLI Raw Output: {"id":"DF871AC2-F710-4CB3-8E01-89D45E881E0B","result":{"type":"message","data":{"response":"Hello! I'm ready to help. What can I do for you?","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+
+7/3/25, 3:27:38 AM PDT: Processing line: {"id":"DF871AC2-F710-4CB3-8E01-89D45E881E0B","result":{"type":"message","data":{"response":"Hello! I'm ready to help. What can I do for you?","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+7/3/25, 3:27:38 AM PDT: Parsed JSON: ["result": {
     data =     {
-        response = "Hi.";
+        response = "Hello! I'm ready to help. What can I do for you?";
         tokenUsage =         {
             completion = 0;
             prompt = 0;
@@ -38,99 +43,84 @@
         );
     };
     type = message;
-}, "id": 32772821-964E-45EA-85ED-02755268EA2F]
-7/3/25, 2:56:58 AM PDT: IPC Response: message
-7/3/25, 2:56:58 AM PDT: Message complete for ID: 32772821-964E-45EA-85ED-02755268EA2F
-7/3/25, 2:57:14 AM PDT: Sending request with ID: 98500724-6A59-4468-981E-323740F947E5 for message: summarize the last commit
-7/3/25, 2:57:18 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"I"}
+}, "id": DF871AC2-F710-4CB3-8E01-89D45E881E0B]
+7/3/25, 3:27:38 AM PDT: IPC Response: message
+7/3/25, 3:27:38 AM PDT: Message complete for ID: DF871AC2-F710-4CB3-8E01-89D45E881E0B
+7/3/25, 3:27:44 AM PDT: Sending request with ID: 94A2B165-8745-4AA5-8990-C71E860EB28F for message: summarize the last commit
+7/3/25, 3:27:47 AM PDT: CLI Raw Output: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"directory":"GeminiHUD","description":"Get the most recent commit to summarize.","command":"git log -n 1"}}}
 
-7/3/25, 2:57:18 AM PDT: Processing line: {"type":"message.chunk","data":"I"}
-7/3/25, 2:57:18 AM PDT: Parsed JSON: ["data": I, "type": message.chunk]
-7/3/25, 2:57:18 AM PDT: Message chunk received: I
-7/3/25, 2:57:18 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"'ll run `git log -n 1` to get the last commit information."}
-
-7/3/25, 2:57:18 AM PDT: Processing line: {"type":"message.chunk","data":"'ll run `git log -n 1` to get the last commit information."}
-7/3/25, 2:57:18 AM PDT: Parsed JSON: ["type": message.chunk, "data": 'll run `git log -n 1` to get the last commit information.]
-7/3/25, 2:57:18 AM PDT: Message chunk received: 'll run `git log -n 1` to get the last commit information.
-7/3/25, 2:57:19 AM PDT: CLI Raw Output: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"command":"git log -n 1","description":"Get the last commit information.","directory":"GeminiHUD"}}}
-
-7/3/25, 2:57:19 AM PDT: Processing line: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"command":"git log -n 1","description":"Get the last commit information.","directory":"GeminiHUD"}}}
-7/3/25, 2:57:19 AM PDT: Parsed JSON: ["type": tool.start, "data": {
+7/3/25, 3:27:47 AM PDT: Processing line: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"directory":"GeminiHUD","description":"Get the most recent commit to summarize.","command":"git log -n 1"}}}
+7/3/25, 3:27:47 AM PDT: Parsed JSON: ["type": tool.start, "data": {
     name = "run_shell_command";
     parameters =     {
         command = "git log -n 1";
-        description = "Get the last commit information.";
+        description = "Get the most recent commit to summarize.";
         directory = GeminiHUD;
     };
 }]
-7/3/25, 2:57:19 AM PDT: Tool Starting: run_shell_command with data: ["name": run_shell_command, "parameters": {
+7/3/25, 3:27:47 AM PDT: Tool Starting: run_shell_command with data: ["name": run_shell_command, "parameters": {
     command = "git log -n 1";
-    description = "Get the last commit information.";
+    description = "Get the most recent commit to summarize.";
     directory = GeminiHUD;
 }]
-7/3/25, 2:57:19 AM PDT: CLI Raw Output: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"commit c077b039606e0725efa67e134b0d9ffe8367b954\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 02:42:34 2025 -0700\n\n    feat(ipc): implement basic tool execution support in IPC server\n    \n    - Simplify IPC server to handle tool events from the model\n    - Add proper tool execution via executeToolCall for manual tool requests\n    - Handle ToolCallResponse events that come from the model\n    - Fix TypeScript errors with proper type handling\n    - Remove sendToolResponse approach that doesn't work with Turn\n    \n    Tools are now notified when requested by the model. The HUD can see when\n    tools are being called, but automatic execution is not yet implemented.\n    \n    Next steps:\n    - Implement auto-approval and execution of tools in IPC mode\n    - Add tool approval flow for manual approval mode\n"}}
+7/3/25, 3:27:47 AM PDT: CLI Raw Output: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"commit 6254b333a585774264cac29c3fdef0d81078a944\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 03:18:16 2025 -0700\n\n    feat(hud): add tool execution formatting and approval mode toggle\n    \n    - Add ToolExecution model to track tool execution state and output\n    - Create ToolExecutionView component for proper tool display formatting\n    - Add approval mode toggle in header bar (Auto/Ask permission)\n    - Update IPC server to support approval mode switching\n    - Add tool event streaming from CLI to HUD\n    - Separate tool executions from message content in conversation view\n    - Add pending tool approval UI with approve/reject buttons\n    - Track active tool executions and update their status in real-time\n    \n    The HUD now properly formats tool executions as separate UI components\n    instead of appending them to message content. Users can switch between\n    automatic tool execution (YOLO mode) and manual approval mode.\n"}}
 
-7/3/25, 2:57:19 AM PDT: Processing line: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"commit c077b039606e0725efa67e134b0d9ffe8367b954\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 02:42:34 2025 -0700\n\n    feat(ipc): implement basic tool execution support in IPC server\n    \n    - Simplify IPC server to handle tool events from the model\n    - Add proper tool execution via executeToolCall for manual tool requests\n    - Handle ToolCallResponse events that come from the model\n    - Fix TypeScript errors with proper type handling\n    - Remove sendToolResponse approach that doesn't work with Turn\n    \n    Tools are now notified when requested by the model. The HUD can see when\n    tools are being called, but automatic execution is not yet implemented.\n    \n    Next steps:\n    - Implement auto-approval and execution of tools in IPC mode\n    - Add tool approval flow for manual approval mode\n"}}
-7/3/25, 2:57:19 AM PDT: Parsed JSON: ["type": tool.end, "data": {
+7/3/25, 3:27:47 AM PDT: Processing line: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"commit 6254b333a585774264cac29c3fdef0d81078a944\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 03:18:16 2025 -0700\n\n    feat(hud): add tool execution formatting and approval mode toggle\n    \n    - Add ToolExecution model to track tool execution state and output\n    - Create ToolExecutionView component for proper tool display formatting\n    - Add approval mode toggle in header bar (Auto/Ask permission)\n    - Update IPC server to support approval mode switching\n    - Add tool event streaming from CLI to HUD\n    - Separate tool executions from message content in conversation view\n    - Add pending tool approval UI with approve/reject buttons\n    - Track active tool executions and update their status in real-time\n    \n    The HUD now properly formats tool executions as separate UI components\n    instead of appending them to message content. Users can switch between\n    automatic tool execution (YOLO mode) and manual approval mode.\n"}}
+7/3/25, 3:27:47 AM PDT: Parsed JSON: ["type": tool.end, "data": {
     name = "run_shell_command";
-    output = "commit c077b039606e0725efa67e134b0d9ffe8367b954\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 02:42:34 2025 -0700\n\n    feat(ipc): implement basic tool execution support in IPC server\n    \n    - Simplify IPC server to handle tool events from the model\n    - Add proper tool execution via executeToolCall for manual tool requests\n    - Handle ToolCallResponse events that come from the model\n    - Fix TypeScript errors with proper type handling\n    - Remove sendToolResponse approach that doesn't work with Turn\n    \n    Tools are now notified when requested by the model. The HUD can see when\n    tools are being called, but automatic execution is not yet implemented.\n    \n    Next steps:\n    - Implement auto-approval and execution of tools in IPC mode\n    - Add tool approval flow for manual approval mode\n";
+    output = "commit 6254b333a585774264cac29c3fdef0d81078a944\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 03:18:16 2025 -0700\n\n    feat(hud): add tool execution formatting and approval mode toggle\n    \n    - Add ToolExecution model to track tool execution state and output\n    - Create ToolExecutionView component for proper tool display formatting\n    - Add approval mode toggle in header bar (Auto/Ask permission)\n    - Update IPC server to support approval mode switching\n    - Add tool event streaming from CLI to HUD\n    - Separate tool executions from message content in conversation view\n    - Add pending tool approval UI with approve/reject buttons\n    - Track active tool executions and update their status in real-time\n    \n    The HUD now properly formats tool executions as separate UI components\n    instead of appending them to message content. Users can switch between\n    automatic tool execution (YOLO mode) and manual approval mode.\n";
     success = 1;
 }]
-7/3/25, 2:57:19 AM PDT: Tool Completed: run_shell_command with data: ["output": commit c077b039606e0725efa67e134b0d9ffe8367b954
+7/3/25, 3:27:47 AM PDT: Tool Completed: run_shell_command with data: ["output": commit 6254b333a585774264cac29c3fdef0d81078a944
 Author: Keith Ballinger <keithballinger@google.com>
-Date:   Thu Jul 3 02:42:34 2025 -0700
+Date:   Thu Jul 3 03:18:16 2025 -0700
 
-    feat(ipc): implement basic tool execution support in IPC server
+    feat(hud): add tool execution formatting and approval mode toggle
     
-    - Simplify IPC server to handle tool events from the model
-    - Add proper tool execution via executeToolCall for manual tool requests
-    - Handle ToolCallResponse events that come from the model
-    - Fix TypeScript errors with proper type handling
-    - Remove sendToolResponse approach that doesn't work with Turn
+    - Add ToolExecution model to track tool execution state and output
+    - Create ToolExecutionView component for proper tool display formatting
+    - Add approval mode toggle in header bar (Auto/Ask permission)
+    - Update IPC server to support approval mode switching
+    - Add tool event streaming from CLI to HUD
+    - Separate tool executions from message content in conversation view
+    - Add pending tool approval UI with approve/reject buttons
+    - Track active tool executions and update their status in real-time
     
-    Tools are now notified when requested by the model. The HUD can see when
-    tools are being called, but automatic execution is not yet implemented.
-    
-    Next steps:
-    - Implement auto-approval and execution of tools in IPC mode
-    - Add tool approval flow for manual approval mode
-, "name": run_shell_command, "success": 1]
-7/3/25, 2:57:21 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"The"}
+    The HUD now properly formats tool executions as separate UI components
+    instead of appending them to message content. Users can switch between
+    automatic tool execution (YOLO mode) and manual approval mode.
+, "success": 1, "name": run_shell_command]
+7/3/25, 3:27:49 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"The"}
 
-7/3/25, 2:57:21 AM PDT: Processing line: {"type":"message.chunk","data":"The"}
-7/3/25, 2:57:21 AM PDT: Parsed JSON: ["data": The, "type": message.chunk]
-7/3/25, 2:57:21 AM PDT: Message chunk received: The
-7/3/25, 2:57:21 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" last commit, `c077b03`, by Keith Ballinger,"}
+7/3/25, 3:27:49 AM PDT: Processing line: {"type":"message.chunk","data":"The"}
+7/3/25, 3:27:49 AM PDT: Parsed JSON: ["data": The, "type": message.chunk]
+7/3/25, 3:27:49 AM PDT: Message chunk received: The
+7/3/25, 3:27:49 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" last commit added tool execution formatting and an approval mode toggle to the HUD. This"}
 
-7/3/25, 2:57:21 AM PDT: Processing line: {"type":"message.chunk","data":" last commit, `c077b03`, by Keith Ballinger,"}
-7/3/25, 2:57:21 AM PDT: Parsed JSON: ["type": message.chunk, "data":  last commit, `c077b03`, by Keith Ballinger,]
-7/3/25, 2:57:21 AM PDT: Message chunk received:  last commit, `c077b03`, by Keith Ballinger,
-7/3/25, 2:57:22 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" implements basic tool execution support in the IPC server. It simplifies the server to handle tool events from the model, adds "}
+7/3/25, 3:27:49 AM PDT: Processing line: {"type":"message.chunk","data":" last commit added tool execution formatting and an approval mode toggle to the HUD. This"}
+7/3/25, 3:27:49 AM PDT: Parsed JSON: ["type": message.chunk, "data":  last commit added tool execution formatting and an approval mode toggle to the HUD. This]
+7/3/25, 3:27:49 AM PDT: Message chunk received:  last commit added tool execution formatting and an approval mode toggle to the HUD. This
+7/3/25, 3:27:50 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" includes a new `ToolExecution` model, a `ToolExecutionView` component, and the ability to switch between automatic"}
 
-7/3/25, 2:57:22 AM PDT: Processing line: {"type":"message.chunk","data":" implements basic tool execution support in the IPC server. It simplifies the server to handle tool events from the model, adds "}
-7/3/25, 2:57:22 AM PDT: Parsed JSON: ["type": message.chunk, "data":  implements basic tool execution support in the IPC server. It simplifies the server to handle tool events from the model, adds ]
-7/3/25, 2:57:22 AM PDT: Message chunk received:  implements basic tool execution support in the IPC server. It simplifies the server to handle tool events from the model, adds 
-7/3/25, 2:57:22 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"`executeToolCall` for manual tool requests, and handles `ToolCallResponse` events. The commit also fixes TypeScript errors and removes"}
+7/3/25, 3:27:50 AM PDT: Processing line: {"type":"message.chunk","data":" includes a new `ToolExecution` model, a `ToolExecutionView` component, and the ability to switch between automatic"}
+7/3/25, 3:27:50 AM PDT: Parsed JSON: ["data":  includes a new `ToolExecution` model, a `ToolExecutionView` component, and the ability to switch between automatic, "type": message.chunk]
+7/3/25, 3:27:50 AM PDT: Message chunk received:  includes a new `ToolExecution` model, a `ToolExecutionView` component, and the ability to switch between automatic
+7/3/25, 3:27:50 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" and manual tool approval. It also updated the IPC server to support this, enabled tool event streaming, and separated tool executions"}
 
-7/3/25, 2:57:22 AM PDT: Processing line: {"type":"message.chunk","data":"`executeToolCall` for manual tool requests, and handles `ToolCallResponse` events. The commit also fixes TypeScript errors and removes"}
-7/3/25, 2:57:22 AM PDT: Parsed JSON: ["data": `executeToolCall` for manual tool requests, and handles `ToolCallResponse` events. The commit also fixes TypeScript errors and removes, "type": message.chunk]
-7/3/25, 2:57:22 AM PDT: Message chunk received: `executeToolCall` for manual tool requests, and handles `ToolCallResponse` events. The commit also fixes TypeScript errors and removes
-7/3/25, 2:57:22 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" a non-functional `sendToolResponse` approach. Currently, the HUD is notified of tool calls, but automatic execution is not yet"}
+7/3/25, 3:27:50 AM PDT: Processing line: {"type":"message.chunk","data":" and manual tool approval. It also updated the IPC server to support this, enabled tool event streaming, and separated tool executions"}
+7/3/25, 3:27:50 AM PDT: Parsed JSON: ["data":  and manual tool approval. It also updated the IPC server to support this, enabled tool event streaming, and separated tool executions, "type": message.chunk]
+7/3/25, 3:27:50 AM PDT: Message chunk received:  and manual tool approval. It also updated the IPC server to support this, enabled tool event streaming, and separated tool executions
+7/3/25, 3:27:50 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" from message content in the conversation view."}
 
-7/3/25, 2:57:22 AM PDT: Processing line: {"type":"message.chunk","data":" a non-functional `sendToolResponse` approach. Currently, the HUD is notified of tool calls, but automatic execution is not yet"}
-7/3/25, 2:57:22 AM PDT: Parsed JSON: ["data":  a non-functional `sendToolResponse` approach. Currently, the HUD is notified of tool calls, but automatic execution is not yet, "type": message.chunk]
-7/3/25, 2:57:22 AM PDT: Message chunk received:  a non-functional `sendToolResponse` approach. Currently, the HUD is notified of tool calls, but automatic execution is not yet
-7/3/25, 2:57:22 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" implemented."}
+7/3/25, 3:27:50 AM PDT: Processing line: {"type":"message.chunk","data":" from message content in the conversation view."}
+7/3/25, 3:27:50 AM PDT: Parsed JSON: ["data":  from message content in the conversation view., "type": message.chunk]
+7/3/25, 3:27:50 AM PDT: Message chunk received:  from message content in the conversation view.
+7/3/25, 3:27:52 AM PDT: CLI Raw Output: {"id":"94A2B165-8745-4AA5-8990-C71E860EB28F","result":{"type":"message","data":{"response":"The last commit added tool execution formatting and an approval mode toggle to the HUD. This includes a new `ToolExecution` model, a `ToolExecutionView` component, and the ability to switch between automatic and manual tool approval. It also updated the IPC server to support this, enabled tool event streaming, and separated tool executions from message content in the conversation view.","tools":[{"name":"run_shell_command","parameters":{"directory":"GeminiHUD","description":"Get the most recent commit to summarize.","command":"git log -n 1"},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
 
-7/3/25, 2:57:22 AM PDT: Processing line: {"type":"message.chunk","data":" implemented."}
-7/3/25, 2:57:22 AM PDT: Parsed JSON: ["type": message.chunk, "data":  implemented.]
-7/3/25, 2:57:22 AM PDT: Message chunk received:  implemented.
-7/3/25, 2:57:25 AM PDT: CLI Raw Output: {"id":"98500724-6A59-4468-981E-323740F947E5","result":{"type":"message","data":{"response":"I'll run `git log -n 1` to get the last commit information.The last commit, `c077b03`, by Keith Ballinger, implements basic tool execution support in the IPC server. It simplifies the server to handle tool events from the model, adds `executeToolCall` for manual tool requests, and handles `ToolCallResponse` events. The commit also fixes TypeScript errors and removes a non-functional `sendToolResponse` approach. Currently, the HUD is notified of tool calls, but automatic execution is not yet implemented.","tools":[{"name":"run_shell_command","parameters":{"command":"git log -n 1","description":"Get the last commit information.","directory":"GeminiHUD"},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
-
-7/3/25, 2:57:25 AM PDT: Processing line: {"id":"98500724-6A59-4468-981E-323740F947E5","result":{"type":"message","data":{"response":"I'll run `git log -n 1` to get the last commit information.The last commit, `c077b03`, by Keith Ballinger, implements basic tool execution support in the IPC server. It simplifies the server to handle tool events from the model, adds `executeToolCall` for manual tool requests, and handles `ToolCallResponse` events. The commit also fixes TypeScript errors and removes a non-functional `sendToolResponse` approach. Currently, the HUD is notified of tool calls, but automatic execution is not yet implemented.","tools":[{"name":"run_shell_command","parameters":{"command":"git log -n 1","description":"Get the last commit information.","directory":"GeminiHUD"},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
-7/3/25, 2:57:25 AM PDT: Parsed JSON: ["result": {
+7/3/25, 3:27:52 AM PDT: Processing line: {"id":"94A2B165-8745-4AA5-8990-C71E860EB28F","result":{"type":"message","data":{"response":"The last commit added tool execution formatting and an approval mode toggle to the HUD. This includes a new `ToolExecution` model, a `ToolExecutionView` component, and the ability to switch between automatic and manual tool approval. It also updated the IPC server to support this, enabled tool event streaming, and separated tool executions from message content in the conversation view.","tools":[{"name":"run_shell_command","parameters":{"directory":"GeminiHUD","description":"Get the most recent commit to summarize.","command":"git log -n 1"},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+7/3/25, 3:27:52 AM PDT: Parsed JSON: ["result": {
     data =     {
-        response = "I'll run `git log -n 1` to get the last commit information.The last commit, `c077b03`, by Keith Ballinger, implements basic tool execution support in the IPC server. It simplifies the server to handle tool events from the model, adds `executeToolCall` for manual tool requests, and handles `ToolCallResponse` events. The commit also fixes TypeScript errors and removes a non-functional `sendToolResponse` approach. Currently, the HUD is notified of tool calls, but automatic execution is not yet implemented.";
+        response = "The last commit added tool execution formatting and an approval mode toggle to the HUD. This includes a new `ToolExecution` model, a `ToolExecutionView` component, and the ability to switch between automatic and manual tool approval. It also updated the IPC server to support this, enabled tool event streaming, and separated tool executions from message content in the conversation view.";
         tokenUsage =         {
             completion = 0;
             prompt = 0;
@@ -142,13 +132,215 @@ Date:   Thu Jul 3 02:42:34 2025 -0700
                 name = "run_shell_command";
                 parameters =                 {
                     command = "git log -n 1";
-                    description = "Get the last commit information.";
+                    description = "Get the most recent commit to summarize.";
                     directory = GeminiHUD;
                 };
             }
         );
     };
     type = message;
-}, "id": 98500724-6A59-4468-981E-323740F947E5]
-7/3/25, 2:57:25 AM PDT: IPC Response: message
-7/3/25, 2:57:25 AM PDT: Message complete for ID: 98500724-6A59-4468-981E-323740F947E5
+}, "id": 94A2B165-8745-4AA5-8990-C71E860EB28F]
+7/3/25, 3:27:52 AM PDT: IPC Response: message
+7/3/25, 3:27:52 AM PDT: Message complete for ID: 94A2B165-8745-4AA5-8990-C71E860EB28F
+7/3/25, 3:33:26 AM PDT: SimpleCLIService: Initialized
+7/3/25, 3:33:27 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 3:33:27 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+
+7/3/25, 3:33:27 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 3:33:27 AM PDT: Parsed JSON: ["result": {
+    data =     {
+        connected = 1;
+        model = "gemini-2.5-pro";
+        workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+    };
+    type = status;
+}, "id": init]
+7/3/25, 3:33:27 AM PDT: IPC Response: status
+7/3/25, 3:33:27 AM PDT: IPC Connected: ["type": status, "data": {
+    connected = 1;
+    model = "gemini-2.5-pro";
+    workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+}]
+7/3/25, 3:33:36 AM PDT: Sending request with ID: 539FEDCD-816D-4FE2-936D-C7F7FC44FB48 for message: what time is it, my friend?
+7/3/25, 3:33:41 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"It is currently:"}
+
+7/3/25, 3:33:41 AM PDT: Processing line: {"type":"message.chunk","data":"It is currently:"}
+7/3/25, 3:33:41 AM PDT: Parsed JSON: ["type": message.chunk, "data": It is currently:]
+7/3/25, 3:33:41 AM PDT: Message chunk received: It is currently:
+7/3/25, 3:33:41 AM PDT: CLI Raw Output: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"command":"date","description":"Get the current date and time"}}}
+
+7/3/25, 3:33:41 AM PDT: Processing line: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"command":"date","description":"Get the current date and time"}}}
+7/3/25, 3:33:41 AM PDT: Parsed JSON: ["type": tool.start, "data": {
+    name = "run_shell_command";
+    parameters =     {
+        command = date;
+        description = "Get the current date and time";
+    };
+}]
+7/3/25, 3:33:41 AM PDT: Tool Starting: run_shell_command with data: ["parameters": {
+    command = date;
+    description = "Get the current date and time";
+}, "name": run_shell_command]
+7/3/25, 3:33:41 AM PDT: CLI Raw Output: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"Thu Jul  3 03:33:41 PDT 2025\n"}}
+
+7/3/25, 3:33:41 AM PDT: Processing line: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"Thu Jul  3 03:33:41 PDT 2025\n"}}
+7/3/25, 3:33:41 AM PDT: Parsed JSON: ["type": tool.end, "data": {
+    name = "run_shell_command";
+    output = "Thu Jul  3 03:33:41 PDT 2025\n";
+    success = 1;
+}]
+7/3/25, 3:33:41 AM PDT: Tool Completed: run_shell_command with data: ["name": run_shell_command, "output": Thu Jul  3 03:33:41 PDT 2025
+, "success": 1]
+7/3/25, 3:33:43 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"3"}
+
+7/3/25, 3:33:43 AM PDT: Processing line: {"type":"message.chunk","data":"3"}
+7/3/25, 3:33:43 AM PDT: Parsed JSON: ["type": message.chunk, "data": 3]
+7/3/25, 3:33:43 AM PDT: Message chunk received: 3
+7/3/25, 3:33:43 AM PDT: CLI Raw Output: {"type":"message.chunk","data":":33 AM PDT."}
+
+7/3/25, 3:33:43 AM PDT: Processing line: {"type":"message.chunk","data":":33 AM PDT."}
+7/3/25, 3:33:43 AM PDT: Parsed JSON: ["type": message.chunk, "data": :33 AM PDT.]
+7/3/25, 3:33:43 AM PDT: Message chunk received: :33 AM PDT.
+7/3/25, 3:33:44 AM PDT: CLI Raw Output: {"id":"539FEDCD-816D-4FE2-936D-C7F7FC44FB48","result":{"type":"message","data":{"response":"It is currently:3:33 AM PDT.","tools":[{"name":"run_shell_command","parameters":{"command":"date","description":"Get the current date and time"},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+
+7/3/25, 3:33:44 AM PDT: Processing line: {"id":"539FEDCD-816D-4FE2-936D-C7F7FC44FB48","result":{"type":"message","data":{"response":"It is currently:3:33 AM PDT.","tools":[{"name":"run_shell_command","parameters":{"command":"date","description":"Get the current date and time"},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+7/3/25, 3:33:44 AM PDT: Parsed JSON: ["result": {
+    data =     {
+        response = "It is currently:3:33 AM PDT.";
+        tokenUsage =         {
+            completion = 0;
+            prompt = 0;
+            total = 0;
+        };
+        tools =         (
+                        {
+                approved = 1;
+                name = "run_shell_command";
+                parameters =                 {
+                    command = date;
+                    description = "Get the current date and time";
+                };
+            }
+        );
+    };
+    type = message;
+}, "id": 539FEDCD-816D-4FE2-936D-C7F7FC44FB48]
+7/3/25, 3:33:44 AM PDT: IPC Response: message
+7/3/25, 3:33:44 AM PDT: Message complete for ID: 539FEDCD-816D-4FE2-936D-C7F7FC44FB48
+7/3/25, 3:33:50 AM PDT: Sending request with ID: C92F2DFE-0104-49D2-8321-8247DA1C9E6A for message: summarize the last commit
+7/3/25, 3:33:52 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"I'll get the last commit for you."}
+
+7/3/25, 3:33:52 AM PDT: Processing line: {"type":"message.chunk","data":"I'll get the last commit for you."}
+7/3/25, 3:33:52 AM PDT: Parsed JSON: ["type": message.chunk, "data": I'll get the last commit for you.]
+7/3/25, 3:33:52 AM PDT: Message chunk received: I'll get the last commit for you.
+7/3/25, 3:33:52 AM PDT: CLI Raw Output: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"description":"Get the last commit log message","command":"git log -n 1"}}}
+
+7/3/25, 3:33:52 AM PDT: Processing line: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"description":"Get the last commit log message","command":"git log -n 1"}}}
+7/3/25, 3:33:52 AM PDT: Parsed JSON: ["data": {
+    name = "run_shell_command";
+    parameters =     {
+        command = "git log -n 1";
+        description = "Get the last commit log message";
+    };
+}, "type": tool.start]
+7/3/25, 3:33:52 AM PDT: Tool Starting: run_shell_command with data: ["parameters": {
+    command = "git log -n 1";
+    description = "Get the last commit log message";
+}, "name": run_shell_command]
+7/3/25, 3:33:53 AM PDT: CLI Raw Output: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"commit 6254b333a585774264cac29c3fdef0d81078a944\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 03:18:16 2025 -0700\n\n    feat(hud): add tool execution formatting and approval mode toggle\n    \n    - Add ToolExecution model to track tool execution state and output\n    - Create ToolExecutionView component for proper tool display formatting\n    - Add approval mode toggle in header bar (Auto/Ask permission)\n    - Update IPC server to support approval mode switching\n    - Add tool event streaming from CLI to HUD\n    - Separate tool executions from message content in conversation view\n    - Add pending tool approval UI with approve/reject buttons\n    - Track active tool executions and update their status in real-time\n    \n    The HUD now properly formats tool executions as separate UI components\n    instead of appending them to message content. Users can switch between\n    automatic tool execution (YOLO mode) and manual approval mode.\n"}}
+
+7/3/25, 3:33:53 AM PDT: Processing line: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"commit 6254b333a585774264cac29c3fdef0d81078a944\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 03:18:16 2025 -0700\n\n    feat(hud): add tool execution formatting and approval mode toggle\n    \n    - Add ToolExecution model to track tool execution state and output\n    - Create ToolExecutionView component for proper tool display formatting\n    - Add approval mode toggle in header bar (Auto/Ask permission)\n    - Update IPC server to support approval mode switching\n    - Add tool event streaming from CLI to HUD\n    - Separate tool executions from message content in conversation view\n    - Add pending tool approval UI with approve/reject buttons\n    - Track active tool executions and update their status in real-time\n    \n    The HUD now properly formats tool executions as separate UI components\n    instead of appending them to message content. Users can switch between\n    automatic tool execution (YOLO mode) and manual approval mode.\n"}}
+7/3/25, 3:33:53 AM PDT: Parsed JSON: ["type": tool.end, "data": {
+    name = "run_shell_command";
+    output = "commit 6254b333a585774264cac29c3fdef0d81078a944\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 03:18:16 2025 -0700\n\n    feat(hud): add tool execution formatting and approval mode toggle\n    \n    - Add ToolExecution model to track tool execution state and output\n    - Create ToolExecutionView component for proper tool display formatting\n    - Add approval mode toggle in header bar (Auto/Ask permission)\n    - Update IPC server to support approval mode switching\n    - Add tool event streaming from CLI to HUD\n    - Separate tool executions from message content in conversation view\n    - Add pending tool approval UI with approve/reject buttons\n    - Track active tool executions and update their status in real-time\n    \n    The HUD now properly formats tool executions as separate UI components\n    instead of appending them to message content. Users can switch between\n    automatic tool execution (YOLO mode) and manual approval mode.\n";
+    success = 1;
+}]
+7/3/25, 3:33:53 AM PDT: Tool Completed: run_shell_command with data: ["success": 1, "output": commit 6254b333a585774264cac29c3fdef0d81078a944
+Author: Keith Ballinger <keithballinger@google.com>
+Date:   Thu Jul 3 03:18:16 2025 -0700
+
+    feat(hud): add tool execution formatting and approval mode toggle
+    
+    - Add ToolExecution model to track tool execution state and output
+    - Create ToolExecutionView component for proper tool display formatting
+    - Add approval mode toggle in header bar (Auto/Ask permission)
+    - Update IPC server to support approval mode switching
+    - Add tool event streaming from CLI to HUD
+    - Separate tool executions from message content in conversation view
+    - Add pending tool approval UI with approve/reject buttons
+    - Track active tool executions and update their status in real-time
+    
+    The HUD now properly formats tool executions as separate UI components
+    instead of appending them to message content. Users can switch between
+    automatic tool execution (YOLO mode) and manual approval mode.
+, "name": run_shell_command]
+7/3/25, 3:33:54 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"The"}
+
+7/3/25, 3:33:54 AM PDT: Processing line: {"type":"message.chunk","data":"The"}
+7/3/25, 3:33:54 AM PDT: Parsed JSON: ["type": message.chunk, "data": The]
+7/3/25, 3:33:54 AM PDT: Message chunk received: The
+7/3/25, 3:33:54 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" last commit added a feature to the HUD for formatting and approving tool executions. It"}
+
+7/3/25, 3:33:54 AM PDT: Processing line: {"type":"message.chunk","data":" last commit added a feature to the HUD for formatting and approving tool executions. It"}
+7/3/25, 3:33:54 AM PDT: Parsed JSON: ["data":  last commit added a feature to the HUD for formatting and approving tool executions. It, "type": message.chunk]
+7/3/25, 3:33:54 AM PDT: Message chunk received:  last commit added a feature to the HUD for formatting and approving tool executions. It
+7/3/25, 3:33:55 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" introduced a `ToolExecution` model and a corresponding `ToolExecutionView` to display tool information cleanly. Now, users can toggle"}
+
+7/3/25, 3:33:55 AM PDT: Processing line: {"type":"message.chunk","data":" introduced a `ToolExecution` model and a corresponding `ToolExecutionView` to display tool information cleanly. Now, users can toggle"}
+7/3/25, 3:33:55 AM PDT: Parsed JSON: ["data":  introduced a `ToolExecution` model and a corresponding `ToolExecutionView` to display tool information cleanly. Now, users can toggle, "type": message.chunk]
+7/3/25, 3:33:55 AM PDT: Message chunk received:  introduced a `ToolExecution` model and a corresponding `ToolExecutionView` to display tool information cleanly. Now, users can toggle
+7/3/25, 3:33:55 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" between automatic and manual approval for tool executions. The commit also updated the IPC server to handle this new mode, enabled tool event"}
+
+7/3/25, 3:33:55 AM PDT: Processing line: {"type":"message.chunk","data":" between automatic and manual approval for tool executions. The commit also updated the IPC server to handle this new mode, enabled tool event"}
+7/3/25, 3:33:55 AM PDT: Parsed JSON: ["type": message.chunk, "data":  between automatic and manual approval for tool executions. The commit also updated the IPC server to handle this new mode, enabled tool event]
+7/3/25, 3:33:55 AM PDT: Message chunk received:  between automatic and manual approval for tool executions. The commit also updated the IPC server to handle this new mode, enabled tool event
+7/3/25, 3:33:56 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" streaming from the CLI, and separated tool executions from regular messages in the conversation view. Finally, it added a UI for pending"}
+
+7/3/25, 3:33:56 AM PDT: Processing line: {"type":"message.chunk","data":" streaming from the CLI, and separated tool executions from regular messages in the conversation view. Finally, it added a UI for pending"}
+7/3/25, 3:33:56 AM PDT: Parsed JSON: ["data":  streaming from the CLI, and separated tool executions from regular messages in the conversation view. Finally, it added a UI for pending, "type": message.chunk]
+7/3/25, 3:33:56 AM PDT: Message chunk received:  streaming from the CLI, and separated tool executions from regular messages in the conversation view. Finally, it added a UI for pending
+7/3/25, 3:33:56 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" tool approvals with \"approve\" and \"reject\" buttons and the ability to track the status of active tool executions in real-"}
+
+7/3/25, 3:33:56 AM PDT: Processing line: {"type":"message.chunk","data":" tool approvals with \"approve\" and \"reject\" buttons and the ability to track the status of active tool executions in real-"}
+7/3/25, 3:33:56 AM PDT: Parsed JSON: ["type": message.chunk, "data":  tool approvals with "approve" and "reject" buttons and the ability to track the status of active tool executions in real-]
+7/3/25, 3:33:56 AM PDT: Message chunk received:  tool approvals with "approve" and "reject" buttons and the ability to track the status of active tool executions in real-
+7/3/25, 3:33:56 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"time."}
+
+7/3/25, 3:33:56 AM PDT: Processing line: {"type":"message.chunk","data":"time."}
+7/3/25, 3:33:56 AM PDT: Parsed JSON: ["type": message.chunk, "data": time.]
+7/3/25, 3:33:56 AM PDT: Message chunk received: time.
+7/3/25, 3:33:58 AM PDT: CLI Raw Output: {"id":"C92F2DFE-0104-49D2-8321-8247DA1C9E6A","result":{"type":"message","data":{"response":"I'll get the last commit for you.The last commit added a feature to the HUD for formatting and approving tool executions. It introduced a `ToolExecution` model and a corresponding `ToolExecutionView` to display tool information cleanly. Now, users can toggle between automatic and manual approval for tool executions. The commit also updated the IPC server to handle this new mode, enabled tool event streaming from the CLI, and separated tool executions from regular messages in the conversation view. Finally, it added a UI for pending tool approvals with \"approve\" and \"reject\" buttons and the ability to track the status of active tool executions in real-time.","tools":[{"name":"run_shell_command","parameters":{"description":"Get the last commit log message","command":"git log -n 1"},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+
+7/3/25, 3:33:58 AM PDT: Processing line: {"id":"C92F2DFE-0104-49D2-8321-8247DA1C9E6A","result":{"type":"message","data":{"response":"I'll get the last commit for you.The last commit added a feature to the HUD for formatting and approving tool executions. It introduced a `ToolExecution` model and a corresponding `ToolExecutionView` to display tool information cleanly. Now, users can toggle between automatic and manual approval for tool executions. The commit also updated the IPC server to handle this new mode, enabled tool event streaming from the CLI, and separated tool executions from regular messages in the conversation view. Finally, it added a UI for pending tool approvals with \"approve\" and \"reject\" buttons and the ability to track the status of active tool executions in real-time.","tools":[{"name":"run_shell_command","parameters":{"description":"Get the last commit log message","command":"git log -n 1"},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+7/3/25, 3:33:58 AM PDT: Parsed JSON: ["id": C92F2DFE-0104-49D2-8321-8247DA1C9E6A, "result": {
+    data =     {
+        response = "I'll get the last commit for you.The last commit added a feature to the HUD for formatting and approving tool executions. It introduced a `ToolExecution` model and a corresponding `ToolExecutionView` to display tool information cleanly. Now, users can toggle between automatic and manual approval for tool executions. The commit also updated the IPC server to handle this new mode, enabled tool event streaming from the CLI, and separated tool executions from regular messages in the conversation view. Finally, it added a UI for pending tool approvals with \"approve\" and \"reject\" buttons and the ability to track the status of active tool executions in real-time.";
+        tokenUsage =         {
+            completion = 0;
+            prompt = 0;
+            total = 0;
+        };
+        tools =         (
+                        {
+                approved = 1;
+                name = "run_shell_command";
+                parameters =                 {
+                    command = "git log -n 1";
+                    description = "Get the last commit log message";
+                };
+            }
+        );
+    };
+    type = message;
+}]
+7/3/25, 3:33:58 AM PDT: IPC Response: message
+7/3/25, 3:33:58 AM PDT: Message complete for ID: C92F2DFE-0104-49D2-8321-8247DA1C9E6A
+7/3/25, 3:34:03 AM PDT: Setting approval mode to: ask
+7/3/25, 3:34:03 AM PDT: CLI Raw Output: {"id":"B3853E53-36E9-4EC7-A024-A0AA77294CA0","result":{"type":"success"}}
+
+7/3/25, 3:34:03 AM PDT: Processing line: {"id":"B3853E53-36E9-4EC7-A024-A0AA77294CA0","result":{"type":"success"}}
+7/3/25, 3:34:03 AM PDT: Parsed JSON: ["id": B3853E53-36E9-4EC7-A024-A0AA77294CA0, "result": {
+    type = success;
+}]
+7/3/25, 3:34:03 AM PDT: IPC Response: success
+7/3/25, 3:34:11 AM PDT: Sending request with ID: 75467A8A-406A-412B-A310-85D7B9DC82F0 for message: what time is it?

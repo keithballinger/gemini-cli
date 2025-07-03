@@ -54,28 +54,43 @@ struct MessageBubble: View {
                 )
             
             VStack(alignment: .leading, spacing: 4) {
-                // Message content
-                Text(message.content)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(appState.currentTheme.foregroundColor)
-                    .textSelection(.enabled)
-                    .lineSpacing(4)
+                // For better flow, show content before tools if tools are executing/pending
+                // but show content after tools if tools are completed
+                let shouldShowContentFirst = message.toolExecutions?.allSatisfy { 
+                    $0.state == .pending || $0.state == .executing || $0.state == .approved 
+                } ?? true
                 
-                // Tool calls if any (legacy)
-                if let tools = message.tools, !tools.isEmpty {
-                    ForEach(tools, id: \.name) { tool in
-                        ToolCallView(tool: tool)
-                    }
+                if shouldShowContentFirst && !message.content.isEmpty {
+                    Text(message.content)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(appState.currentTheme.foregroundColor)
+                        .textSelection(.enabled)
+                        .lineSpacing(4)
                 }
                 
-                // Tool executions (new format)
+                // Tool executions (if any)
                 if let toolExecutions = message.toolExecutions, !toolExecutions.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(toolExecutions) { toolExecution in
                             ToolExecutionView(toolExecution: toolExecution)
                         }
                     }
-                    .padding(.top, 8)
+                    .padding(.vertical, 8)
+                }
+                
+                if !shouldShowContentFirst && !message.content.isEmpty {
+                    Text(message.content)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(appState.currentTheme.foregroundColor)
+                        .textSelection(.enabled)
+                        .lineSpacing(4)
+                }
+                
+                // Tool calls if any (legacy)
+                if let tools = message.tools, !tools.isEmpty {
+                    ForEach(tools, id: \.name) { tool in
+                        ToolCallView(tool: tool)
+                    }
                 }
                 
                 // Timestamp
