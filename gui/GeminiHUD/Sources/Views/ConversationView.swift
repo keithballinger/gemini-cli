@@ -86,12 +86,6 @@ struct MessageBubble: View {
                         .lineSpacing(4)
                 }
                 
-                // Tool calls if any (legacy)
-                if let tools = message.tools, !tools.isEmpty {
-                    ForEach(tools, id: \.name) { tool in
-                        ToolCallView(tool: tool)
-                    }
-                }
                 
                 // Timestamp
                 Text(message.timestamp, style: .time)

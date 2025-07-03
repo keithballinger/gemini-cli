@@ -1,75 +1,240 @@
-7/3/25, 3:46:21 AM PDT: SimpleCLIService: Initialized
-7/3/25, 3:46:22 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
-7/3/25, 3:46:23 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 3:52:58 AM PDT: SimpleCLIService: Initialized
+7/3/25, 3:52:59 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 3:53:00 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
 
-7/3/25, 3:46:23 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
-7/3/25, 3:46:23 AM PDT: Parsed JSON: ["result": {
+7/3/25, 3:53:00 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 3:53:00 AM PDT: Parsed JSON: ["id": init, "result": {
     data =     {
         connected = 1;
         model = "gemini-2.5-pro";
         workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
     };
     type = status;
-}, "id": init]
-7/3/25, 3:46:23 AM PDT: IPC Response: status
-7/3/25, 3:46:23 AM PDT: IPC Connected: ["data": {
+}]
+7/3/25, 3:53:00 AM PDT: IPC Response: status
+7/3/25, 3:53:00 AM PDT: IPC Connected: ["type": status, "data": {
     connected = 1;
     model = "gemini-2.5-pro";
     workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
-}, "type": status]
-7/3/25, 3:46:25 AM PDT: Setting approval mode to: ask
-7/3/25, 3:46:25 AM PDT: CLI Raw Output: {"id":"440B62B5-7EF3-47B3-994E-4113E8312BFA","result":{"type":"success"}}
+}]
+7/3/25, 3:53:02 AM PDT: Setting approval mode to: ask
+7/3/25, 3:53:02 AM PDT: CLI Raw Output: {"id":"38FB91D7-3C1A-45EB-96D8-D3075C16A063","result":{"type":"success"}}
 
-7/3/25, 3:46:25 AM PDT: Processing line: {"id":"440B62B5-7EF3-47B3-994E-4113E8312BFA","result":{"type":"success"}}
-7/3/25, 3:46:25 AM PDT: Parsed JSON: ["result": {
+7/3/25, 3:53:02 AM PDT: Processing line: {"id":"38FB91D7-3C1A-45EB-96D8-D3075C16A063","result":{"type":"success"}}
+7/3/25, 3:53:02 AM PDT: Parsed JSON: ["id": 38FB91D7-3C1A-45EB-96D8-D3075C16A063, "result": {
     type = success;
-}, "id": 440B62B5-7EF3-47B3-994E-4113E8312BFA]
-7/3/25, 3:46:25 AM PDT: IPC Response: success
-7/3/25, 3:46:29 AM PDT: Sending request with ID: 082189CC-2C75-4A52-A4DB-60A7B7F85F88 for message: what time is it?
-7/3/25, 3:46:33 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"It is Thursday, July 3, 2025 at"}
+}]
+7/3/25, 3:53:02 AM PDT: IPC Response: success
+7/3/25, 3:53:11 AM PDT: Sending request with ID: 132FF0F1-4FFA-4641-9BDB-39136CE69C4C for message: use the shell command to get the current time
+7/3/25, 3:53:14 AM PDT: CLI Raw Output: {"type":"tool.approval","data":{"id":"run_shell_command-1751539994080-8bb9da6f64205","name":"run_shell_command","parameters":{"description":"Get the current date and time.","command":"date"}}}
 
-7/3/25, 3:46:33 AM PDT: Processing line: {"type":"message.chunk","data":"It is Thursday, July 3, 2025 at"}
-7/3/25, 3:46:33 AM PDT: Parsed JSON: ["data": It is Thursday, July 3, 2025 at, "type": message.chunk]
-7/3/25, 3:46:33 AM PDT: Message chunk received: It is Thursday, July 3, 2025 at
-7/3/25, 3:46:33 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" 12:00 PM."}
+7/3/25, 3:53:14 AM PDT: Processing line: {"type":"tool.approval","data":{"id":"run_shell_command-1751539994080-8bb9da6f64205","name":"run_shell_command","parameters":{"description":"Get the current date and time.","command":"date"}}}
+7/3/25, 3:53:14 AM PDT: Parsed JSON: ["data": {
+    id = "run_shell_command-1751539994080-8bb9da6f64205";
+    name = "run_shell_command";
+    parameters =     {
+        command = date;
+        description = "Get the current date and time.";
+    };
+}, "type": tool.approval]
+7/3/25, 3:53:14 AM PDT: Tool Approval Request: ["id": run_shell_command-1751539994080-8bb9da6f64205, "name": run_shell_command, "parameters": {
+    command = date;
+    description = "Get the current date and time.";
+}]
+7/3/25, 3:53:15 AM PDT: Sending tool approval: run_shell_command-1751539994080-8bb9da6f64205 = true
+7/3/25, 3:53:15 AM PDT: CLI Raw Output: {"id":"B53CD1C6-2E7A-4D89-ACB2-0FEEFD466FC6","result":{"type":"success"}}
 
-7/3/25, 3:46:33 AM PDT: Processing line: {"type":"message.chunk","data":" 12:00 PM."}
-7/3/25, 3:46:33 AM PDT: Parsed JSON: ["data":  12:00 PM., "type": message.chunk]
-7/3/25, 3:46:33 AM PDT: Message chunk received:  12:00 PM.
-7/3/25, 3:46:35 AM PDT: CLI Raw Output: {"id":"082189CC-2C75-4A52-A4DB-60A7B7F85F88","result":{"type":"message","data":{"response":"It is Thursday, July 3, 2025 at 12:00 PM.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+7/3/25, 3:53:15 AM PDT: Processing line: {"id":"B53CD1C6-2E7A-4D89-ACB2-0FEEFD466FC6","result":{"type":"success"}}
+7/3/25, 3:53:15 AM PDT: Parsed JSON: ["result": {
+    type = success;
+}, "id": B53CD1C6-2E7A-4D89-ACB2-0FEEFD466FC6]
+7/3/25, 3:53:15 AM PDT: IPC Response: success
+7/3/25, 3:53:15 AM PDT: CLI Raw Output: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"description":"Get the current date and time.","command":"date"}}}
 
-7/3/25, 3:46:35 AM PDT: Processing line: {"id":"082189CC-2C75-4A52-A4DB-60A7B7F85F88","result":{"type":"message","data":{"response":"It is Thursday, July 3, 2025 at 12:00 PM.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
-7/3/25, 3:46:35 AM PDT: Parsed JSON: ["result": {
+7/3/25, 3:53:15 AM PDT: Processing line: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"description":"Get the current date and time.","command":"date"}}}
+7/3/25, 3:53:15 AM PDT: Parsed JSON: ["data": {
+    name = "run_shell_command";
+    parameters =     {
+        command = date;
+        description = "Get the current date and time.";
+    };
+}, "type": tool.start]
+7/3/25, 3:53:15 AM PDT: Tool Starting: run_shell_command with data: ["name": run_shell_command, "parameters": {
+    command = date;
+    description = "Get the current date and time.";
+}]
+7/3/25, 3:53:15 AM PDT: CLI Raw Output: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"Thu Jul  3 03:53:15 PDT 2025\n"}}
+
+7/3/25, 3:53:15 AM PDT: Processing line: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"Thu Jul  3 03:53:15 PDT 2025\n"}}
+7/3/25, 3:53:15 AM PDT: Parsed JSON: ["type": tool.end, "data": {
+    name = "run_shell_command";
+    output = "Thu Jul  3 03:53:15 PDT 2025\n";
+    success = 1;
+}]
+7/3/25, 3:53:15 AM PDT: Tool Completed: run_shell_command with data: ["output": Thu Jul  3 03:53:15 PDT 2025
+, "success": 1, "name": run_shell_command]
+7/3/25, 3:53:16 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"OK"}
+
+7/3/25, 3:53:16 AM PDT: Processing line: {"type":"message.chunk","data":"OK"}
+7/3/25, 3:53:16 AM PDT: Parsed JSON: ["type": message.chunk, "data": OK]
+7/3/25, 3:53:16 AM PDT: Message chunk received: OK
+7/3/25, 3:53:17 AM PDT: CLI Raw Output: {"type":"message.chunk","data":". The current time is Thursday, July 3, 2025"}
+
+7/3/25, 3:53:17 AM PDT: Processing line: {"type":"message.chunk","data":". The current time is Thursday, July 3, 2025"}
+7/3/25, 3:53:17 AM PDT: Parsed JSON: ["data": . The current time is Thursday, July 3, 2025, "type": message.chunk]
+7/3/25, 3:53:17 AM PDT: Message chunk received: . The current time is Thursday, July 3, 2025
+7/3/25, 3:53:17 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" at 3:53 AM PDT."}
+
+7/3/25, 3:53:17 AM PDT: Processing line: {"type":"message.chunk","data":" at 3:53 AM PDT."}
+7/3/25, 3:53:17 AM PDT: Parsed JSON: ["data":  at 3:53 AM PDT., "type": message.chunk]
+7/3/25, 3:53:17 AM PDT: Message chunk received:  at 3:53 AM PDT.
+7/3/25, 3:53:18 AM PDT: CLI Raw Output: {"id":"132FF0F1-4FFA-4641-9BDB-39136CE69C4C","result":{"type":"message","data":{"response":"OK. The current time is Thursday, July 3, 2025 at 3:53 AM PDT.","tools":[{"name":"run_shell_command","parameters":{"description":"Get the current date and time.","command":"date"},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+
+7/3/25, 3:53:18 AM PDT: Processing line: {"id":"132FF0F1-4FFA-4641-9BDB-39136CE69C4C","result":{"type":"message","data":{"response":"OK. The current time is Thursday, July 3, 2025 at 3:53 AM PDT.","tools":[{"name":"run_shell_command","parameters":{"description":"Get the current date and time.","command":"date"},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+7/3/25, 3:53:18 AM PDT: Parsed JSON: ["id": 132FF0F1-4FFA-4641-9BDB-39136CE69C4C, "result": {
     data =     {
-        response = "It is Thursday, July 3, 2025 at 12:00 PM.";
+        response = "OK. The current time is Thursday, July 3, 2025 at 3:53 AM PDT.";
         tokenUsage =         {
             completion = 0;
             prompt = 0;
             total = 0;
         };
         tools =         (
+                        {
+                approved = 1;
+                name = "run_shell_command";
+                parameters =                 {
+                    command = date;
+                    description = "Get the current date and time.";
+                };
+            }
         );
     };
     type = message;
-}, "id": 082189CC-2C75-4A52-A4DB-60A7B7F85F88]
-7/3/25, 3:46:35 AM PDT: IPC Response: message
-7/3/25, 3:46:35 AM PDT: Message complete for ID: 082189CC-2C75-4A52-A4DB-60A7B7F85F88
-7/3/25, 3:47:03 AM PDT: SimpleCLIService: Initialized
-7/3/25, 3:47:04 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
-7/3/25, 3:47:05 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+}]
+7/3/25, 3:53:18 AM PDT: IPC Response: message
+7/3/25, 3:53:18 AM PDT: Message complete for ID: 132FF0F1-4FFA-4641-9BDB-39136CE69C4C
+7/3/25, 3:53:21 AM PDT: Setting approval mode to: yolo
+7/3/25, 3:53:21 AM PDT: CLI Raw Output: {"id":"279FBDBC-3E70-4F49-B0DA-4577BF7FB3E0","result":{"type":"success"}}
 
-7/3/25, 3:47:05 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
-7/3/25, 3:47:05 AM PDT: Parsed JSON: ["result": {
-    data =     {
-        connected = 1;
-        model = "gemini-2.5-pro";
-        workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+7/3/25, 3:53:21 AM PDT: Processing line: {"id":"279FBDBC-3E70-4F49-B0DA-4577BF7FB3E0","result":{"type":"success"}}
+7/3/25, 3:53:21 AM PDT: Parsed JSON: ["id": 279FBDBC-3E70-4F49-B0DA-4577BF7FB3E0, "result": {
+    type = success;
+}]
+7/3/25, 3:53:21 AM PDT: IPC Response: success
+7/3/25, 3:53:30 AM PDT: Sending request with ID: D718E6B2-32C1-4339-B5FF-A9ACAD4D5316 for message: summarize the last 3 commits
+7/3/25, 3:53:34 AM PDT: CLI Raw Output: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"description":"Get the last 3 git commits.","command":"git log -n 3"}}}
+
+7/3/25, 3:53:34 AM PDT: Processing line: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"description":"Get the last 3 git commits.","command":"git log -n 3"}}}
+7/3/25, 3:53:34 AM PDT: Parsed JSON: ["data": {
+    name = "run_shell_command";
+    parameters =     {
+        command = "git log -n 3";
+        description = "Get the last 3 git commits.";
     };
-    type = status;
-}, "id": init]
-7/3/25, 3:47:05 AM PDT: IPC Response: status
-7/3/25, 3:47:05 AM PDT: IPC Connected: ["data": {
-    connected = 1;
-    model = "gemini-2.5-pro";
-    workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
-}, "type": status]
+}, "type": tool.start]
+7/3/25, 3:53:34 AM PDT: Tool Starting: run_shell_command with data: ["name": run_shell_command, "parameters": {
+    command = "git log -n 3";
+    description = "Get the last 3 git commits.";
+}]
+7/3/25, 3:53:34 AM PDT: CLI Raw Output: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"commit ceb75709a41859a8e9a01bfd50b5b3e44da5cf14\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 03:49:07 2025 -0700\n\n    fix(hud): remove offline status from header bar\n    \n    - Remove the (Offline) text that was showing in the header\n    - Keep all other functionality intact including tool approvals\n\ncommit ed4a5553df363039d9e20f53bdd0d84e26da3c68\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 03:43:12 2025 -0700\n\n    feat(hud): implement tool approval mode with UI prompts\n    \n    - Add support for tool approval requests in IPC server\n    - Create approval UI with approve/reject buttons in ToolExecutionView\n    - Handle tool.approval events to show pending tools in HUD\n    - Update approve/reject methods to properly update tool states\n    - Connect approval decisions back to CLI via IPC\n    - Tool approvals now work correctly in ask mode\n\ncommit b76978a2cc224e275b804aa7c5701a43c712e51e\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 03:35:18 2025 -0700\n\n    fix(hud): fix tool execution display flow to show tools inline\n    \n    - Change tool.start handling to add tools to current message instead of creating new message\n    - Update tool.end to not clear currentStreamMessage, allowing post-tool content to continue\n    - Add logic in ConversationView to show content before/after tools based on execution state\n    - Tools now appear inline where they execute rather than at the end of responses\n    - Fix visual flow so tool outputs are properly integrated into the conversation\n"}}
+
+7/3/25, 3:53:34 AM PDT: Processing line: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"commit ceb75709a41859a8e9a01bfd50b5b3e44da5cf14\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 03:49:07 2025 -0700\n\n    fix(hud): remove offline status from header bar\n    \n    - Remove the (Offline) text that was showing in the header\n    - Keep all other functionality intact including tool approvals\n\ncommit ed4a5553df363039d9e20f53bdd0d84e26da3c68\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 03:43:12 2025 -0700\n\n    feat(hud): implement tool approval mode with UI prompts\n    \n    - Add support for tool approval requests in IPC server\n    - Create approval UI with approve/reject buttons in ToolExecutionView\n    - Handle tool.approval events to show pending tools in HUD\n    - Update approve/reject methods to properly update tool states\n    - Connect approval decisions back to CLI via IPC\n    - Tool approvals now work correctly in ask mode\n\ncommit b76978a2cc224e275b804aa7c5701a43c712e51e\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 03:35:18 2025 -0700\n\n    fix(hud): fix tool execution display flow to show tools inline\n    \n    - Change tool.start handling to add tools to current message instead of creating new message\n    - Update tool.end to not clear currentStreamMessage, allowing post-tool content to continue\n    - Add logic in ConversationView to show content before/after tools based on execution state\n    - Tools now appear inline where they execute rather than at the end of responses\n    - Fix visual flow so tool outputs are properly integrated into the conversation\n"}}
+7/3/25, 3:53:34 AM PDT: Parsed JSON: ["data": {
+    name = "run_shell_command";
+    output = "commit ceb75709a41859a8e9a01bfd50b5b3e44da5cf14\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 03:49:07 2025 -0700\n\n    fix(hud): remove offline status from header bar\n    \n    - Remove the (Offline) text that was showing in the header\n    - Keep all other functionality intact including tool approvals\n\ncommit ed4a5553df363039d9e20f53bdd0d84e26da3c68\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 03:43:12 2025 -0700\n\n    feat(hud): implement tool approval mode with UI prompts\n    \n    - Add support for tool approval requests in IPC server\n    - Create approval UI with approve/reject buttons in ToolExecutionView\n    - Handle tool.approval events to show pending tools in HUD\n    - Update approve/reject methods to properly update tool states\n    - Connect approval decisions back to CLI via IPC\n    - Tool approvals now work correctly in ask mode\n\ncommit b76978a2cc224e275b804aa7c5701a43c712e51e\nAuthor: Keith Ballinger <keithballinger@google.com>\nDate:   Thu Jul 3 03:35:18 2025 -0700\n\n    fix(hud): fix tool execution display flow to show tools inline\n    \n    - Change tool.start handling to add tools to current message instead of creating new message\n    - Update tool.end to not clear currentStreamMessage, allowing post-tool content to continue\n    - Add logic in ConversationView to show content before/after tools based on execution state\n    - Tools now appear inline where they execute rather than at the end of responses\n    - Fix visual flow so tool outputs are properly integrated into the conversation\n";
+    success = 1;
+}, "type": tool.end]
+7/3/25, 3:53:34 AM PDT: Tool Completed: run_shell_command with data: ["output": commit ceb75709a41859a8e9a01bfd50b5b3e44da5cf14
+Author: Keith Ballinger <keithballinger@google.com>
+Date:   Thu Jul 3 03:49:07 2025 -0700
+
+    fix(hud): remove offline status from header bar
+    
+    - Remove the (Offline) text that was showing in the header
+    - Keep all other functionality intact including tool approvals
+
+commit ed4a5553df363039d9e20f53bdd0d84e26da3c68
+Author: Keith Ballinger <keithballinger@google.com>
+Date:   Thu Jul 3 03:43:12 2025 -0700
+
+    feat(hud): implement tool approval mode with UI prompts
+    
+    - Add support for tool approval requests in IPC server
+    - Create approval UI with approve/reject buttons in ToolExecutionView
+    - Handle tool.approval events to show pending tools in HUD
+    - Update approve/reject methods to properly update tool states
+    - Connect approval decisions back to CLI via IPC
+    - Tool approvals now work correctly in ask mode
+
+commit b76978a2cc224e275b804aa7c5701a43c712e51e
+Author: Keith Ballinger <keithballinger@google.com>
+Date:   Thu Jul 3 03:35:18 2025 -0700
+
+    fix(hud): fix tool execution display flow to show tools inline
+    
+    - Change tool.start handling to add tools to current message instead of creating new message
+    - Update tool.end to not clear currentStreamMessage, allowing post-tool content to continue
+    - Add logic in ConversationView to show content before/after tools based on execution state
+    - Tools now appear inline where they execute rather than at the end of responses
+    - Fix visual flow so tool outputs are properly integrated into the conversation
+, "success": 1, "name": run_shell_command]
+7/3/25, 3:53:36 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"Here"}
+
+7/3/25, 3:53:36 AM PDT: Processing line: {"type":"message.chunk","data":"Here"}
+7/3/25, 3:53:36 AM PDT: Parsed JSON: ["type": message.chunk, "data": Here]
+7/3/25, 3:53:36 AM PDT: Message chunk received: Here
+7/3/25, 3:53:36 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" are the last three commits:\n\n*   `ceb7570`:"}
+
+7/3/25, 3:53:36 AM PDT: Processing line: {"type":"message.chunk","data":" are the last three commits:\n\n*   `ceb7570`:"}
+7/3/25, 3:53:36 AM PDT: Parsed JSON: ["data":  are the last three commits:
+
+*   `ceb7570`:, "type": message.chunk]
+7/3/25, 3:53:36 AM PDT: Message chunk received:  are the last three commits:
+
+*   `ceb7570`:
+7/3/25, 3:53:36 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" A fix to the HUD to remove the offline status from the header bar.\n*   `ed4a55"}
+
+7/3/25, 3:53:36 AM PDT: Processing line: {"type":"message.chunk","data":" A fix to the HUD to remove the offline status from the header bar.\n*   `ed4a55"}
+7/3/25, 3:53:36 AM PDT: Parsed JSON: ["data":  A fix to the HUD to remove the offline status from the header bar.
+*   `ed4a55, "type": message.chunk]
+7/3/25, 3:53:36 AM PDT: Message chunk received:  A fix to the HUD to remove the offline status from the header bar.
+*   `ed4a55
+7/3/25, 3:53:36 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"5`: A new feature for the HUD that implements a tool approval mode with UI prompts.\n*   `b7697"}
+
+7/3/25, 3:53:36 AM PDT: Processing line: {"type":"message.chunk","data":"5`: A new feature for the HUD that implements a tool approval mode with UI prompts.\n*   `b7697"}
+7/3/25, 3:53:36 AM PDT: Parsed JSON: ["type": message.chunk, "data": 5`: A new feature for the HUD that implements a tool approval mode with UI prompts.
+*   `b7697]
+7/3/25, 3:53:36 AM PDT: Message chunk received: 5`: A new feature for the HUD that implements a tool approval mode with UI prompts.
+*   `b7697
+7/3/25, 3:53:37 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"8a`: A fix to the HUD to show tools inline in the conversation view."}
+
+7/3/25, 3:53:37 AM PDT: Processing line: {"type":"message.chunk","data":"8a`: A fix to the HUD to show tools inline in the conversation view."}
+7/3/25, 3:53:37 AM PDT: Parsed JSON: ["data": 8a`: A fix to the HUD to show tools inline in the conversation view., "type": message.chunk]
+7/3/25, 3:53:37 AM PDT: Message chunk received: 8a`: A fix to the HUD to show tools inline in the conversation view.
+7/3/25, 3:53:39 AM PDT: CLI Raw Output: {"id":"D718E6B2-32C1-4339-B5FF-A9ACAD4D5316","result":{"type":"message","data":{"response":"Here are the last three commits:\n\n*   `ceb7570`: A fix to the HUD to remove the offline status from the header bar.\n*   `ed4a555`: A new feature for the HUD that implements a tool approval mode with UI prompts.\n*   `b76978a`: A fix to the HUD to show tools inline in the conversation view.","tools":[{"name":"run_shell_command","parameters":{"description":"Get the last 3 git commits.","command":"git log -n 3"},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+
+7/3/25, 3:53:39 AM PDT: Processing line: {"id":"D718E6B2-32C1-4339-B5FF-A9ACAD4D5316","result":{"type":"message","data":{"response":"Here are the last three commits:\n\n*   `ceb7570`: A fix to the HUD to remove the offline status from the header bar.\n*   `ed4a555`: A new feature for the HUD that implements a tool approval mode with UI prompts.\n*   `b76978a`: A fix to the HUD to show tools inline in the conversation view.","tools":[{"name":"run_shell_command","parameters":{"description":"Get the last 3 git commits.","command":"git log -n 3"},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+7/3/25, 3:53:39 AM PDT: Parsed JSON: ["id": D718E6B2-32C1-4339-B5FF-A9ACAD4D5316, "result": {
+    data =     {
+        response = "Here are the last three commits:\n\n*   `ceb7570`: A fix to the HUD to remove the offline status from the header bar.\n*   `ed4a555`: A new feature for the HUD that implements a tool approval mode with UI prompts.\n*   `b76978a`: A fix to the HUD to show tools inline in the conversation view.";
+        tokenUsage =         {
+            completion = 0;
+            prompt = 0;
+            total = 0;
+        };
+        tools =         (
+                        {
+                approved = 1;
+                name = "run_shell_command";
+                parameters =                 {
+                    command = "git log -n 3";
+                    description = "Get the last 3 git commits.";
+                };
+            }
+        );
+    };
+    type = message;
+}]
+7/3/25, 3:53:39 AM PDT: IPC Response: message
+7/3/25, 3:53:39 AM PDT: Message complete for ID: D718E6B2-32C1-4339-B5FF-A9ACAD4D5316

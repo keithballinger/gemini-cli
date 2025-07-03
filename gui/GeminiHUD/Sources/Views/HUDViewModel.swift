@@ -237,6 +237,21 @@ class HUDViewModel: ObservableObject {
             // Tool execution started
             guard let name = data["name"] as? String else { return }
             
+            // Find the existing pending tool execution and update it to executing
+            for (messageIndex, message) in messages.enumerated() {
+                if var toolExecutions = message.toolExecutions {
+                    for (toolIndex, tool) in toolExecutions.enumerated() {
+                        if tool.name == name && (tool.state == .pending || tool.state == .approved) {
+                            toolExecutions[toolIndex].state = .executing
+                            messages[messageIndex].toolExecutions = toolExecutions
+                            activeToolExecutions[name] = toolExecutions[toolIndex]
+                            return
+                        }
+                    }
+                }
+            }
+            
+            // If no existing tool found, create a new one
             let toolExecution = ToolExecution(
                 name: name,
                 parameters: data["parameters"] as? [String: Any] ?? [:],
@@ -246,48 +261,38 @@ class HUDViewModel: ObservableObject {
             // Store in active executions
             activeToolExecutions[name] = toolExecution
             
-            // Add tool execution to current message instead of creating new one
+            // Add to current message
             if let currentMessage = currentStreamMessage,
                let index = messages.firstIndex(where: { $0.id == currentMessage.id }) {
                 var toolExecutions = messages[index].toolExecutions ?? []
                 toolExecutions.append(toolExecution)
                 messages[index].toolExecutions = toolExecutions
-            } else {
-                // No current message, create one for the tool
-                let toolMessage = Message(
-                    id: UUID().uuidString,
-                    role: .assistant,
-                    content: "",
-                    timestamp: Date(),
-                    tools: nil,
-                    toolExecutions: [toolExecution]
-                )
-                messages.append(toolMessage)
-                currentStreamMessage = toolMessage
             }
             
         case "tool.end":
             // Tool execution completed
-            guard let name = data["name"] as? String,
-                  var toolExecution = activeToolExecutions[name] else { return }
+            guard let name = data["name"] as? String else { return }
             
-            // Update execution state
-            toolExecution.state = data["success"] as? Bool == true ? .completed : .failed
-            toolExecution.output = data["output"] as? String
-            toolExecution.executedAt = Date()
+            let success = data["success"] as? Bool == true
+            let output = data["output"] as? String
+            
+            // Find and update the existing tool execution
+            for (messageIndex, message) in messages.enumerated() {
+                if var toolExecutions = message.toolExecutions {
+                    for (toolIndex, tool) in toolExecutions.enumerated() {
+                        if tool.name == name && (tool.state == .executing || tool.state == .approved) {
+                            toolExecutions[toolIndex].state = success ? .completed : .failed
+                            toolExecutions[toolIndex].output = output
+                            toolExecutions[toolIndex].executedAt = Date()
+                            messages[messageIndex].toolExecutions = toolExecutions
+                            break
+                        }
+                    }
+                }
+            }
             
             // Remove from active executions
             activeToolExecutions.removeValue(forKey: name)
-            
-            // Find the message with this tool execution and update it
-            for (messageIndex, message) in messages.enumerated() {
-                if var toolExecutions = message.toolExecutions,
-                   let toolIndex = toolExecutions.firstIndex(where: { $0.name == name && $0.state == .executing }) {
-                    toolExecutions[toolIndex] = toolExecution
-                    messages[messageIndex].toolExecutions = toolExecutions
-                    break
-                }
-            }
             
             // Don't clear currentStreamMessage - let it continue for post-tool content
             
