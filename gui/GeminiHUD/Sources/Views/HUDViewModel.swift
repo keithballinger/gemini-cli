@@ -251,7 +251,7 @@ class HUDViewModel: ObservableObject {
                 }
             }
             
-            // If no existing tool found, create a new one
+            // If no existing tool found, create a new one (happens in YOLO mode)
             let toolExecution = ToolExecution(
                 name: name,
                 parameters: data["parameters"] as? [String: Any] ?? [:],
@@ -261,12 +261,24 @@ class HUDViewModel: ObservableObject {
             // Store in active executions
             activeToolExecutions[name] = toolExecution
             
-            // Add to current message
+            // Add to current message or create a new one
             if let currentMessage = currentStreamMessage,
                let index = messages.firstIndex(where: { $0.id == currentMessage.id }) {
                 var toolExecutions = messages[index].toolExecutions ?? []
                 toolExecutions.append(toolExecution)
                 messages[index].toolExecutions = toolExecutions
+            } else {
+                // No current message, create one for the tool
+                let toolMessage = Message(
+                    id: UUID().uuidString,
+                    role: .assistant,
+                    content: "",
+                    timestamp: Date(),
+                    tools: nil,
+                    toolExecutions: [toolExecution]
+                )
+                messages.append(toolMessage)
+                currentStreamMessage = toolMessage
             }
             
         case "tool.end":
