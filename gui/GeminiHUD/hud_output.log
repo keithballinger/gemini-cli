@@ -1,0 +1,62 @@
+AppDelegate: Application launched
+AppDelegate: Setting up status bar
+AppDelegate: Status bar setup complete
+AppDelegate: Showing HUD window
+WindowManager: showHUD called
+WindowManager: Creating new HUD window
+WindowManager: Making window key and visible
+WindowManager: Window visible = true
+AppDelegate: Initiating IPC connection...
+CLI process started successfully
+CLI STDERR: (node:12549) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+CLI STDERR: (node:12549) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+
+CLI STDERR: IPC: Initializing auth with type: gemini-api-key
+
+CLI STDERR: IPC: Auth initialized successfully
+
+HUDViewModel: Sending message: hello, my sweet gemini
+HUDViewModel: Sending message via CLI: hello, my sweet gemini
+CLI STDERR: IPC: Received line: {"params":{"message":"hello, my sweet gemini","context":{}},"id":"CEA7ADCF-7F73-4409-8A6B-A40F8B336303","method":"chat.send"}
+
+CLI STDERR: IPC: Parsed request: {"params":{"message":"hello, my sweet gemini","context":{}},"id":"CEA7ADCF-7F73-4409-8A6B-A40F8B336303","method":"chat.send"}
+
+CLI STDERR: IPC: handleChatSend called with message: "hello, my sweet gemini"
+
+CLI STDERR: IPC: Tool response event: {"type":"thought","value":{"subject":"Responding to the User","description":"I acknowledged the user's greeting and am now formulating a concise and professional response. My primary focus is to convey a helpful demeanor while staying true to my CLI agent persona. I'm aiming for a greeting that sets a positive tone for our interaction and invites the user to specify their needs."}}
+
+HUDViewModel: handleCLIOutput called with: Hello! How
+HUDViewModel: Created new assistant message
+HUDViewModel: Updated message content, total length: 10
+HUDViewModel: handleCLIOutput called with:  can I help you today?
+HUDViewModel: Updated message content, total length: 32
+HUDViewModel: Sending message: summarize the last git commit
+HUDViewModel: Sending message via CLI: summarize the last git commit
+CLI STDERR: IPC: Received line: {"params":{"context":{},"message":"summarize the last git commit"},"id":"FF4D39E5-DA49-4D6D-BB7C-EF2B6A70F073","method":"chat.send"}
+
+CLI STDERR: IPC: Parsed request: {"params":{"context":{},"message":"summarize the last git commit"},"id":"FF4D39E5-DA49-4D6D-BB7C-EF2B6A70F073","method":"chat.send"}
+
+CLI STDERR: IPC: handleChatSend called with message: "summarize the last git commit"
+
+CLI STDERR: IPC: Tool response event: {"type":"thought","value":{"subject":"Locating Recent Changes","description":"I'm focusing on retrieving the most recent git commit using `git log -n 1`. The goal is to provide a concise summary for the user.  I'll translate the `git log` output into a user-friendly format, highlighting the essential commit information."}}
+
+HUDViewModel: handleCLIOutput called with: I'll run 
+HUDViewModel: Created new assistant message
+HUDViewModel: Updated message content, total length: 9
+HUDViewModel: handleCLIOutput called with: `git log -n 1` to get the summary of the last commit.
+HUDViewModel: Updated message content, total length: 62
+HUDViewModel: Sending message: hi
+HUDViewModel: Sending message via CLI: hi
+CLI STDERR: IPC: Received line: {"method":"chat.send","id":"A7439712-C5A1-48FD-BF13-34601EC6A880","params":{"context":{},"message":"hi"}}
+
+CLI STDERR: IPC: Parsed request: {"method":"chat.send","id":"A7439712-C5A1-48FD-BF13-34601EC6A880","params":{"context":{},"message":"hi"}}
+
+CLI STDERR: IPC: handleChatSend called with message: "hi"
+
+CLI STDERR: IPC: Tool response event: {"type":"thought","value":{"subject":"Addressing the Greeting","description":"I've received the user's initial \"hi\" and have formulated a response. My focus is on acknowledging the greeting directly and immediately asking how I can assist, ensuring brevity as requested. I'm aiming for a concise and helpful interaction."}}
+
+HUDViewModel: handleCLIOutput called with: Hello! How can I help you?
+HUDViewModel: Created new assistant message
+HUDViewModel: Updated message content, total length: 26

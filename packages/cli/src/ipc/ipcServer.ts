@@ -10,7 +10,9 @@ import {
   ServerGeminiContentEvent,
   ServerGeminiToolCallRequestEvent,
   ServerGeminiToolCallResponseEvent,
-  ServerGeminiErrorEvent
+  ServerGeminiErrorEvent,
+  ToolCallRequestInfo,
+  executeToolCall
 } from '@google/gemini-cli-core';
 import * as readline from 'node:readline';
 import { EventEmitter } from 'node:events';
@@ -152,19 +154,24 @@ export class IPCServer extends EventEmitter {
             break;
             
           case GeminiEventType.ToolCallRequest:
-            // Notify about tool call
+            // Handle tool call request - just notify for now
             const toolEvent = event as ServerGeminiToolCallRequestEvent;
-            toolCalls.push({
-              name: toolEvent.value.name,
-              parameters: toolEvent.value.args || {},
-              approved: false,
-            });
+            console.error(`IPC: Tool call requested: ${toolEvent.value.name}`);
+            
+            // Notify about tool request
             this.sendStreamEvent({
               type: 'tool.start',
               data: {
                 name: toolEvent.value.name,
                 parameters: toolEvent.value.args || {},
               },
+            });
+            
+            // Track the tool call
+            toolCalls.push({
+              name: toolEvent.value.name,
+              parameters: toolEvent.value.args || {},
+              approved: false,
             });
             break;
             
@@ -179,18 +186,27 @@ export class IPCServer extends EventEmitter {
             
           // Handle other event types as needed
           case GeminiEventType.Thought:
+            // Just log thoughts for debugging
+            console.error(`IPC: Thought event: ${JSON.stringify(event)}`);
+            break;
+            
           case GeminiEventType.ChatCompressed:
           case GeminiEventType.ToolCallConfirmation:
+            // These are informational events
+            break;
+            
           case GeminiEventType.ToolCallResponse:
-            // Tool was executed by the client
+            // This event is sent after tool execution by the model
             const toolResponseEvent = event as ServerGeminiToolCallResponseEvent;
-            console.error(`IPC: Tool response event: ${JSON.stringify(toolResponseEvent)}`);
+            console.error(`IPC: Tool response completed for callId: ${toolResponseEvent.value.callId}`);
+            
+            // Notify about tool completion
             this.sendStreamEvent({
               type: 'tool.end',
               data: {
                 name: toolResponseEvent.value.callId,
-                success: true,
-                output: 'Tool executed',
+                success: !toolResponseEvent.value.error,
+                output: toolResponseEvent.value.resultDisplay || 'Tool executed',
               },
             });
             break;
@@ -225,17 +241,83 @@ export class IPCServer extends EventEmitter {
   private async handleToolExecute(request: IPCRequest) {
     const { toolName, parameters, approved } = request.params;
     
-    // TODO: Implement tool execution
-    this.sendResponse({
-      id: request.id,
-      result: {
-        type: 'tool',
-        data: {
-          output: 'Tool execution not yet implemented',
-          success: false,
+    try {
+      console.error(`IPC: handleToolExecute called for tool: ${toolName}`);
+      
+      // Get the tool registry from config
+      const toolRegistry = await this.config.getToolRegistry();
+      
+      // Create a tool call request
+      const toolCallRequest: ToolCallRequestInfo = {
+        name: toolName,
+        args: parameters,
+        callId: request.id,
+        isClientInitiated: true,
+      };
+      
+      // Execute the tool
+      const toolResponse = await executeToolCall(
+        this.config,
+        toolCallRequest,
+        toolRegistry
+      );
+      
+      // Extract the result from the response
+      let output = '';
+      let success = true;
+      
+      if (toolResponse.error) {
+        output = toolResponse.error.message;
+        success = false;
+      } else if (toolResponse.resultDisplay) {
+        if (typeof toolResponse.resultDisplay === 'string') {
+          output = toolResponse.resultDisplay;
+        } else {
+          // Handle complex display types
+          output = JSON.stringify(toolResponse.resultDisplay);
+        }
+      } else if (toolResponse.responseParts) {
+        // responseParts is PartListUnion which can be Part[] or Part
+        const parts = Array.isArray(toolResponse.responseParts) 
+          ? toolResponse.responseParts 
+          : [toolResponse.responseParts];
+        
+        if (parts.length > 0) {
+          const part = parts[0];
+          if (typeof part === 'object' && part !== null && 'functionResponse' in part) {
+            const functionResponse = (part as any).functionResponse;
+            if (functionResponse && functionResponse.response) {
+              output = JSON.stringify(functionResponse.response);
+            }
+          }
+        }
+      }
+      
+      console.error(`IPC: Tool execution completed. Success: ${success}`);
+      
+      this.sendResponse({
+        id: request.id,
+        result: {
+          type: 'tool',
+          data: {
+            output: output || 'Tool executed',
+            success,
+          },
         },
-      },
-    });
+      });
+    } catch (error: any) {
+      console.error(`IPC: Tool execution error:`, error);
+      this.sendResponse({
+        id: request.id,
+        result: {
+          type: 'tool',
+          data: {
+            output: error.message || 'Tool execution failed',
+            success: false,
+          },
+        },
+      });
+    }
   }
 
   private async handleGetStatus(request: IPCRequest) {
