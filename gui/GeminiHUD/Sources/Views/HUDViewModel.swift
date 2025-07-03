@@ -167,6 +167,15 @@ class HUDViewModel: ObservableObject {
         // Remove from pending approvals
         pendingToolApprovals.removeAll { $0.id == toolExecution.id }
         
+        // Update tool state to approved in all messages
+        for (messageIndex, message) in messages.enumerated() {
+            if var toolExecutions = message.toolExecutions,
+               let toolIndex = toolExecutions.firstIndex(where: { $0.id == toolExecution.id }) {
+                toolExecutions[toolIndex].state = .approved
+                messages[messageIndex].toolExecutions = toolExecutions
+            }
+        }
+        
         // Send approval to CLI
         cliService.approveTool(toolExecution.id, approved: true)
     }
@@ -175,18 +184,17 @@ class HUDViewModel: ObservableObject {
         // Remove from pending approvals
         pendingToolApprovals.removeAll { $0.id == toolExecution.id }
         
-        // Send rejection to CLI
-        cliService.approveTool(toolExecution.id, approved: false)
-        
-        // Update the tool execution in the message
-        if let currentMessage = currentStreamMessage,
-           let messageIndex = messages.firstIndex(where: { $0.id == currentMessage.id }) {
-            var updatedToolExecutions = messages[messageIndex].toolExecutions ?? []
-            if let toolIndex = updatedToolExecutions.firstIndex(where: { $0.id == toolExecution.id }) {
-                updatedToolExecutions[toolIndex].state = .rejected
-                messages[messageIndex].toolExecutions = updatedToolExecutions
+        // Update tool state to rejected in all messages
+        for (messageIndex, message) in messages.enumerated() {
+            if var toolExecutions = message.toolExecutions,
+               let toolIndex = toolExecutions.firstIndex(where: { $0.id == toolExecution.id }) {
+                toolExecutions[toolIndex].state = .rejected
+                messages[messageIndex].toolExecutions = toolExecutions
             }
         }
+        
+        // Send rejection to CLI
+        cliService.approveTool(toolExecution.id, approved: false)
     }
     
     private func handleToolEvent(type: String, data: [String: Any]) {
@@ -206,9 +214,20 @@ class HUDViewModel: ObservableObject {
             // Add to pending approvals
             pendingToolApprovals.append(toolExecution)
             
-            // Also add to current message
-            if let currentMessage = currentStreamMessage,
-               let index = messages.firstIndex(where: { $0.id == currentMessage.id }) {
+            // Create a message for the tool approval if there isn't one
+            if currentStreamMessage == nil {
+                let toolMessage = Message(
+                    id: UUID().uuidString,
+                    role: .assistant,
+                    content: "",
+                    timestamp: Date(),
+                    tools: nil,
+                    toolExecutions: [toolExecution]
+                )
+                messages.append(toolMessage)
+                currentStreamMessage = toolMessage
+            } else if let currentMessage = currentStreamMessage,
+                      let index = messages.firstIndex(where: { $0.id == currentMessage.id }) {
                 var toolExecutions = messages[index].toolExecutions ?? []
                 toolExecutions.append(toolExecution)
                 messages[index].toolExecutions = toolExecutions

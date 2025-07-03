@@ -46,10 +46,7 @@ export class IPCServer extends EventEmitter {
   private isRunning = false;
   private toolScheduler: CoreToolScheduler | null = null;
   private approvalMode: ApprovalMode = ApprovalMode.YOLO;
-  private pendingToolApprovals = new Map<string, {
-    resolve: (approved: boolean) => void;
-    toolCall: ToolCallRequestInfo;
-  }>();
+  private pendingApprovals = new Map<string, any>();
 
   constructor(config: Config) {
     super();
@@ -164,7 +161,20 @@ export class IPCServer extends EventEmitter {
         onToolCallsUpdate: (toolCalls) => {
           // Handle tool status updates
           for (const toolCall of toolCalls) {
-            if (toolCall.status === 'executing') {
+            if (toolCall.status === 'awaiting_approval') {
+              // Store the tool call for later approval
+              this.pendingApprovals.set(toolCall.request.callId, toolCall);
+              
+              // Send approval request to HUD
+              this.sendStreamEvent({
+                type: 'tool.approval',
+                data: {
+                  id: toolCall.request.callId,
+                  name: toolCall.request.name,
+                  parameters: toolCall.request.args || {},
+                },
+              });
+            } else if (toolCall.status === 'executing') {
               this.sendStreamEvent({
                 type: 'tool.start',
                 data: {
@@ -488,15 +498,19 @@ export class IPCServer extends EventEmitter {
   private async handleToolApprove(request: IPCRequest) {
     const { toolId, approved } = request.params;
     
-    const pending = this.pendingToolApprovals.get(toolId);
-    if (!pending) {
+    const pendingToolCall = this.pendingApprovals.get(toolId);
+    if (!pendingToolCall) {
       this.sendError(request.id, -32602, `No pending approval for tool: ${toolId}`);
       return;
     }
     
-    // Resolve the approval promise
-    pending.resolve(approved);
-    this.pendingToolApprovals.delete(toolId);
+    // Call the onConfirm handler from the tool's confirmation details
+    if (pendingToolCall.confirmationDetails && pendingToolCall.confirmationDetails.onConfirm) {
+      const outcome = approved ? 'approved' : 'rejected';
+      pendingToolCall.confirmationDetails.onConfirm(outcome);
+    }
+    
+    this.pendingApprovals.delete(toolId);
     
     console.error(`IPC: Tool ${toolId} approval: ${approved}`);
     
