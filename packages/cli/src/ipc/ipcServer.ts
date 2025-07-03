@@ -12,7 +12,10 @@ import {
   ServerGeminiToolCallResponseEvent,
   ServerGeminiErrorEvent,
   ToolCallRequestInfo,
-  executeToolCall
+  executeToolCall,
+  CoreToolScheduler,
+  ApprovalMode,
+  ToolCallResponseInfo
 } from '@google/gemini-cli-core';
 import * as readline from 'node:readline';
 import { EventEmitter } from 'node:events';
@@ -41,6 +44,7 @@ export class IPCServer extends EventEmitter {
   private config: Config;
   private rl: readline.Interface;
   private isRunning = false;
+  private toolScheduler: CoreToolScheduler | null = null;
 
   constructor(config: Config) {
     super();
@@ -134,12 +138,99 @@ export class IPCServer extends EventEmitter {
       const abortController = new AbortController();
       const signal = abortController.signal;
       
-      // Send the message and handle the complete conversation turn
-      const turn = await geminiClient.sendMessageStream(message, signal);
-      
-      // Process all events from the turn
+      // Initialize response tracking
       let responseText = '';
       const toolCalls: any[] = [];
+      const toolCallRequests: ToolCallRequestInfo[] = [];
+      
+      // Create a tool scheduler for this conversation turn
+      const toolScheduler = new CoreToolScheduler({
+        config: this.config,
+        toolRegistry: this.config.getToolRegistry(),
+        approvalMode: ApprovalMode.YOLO, // Auto-approve all tools in IPC mode
+        getPreferredEditor: () => undefined,
+        outputUpdateHandler: (callId, output) => {
+          console.error(`IPC: Tool ${callId} output: ${output}`);
+          // Could stream this back to HUD if needed
+        },
+        onToolCallsUpdate: (toolCalls) => {
+          // Handle tool status updates
+          for (const toolCall of toolCalls) {
+            if (toolCall.status === 'executing') {
+              this.sendStreamEvent({
+                type: 'tool.start',
+                data: {
+                  name: toolCall.request.name,
+                  parameters: toolCall.request.args || {},
+                },
+              });
+            } else if (toolCall.status === 'success' || toolCall.status === 'error') {
+              const success = toolCall.status === 'success';
+              let output = '';
+              
+              if (toolCall.status === 'success' && toolCall.response.resultDisplay) {
+                output = typeof toolCall.response.resultDisplay === 'string' 
+                  ? toolCall.response.resultDisplay 
+                  : JSON.stringify(toolCall.response.resultDisplay);
+              } else if (toolCall.status === 'error' && toolCall.response.error) {
+                output = toolCall.response.error.message;
+              }
+              
+              this.sendStreamEvent({
+                type: 'tool.end',
+                data: {
+                  name: toolCall.request.name,
+                  success,
+                  output: output || 'Tool executed',
+                },
+              });
+            }
+          }
+        },
+        onAllToolCallsComplete: async (completedCalls) => {
+          console.error(`IPC: All tools complete. Count: ${completedCalls.length}`);
+          
+          // Send tool responses back to Gemini
+          const responseParts = completedCalls.map(call => call.response.responseParts).flat();
+          if (responseParts.length > 0) {
+            console.error(`IPC: Sending ${responseParts.length} tool responses back to Gemini`);
+            const continuationTurn = await geminiClient.sendMessageStream(responseParts, signal);
+            
+            // Process the continuation
+            for await (const event of continuationTurn) {
+              if (event.type === GeminiEventType.Content) {
+                const contentEvent = event as ServerGeminiContentEvent;
+                responseText += contentEvent.value;
+                this.sendStreamEvent({
+                  type: 'message.chunk',
+                  data: contentEvent.value,
+                });
+              }
+              // Handle other events as needed
+            }
+          }
+          
+          // Send final response after tools complete
+          this.sendResponse({
+            id: request.id,
+            result: {
+              type: 'message',
+              data: {
+                response: responseText,
+                tools: toolCalls,
+                tokenUsage: {
+                  prompt: 0, // TODO: Get actual token counts from Turn object
+                  completion: 0,
+                  total: 0,
+                },
+              },
+            },
+          });
+        },
+      });
+      
+      // Send the message and handle the complete conversation turn
+      const turn = await geminiClient.sendMessageStream(message, signal);
       
       for await (const event of turn) {
         switch (event.type) {
@@ -154,24 +245,16 @@ export class IPCServer extends EventEmitter {
             break;
             
           case GeminiEventType.ToolCallRequest:
-            // Handle tool call request - just notify for now
+            // Collect tool call requests
             const toolEvent = event as ServerGeminiToolCallRequestEvent;
             console.error(`IPC: Tool call requested: ${toolEvent.value.name}`);
+            toolCallRequests.push(toolEvent.value);
             
-            // Notify about tool request
-            this.sendStreamEvent({
-              type: 'tool.start',
-              data: {
-                name: toolEvent.value.name,
-                parameters: toolEvent.value.args || {},
-              },
-            });
-            
-            // Track the tool call
+            // Track for response
             toolCalls.push({
               name: toolEvent.value.name,
               parameters: toolEvent.value.args || {},
-              approved: false,
+              approved: true, // Will be auto-approved
             });
             break;
             
@@ -217,22 +300,31 @@ export class IPCServer extends EventEmitter {
         }
       }
 
-      // Send final response
-      this.sendResponse({
-        id: request.id,
-        result: {
-          type: 'message',
-          data: {
-            response: responseText,
-            tools: toolCalls,
-            tokenUsage: {
-              prompt: 0, // TODO: Get actual token counts from Turn object
-              completion: 0,
-              total: 0,
+      // Schedule any tool calls that were requested
+      if (toolCallRequests.length > 0) {
+        console.error(`IPC: Scheduling ${toolCallRequests.length} tool calls`);
+        await toolScheduler.schedule(toolCallRequests, signal);
+        
+        // The onAllToolCallsComplete callback will handle sending responses back to Gemini
+        // and updating responseText with any continuation
+      } else {
+        // No tools to execute, send response now
+        this.sendResponse({
+          id: request.id,
+          result: {
+            type: 'message',
+            data: {
+              response: responseText,
+              tools: toolCalls,
+              tokenUsage: {
+                prompt: 0, // TODO: Get actual token counts from Turn object
+                completion: 0,
+                total: 0,
+              },
             },
           },
-        },
-      });
+        });
+      }
     } catch (error: any) {
       this.sendError(request.id, -32000, `Chat error: ${error.message}`);
     }

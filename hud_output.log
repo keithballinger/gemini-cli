@@ -1,0 +1,44 @@
+AppDelegate: Application launched
+AppDelegate: Setting up status bar
+AppDelegate: Status bar setup complete
+AppDelegate: Showing HUD window
+WindowManager: showHUD called
+WindowManager: Creating new HUD window
+WindowManager: Making window key and visible
+WindowManager: Window visible = true
+AppDelegate: Initiating IPC connection...
+CLI process started successfully
+CLI STDERR: (node:15341) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+CLI STDERR: (node:15341) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+
+CLI STDERR: IPC: Initializing auth with type: gemini-api-key
+
+CLI STDERR: IPC: Auth initialized successfully
+
+HUDViewModel: Sending message: hello
+HUDViewModel: Sending message via CLI: hello
+CLI STDERR: IPC: Received line: {"params":{"message":"hello","context":{}},"id":"FA1DAC9C-4FDC-4053-B092-4A568EDEBF18","method":"chat.send"}
+
+CLI STDERR: IPC: Parsed request: {"params":{"message":"hello","context":{}},"id":"FA1DAC9C-4FDC-4053-B092-4A568EDEBF18","method":"chat.send"}
+
+CLI STDERR: IPC: handleChatSend called with message: "hello"
+
+CLI STDERR: IPC: Thought event: {"type":"thought","value":{"subject":"Offering Assistance","description":"I greeted the user and inquired how I could be of assistance. My focus now is on actively listening to their needs."}}
+
+HUDViewModel: handleCLIOutput called with: Hi there! How can I help you today?
+HUDViewModel: Created new assistant message
+HUDViewModel: Updated message content, total length: 35
+HUDViewModel: Sending message: summarize the last commit
+HUDViewModel: Sending message via CLI: summarize the last commit
+CLI STDERR: IPC: Received line: {"id":"A7CFAE5E-49A6-404C-B346-E03D04AFB791","method":"chat.send","params":{"message":"summarize the last commit","context":{}}}
+
+CLI STDERR: IPC: Parsed request: {"id":"A7CFAE5E-49A6-404C-B346-E03D04AFB791","method":"chat.send","params":{"message":"summarize the last commit","context":{}}}
+
+CLI STDERR: IPC: handleChatSend called with message: "summarize the last commit"
+
+CLI STDERR: IPC: Thought event: {"type":"thought","value":{"subject":"Reflecting on the Commit","description":"I've just reviewed the last commit message using `git log -n 1`, and I'm currently reflecting on its implications. My focus is now on synthesizing this information into a concise update for the user. I'm aiming to provide a clear and direct summary of the key changes introduced in that specific commit."}}
+
+CLI STDERR: IPC: Tool call requested: run_shell_command
+
