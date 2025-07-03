@@ -45,6 +45,11 @@ export class IPCServer extends EventEmitter {
   private rl: readline.Interface;
   private isRunning = false;
   private toolScheduler: CoreToolScheduler | null = null;
+  private approvalMode: ApprovalMode = ApprovalMode.YOLO;
+  private pendingToolApprovals = new Map<string, {
+    resolve: (approved: boolean) => void;
+    toolCall: ToolCallRequestInfo;
+  }>();
 
   constructor(config: Config) {
     super();
@@ -113,6 +118,9 @@ export class IPCServer extends EventEmitter {
         case 'config.setApprovalMode':
           await this.handleSetApprovalMode(request);
           break;
+        case 'tool.approve':
+          await this.handleToolApprove(request);
+          break;
         default:
           this.sendError(request.id, -32601, `Method not found: ${request.method}`);
       }
@@ -147,7 +155,7 @@ export class IPCServer extends EventEmitter {
       const toolScheduler = new CoreToolScheduler({
         config: this.config,
         toolRegistry: this.config.getToolRegistry(),
-        approvalMode: ApprovalMode.YOLO, // Auto-approve all tools in IPC mode
+        approvalMode: this.approvalMode,
         getPreferredEditor: () => undefined,
         outputUpdateHandler: (callId, output) => {
           console.error(`IPC: Tool ${callId} output: ${output}`);
@@ -453,7 +461,45 @@ export class IPCServer extends EventEmitter {
   private async handleSetApprovalMode(request: IPCRequest) {
     const { mode } = request.params;
     
-    // TODO: Set approval mode
+    // Map string mode to ApprovalMode enum
+    switch (mode) {
+      case 'yolo':
+        this.approvalMode = ApprovalMode.YOLO;
+        break;
+      case 'ask':
+        // Use DEFAULT mode for manual approval
+        this.approvalMode = ApprovalMode.DEFAULT;
+        break;
+      default:
+        this.sendError(request.id, -32602, `Invalid approval mode: ${mode}`);
+        return;
+    }
+    
+    console.error(`IPC: Approval mode set to: ${mode}`);
+    
+    this.sendResponse({
+      id: request.id,
+      result: {
+        type: 'success',
+      },
+    });
+  }
+  
+  private async handleToolApprove(request: IPCRequest) {
+    const { toolId, approved } = request.params;
+    
+    const pending = this.pendingToolApprovals.get(toolId);
+    if (!pending) {
+      this.sendError(request.id, -32602, `No pending approval for tool: ${toolId}`);
+      return;
+    }
+    
+    // Resolve the approval promise
+    pending.resolve(approved);
+    this.pendingToolApprovals.delete(toolId);
+    
+    console.error(`IPC: Tool ${toolId} approval: ${approved}`);
+    
     this.sendResponse({
       id: request.id,
       result: {

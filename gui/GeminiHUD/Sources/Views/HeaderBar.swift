@@ -31,6 +31,38 @@ struct HeaderBar: View {
                     .fill(viewModel.isConnected ? Color.green : Color.red)
                     .frame(width: 6, height: 6)
                 
+                // Tool approval mode toggle
+                Menu {
+                    ForEach(ToolApprovalMode.allCases, id: \.self) { mode in
+                        Button(action: {
+                            viewModel.setToolApprovalMode(mode)
+                        }) {
+                            HStack {
+                                Image(systemName: mode.icon)
+                                Text(mode.displayName)
+                                if viewModel.toolApprovalMode == mode {
+                                    Spacer()
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: viewModel.toolApprovalMode.icon)
+                            .font(.system(size: 11))
+                        Text(viewModel.toolApprovalMode == .yolo ? "Auto" : "Ask")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .foregroundColor(appState.currentTheme.foregroundColor.opacity(0.8))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(appState.currentTheme.backgroundColor.opacity(0.5))
+                    .cornerRadius(4)
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                
                 // Token usage
                 HStack(spacing: 4) {
                     Image(systemName: "bolt.fill")

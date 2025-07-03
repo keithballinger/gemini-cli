@@ -11,10 +11,13 @@ class HUDViewModel: ObservableObject {
     @Published var isProcessing = false
     @Published var isConnected = false
     @Published var connectionError: String?
+    @Published var toolApprovalMode: ToolApprovalMode = .yolo
+    @Published var pendingToolApprovals: [ToolExecution] = []
     
     private var cancellables = Set<AnyCancellable>()
     private let cliService = SimpleCLIService() // Create a single, persistent instance
     private var currentStreamMessage: Message?
+    private var activeToolExecutions: [String: ToolExecution] = [:] // Track tools by name during execution
     
     private init() {
         setupBindings()
@@ -29,11 +32,19 @@ class HUDViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
+        cliService.toolEventStream
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] (type, data) in
+                self?.handleToolEvent(type: type, data: data)
+            }
+            .store(in: &cancellables)
+        
         cliService.$isRunning
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isRunning in
                 if !isRunning {
                     self?.isProcessing = false
+                    self?.currentStreamMessage = nil
                 }
             }
             .store(in: &cancellables)
@@ -52,6 +63,8 @@ class HUDViewModel: ObservableObject {
     }
     
     private func handleCLIOutput(_ output: String) {
+        // This method should be called by SimpleCLIService with parsed events
+        // For now, we'll just handle message chunks
         print("HUDViewModel: handleCLIOutput called with: \(output)")
         
         // Create new message if needed
@@ -140,6 +153,112 @@ class HUDViewModel: ObservableObject {
     func toggleToolPalette() {
         withAnimation(.spring()) {
             isToolPaletteVisible.toggle()
+        }
+    }
+    
+    func setToolApprovalMode(_ mode: ToolApprovalMode) {
+        toolApprovalMode = mode
+        
+        // Send mode update to CLI
+        cliService.setApprovalMode(mode.rawValue)
+    }
+    
+    func approveTool(_ toolExecution: ToolExecution) {
+        // Remove from pending approvals
+        pendingToolApprovals.removeAll { $0.id == toolExecution.id }
+        
+        // Send approval to CLI
+        cliService.approveTool(toolExecution.id, approved: true)
+    }
+    
+    func rejectTool(_ toolExecution: ToolExecution) {
+        // Remove from pending approvals
+        pendingToolApprovals.removeAll { $0.id == toolExecution.id }
+        
+        // Send rejection to CLI
+        cliService.approveTool(toolExecution.id, approved: false)
+        
+        // Update the tool execution in the message
+        if let currentMessage = currentStreamMessage,
+           let messageIndex = messages.firstIndex(where: { $0.id == currentMessage.id }) {
+            var updatedToolExecutions = messages[messageIndex].toolExecutions ?? []
+            if let toolIndex = updatedToolExecutions.firstIndex(where: { $0.id == toolExecution.id }) {
+                updatedToolExecutions[toolIndex].state = .rejected
+                messages[messageIndex].toolExecutions = updatedToolExecutions
+            }
+        }
+    }
+    
+    private func handleToolEvent(type: String, data: [String: Any]) {
+        switch type {
+        case "tool.approval":
+            // Tool needs approval - only happens in ask mode
+            guard let name = data["name"] as? String,
+                  let params = data["parameters"] as? [String: Any] else { return }
+            
+            let toolExecution = ToolExecution(
+                id: data["id"] as? String ?? UUID().uuidString,
+                name: name,
+                parameters: params,
+                state: .pending
+            )
+            
+            // Add to pending approvals
+            pendingToolApprovals.append(toolExecution)
+            
+            // Also add to current message
+            if let currentMessage = currentStreamMessage,
+               let index = messages.firstIndex(where: { $0.id == currentMessage.id }) {
+                var toolExecutions = messages[index].toolExecutions ?? []
+                toolExecutions.append(toolExecution)
+                messages[index].toolExecutions = toolExecutions
+            }
+            
+        case "tool.start":
+            // Tool execution started
+            guard let name = data["name"] as? String else { return }
+            
+            let toolExecution = ToolExecution(
+                name: name,
+                parameters: data["parameters"] as? [String: Any] ?? [:],
+                state: .executing
+            )
+            
+            // Store in active executions
+            activeToolExecutions[name] = toolExecution
+            
+            // Add to current message
+            if let currentMessage = currentStreamMessage,
+               let index = messages.firstIndex(where: { $0.id == currentMessage.id }) {
+                var toolExecutions = messages[index].toolExecutions ?? []
+                toolExecutions.append(toolExecution)
+                messages[index].toolExecutions = toolExecutions
+            }
+            
+        case "tool.end":
+            // Tool execution completed
+            guard let name = data["name"] as? String,
+                  var toolExecution = activeToolExecutions[name] else { return }
+            
+            // Update execution state
+            toolExecution.state = data["success"] as? Bool == true ? .completed : .failed
+            toolExecution.output = data["output"] as? String
+            toolExecution.executedAt = Date()
+            
+            // Remove from active executions
+            activeToolExecutions.removeValue(forKey: name)
+            
+            // Update in message
+            if let currentMessage = currentStreamMessage,
+               let messageIndex = messages.firstIndex(where: { $0.id == currentMessage.id }),
+               var toolExecutions = messages[messageIndex].toolExecutions,
+               let toolIndex = toolExecutions.firstIndex(where: { $0.name == name && $0.state == .executing }) {
+                toolExecutions[toolIndex] = toolExecution
+                messages[messageIndex].toolExecutions = toolExecutions
+            }
+            
+        default:
+            break
         }
     }
 }

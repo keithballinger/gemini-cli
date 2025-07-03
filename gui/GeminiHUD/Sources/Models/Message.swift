@@ -6,6 +6,7 @@ struct Message: Identifiable, Codable {
     var content: String
     let timestamp: Date
     var tools: [ToolCall]?
+    var toolExecutions: [ToolExecution]?
     
     enum Role: String, Codable {
         case user

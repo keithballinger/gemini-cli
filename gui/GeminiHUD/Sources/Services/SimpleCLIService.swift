@@ -16,6 +16,11 @@ class SimpleCLIService: ObservableObject {
         streamSubject.eraseToAnyPublisher()
     }
     
+    private let toolEventSubject = PassthroughSubject<(String, [String: Any]), Never>()
+    var toolEventStream: AnyPublisher<(String, [String: Any]), Never> {
+        toolEventSubject.eraseToAnyPublisher()
+    }
+    
     private var messageQueue = DispatchQueue(label: "com.gemini.cli.queue", qos: .userInitiated)
     private var outputBuffer = ""
     
@@ -265,10 +270,23 @@ class SimpleCLIService: ObservableObject {
                     case "tool.start":
                         if let toolData = json["data"] as? [String: Any] {
                             log("Tool Starting: \(toolData["name"] ?? "unknown") with data: \(toolData)")
+                            DispatchQueue.main.async {
+                                self.toolEventSubject.send(("tool.start", toolData))
+                            }
                         }
                     case "tool.end":
                         if let toolData = json["data"] as? [String: Any] {
                             log("Tool Completed: \(toolData["name"] ?? "unknown") with data: \(toolData)")
+                            DispatchQueue.main.async {
+                                self.toolEventSubject.send(("tool.end", toolData))
+                            }
+                        }
+                    case "tool.approval":
+                        if let toolData = json["data"] as? [String: Any] {
+                            log("Tool Approval Request: \(toolData)")
+                            DispatchQueue.main.async {
+                                self.toolEventSubject.send(("tool.approval", toolData))
+                            }
                         }
                     case "error":
                         if let errorData = json["data"] {
@@ -340,5 +358,54 @@ class SimpleCLIService: ObservableObject {
     
     deinit {
         stop()
+    }
+    
+    func setApprovalMode(_ mode: String) {
+        guard let inputPipe = inputPipe else { return }
+        
+        messageQueue.async { [weak self] in
+            let request: [String: Any] = [
+                "id": UUID().uuidString,
+                "method": "config.setApprovalMode",
+                "params": ["mode": mode]
+            ]
+            
+            self?.log("Setting approval mode to: \(mode)")
+            
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: request)
+                let jsonString = String(data: jsonData, encoding: .utf8)! + "\n"
+                let messageData = jsonString.data(using: .utf8)!
+                inputPipe.fileHandleForWriting.write(messageData)
+            } catch {
+                print("Failed to send approval mode request: \(error)")
+            }
+        }
+    }
+    
+    func approveTool(_ toolId: String, approved: Bool) {
+        guard let inputPipe = inputPipe else { return }
+        
+        messageQueue.async { [weak self] in
+            let request: [String: Any] = [
+                "id": UUID().uuidString,
+                "method": "tool.approve",
+                "params": [
+                    "toolId": toolId,
+                    "approved": approved
+                ]
+            ]
+            
+            self?.log("Sending tool approval: \(toolId) = \(approved)")
+            
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: request)
+                let jsonString = String(data: jsonData, encoding: .utf8)! + "\n"
+                let messageData = jsonString.data(using: .utf8)!
+                inputPipe.fileHandleForWriting.write(messageData)
+            } catch {
+                print("Failed to send tool approval: \(error)")
+            }
+        }
     }
 }

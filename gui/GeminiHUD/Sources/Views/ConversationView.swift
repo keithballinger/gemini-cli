@@ -61,11 +61,21 @@ struct MessageBubble: View {
                     .textSelection(.enabled)
                     .lineSpacing(4)
                 
-                // Tool calls if any
+                // Tool calls if any (legacy)
                 if let tools = message.tools, !tools.isEmpty {
                     ForEach(tools, id: \.name) { tool in
                         ToolCallView(tool: tool)
                     }
+                }
+                
+                // Tool executions (new format)
+                if let toolExecutions = message.toolExecutions, !toolExecutions.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(toolExecutions) { toolExecution in
+                            ToolExecutionView(toolExecution: toolExecution)
+                        }
+                    }
+                    .padding(.top, 8)
                 }
                 
                 // Timestamp
