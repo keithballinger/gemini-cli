@@ -169,6 +169,19 @@ export async function main() {
   const ipcMode = argv.includes('--ipc');
   
   if (ipcMode) {
+    // Initialize authentication for IPC mode
+    const selectedAuthType = settings.merged.selectedAuthType || AuthType.USE_GEMINI;
+    
+    try {
+      console.error('IPC: Initializing auth with type:', selectedAuthType);
+      await validateAuthMethod(selectedAuthType);
+      await config.refreshAuth(selectedAuthType);
+      console.error('IPC: Auth initialized successfully');
+    } catch (err) {
+      console.error('IPC: Error authenticating:', err);
+      process.exit(1);
+    }
+    
     // Start IPC server
     const { startIPCServer } = await import('./ipc/ipcServer.js');
     await startIPCServer(config);

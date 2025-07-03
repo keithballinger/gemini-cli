@@ -21,6 +21,27 @@ struct HUDView: View {
                 Divider()
                     .foregroundColor(appState.currentTheme.borderColor)
                 
+                // Connection status
+                if !viewModel.isConnected || viewModel.connectionError != nil {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                        Text(viewModel.connectionError ?? "Reconnecting to CLI...")
+                            .font(.system(size: 14))
+                            .foregroundColor(.orange)
+                        
+                        if !viewModel.isConnected {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                                .padding(.leading, 4)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                    .background(Color.orange.opacity(0.1))
+                    .cornerRadius(4)
+                }
+                
                 // Content area
                 HStack(spacing: 0) {
                     // Tool palette (collapsible)

@@ -20,32 +20,39 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var keyboardShortcutManager: KeyboardShortcutManager?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        print("AppDelegate: Application launched")
+        
         // Initialize app state
         appState = AppState()
         windowManager = WindowManager()
         windowManager?.appState = appState
         
-        // Hide from dock
-        NSApp.setActivationPolicy(.accessory)
+        // Keep in dock for debugging
+        NSApp.setActivationPolicy(.regular)
         
         // Create menu bar item
+        print("AppDelegate: Setting up status bar")
         setupStatusBar()
+        print("AppDelegate: Status bar setup complete")
         
         // Show HUD window
+        print("AppDelegate: Showing HUD window")
         windowManager?.showHUD()
         
+        // TEMPORARILY DISABLED for debugging
         // Set up hot corners
-        hotCornersManager = HotCornersManager(appState: appState)
+        // hotCornersManager = HotCornersManager(appState: appState)
         
         // Set up keyboard shortcuts
-        keyboardShortcutManager = KeyboardShortcutManager(windowManager: windowManager, appState: appState)
-        keyboardShortcutManager?.setupShortcuts()
+        // keyboardShortcutManager = KeyboardShortcutManager(windowManager: windowManager, appState: appState)
+        // keyboardShortcutManager?.setupShortcuts()
         
         // Request accessibility permissions if needed
-        KeyboardShortcutManager.requestAccessibilityPermissions()
+        // KeyboardShortcutManager.requestAccessibilityPermissions()
         
-        // Try to connect to IPC after a short delay
+        // Auto-connect to IPC on startup
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            print("AppDelegate: Initiating IPC connection...")
             HUDViewModel.shared.connectToIPC()
         }
     }

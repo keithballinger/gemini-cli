@@ -10,6 +10,7 @@ struct ConversationView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     if viewModel.messages.isEmpty {
                         Text("Start a conversation...")
+                            .font(.system(size: 16))
                             .foregroundColor(appState.currentTheme.foregroundColor.opacity(0.5))
                             .frame(maxWidth: .infinity)
                             .padding(.top, 20)
@@ -44,8 +45,8 @@ struct MessageBubble: View {
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             // Role indicator
-            Image(systemName: message.role == .user ? "person.circle" : "sparkle.circle")
-                .font(.system(size: 16))
+            Image(systemName: message.role == .user ? "person.circle.fill" : "sparkle.circle.fill")
+                .font(.system(size: 20))
                 .foregroundColor(
                     message.role == .user
                         ? appState.currentTheme.foregroundColor
@@ -55,9 +56,10 @@ struct MessageBubble: View {
             VStack(alignment: .leading, spacing: 4) {
                 // Message content
                 Text(message.content)
-                    .font(.system(size: 13))
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundColor(appState.currentTheme.foregroundColor)
                     .textSelection(.enabled)
+                    .lineSpacing(4)
                 
                 // Tool calls if any
                 if let tools = message.tools, !tools.isEmpty {

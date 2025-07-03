@@ -13,10 +13,52 @@ enum IPCMethod: String, Codable {
 
 // MARK: - Request/Response Models
 
-struct IPCRequest: Codable {
+struct IPCRequest {
     let id: String
     let method: IPCMethod
     let params: IPCParams
+    
+    func toJSON() throws -> Data {
+        var dict: [String: Any] = [
+            "id": id,
+            "method": method.rawValue
+        ]
+        
+        // Convert params to simple format expected by CLI
+        switch params {
+        case .sendMessage(let p):
+            var paramsDict: [String: Any] = ["message": p.message]
+            if let context = p.context {
+                var contextDict: [String: Any] = [:]
+                if let files = context.files {
+                    contextDict["files"] = files
+                }
+                if let workingDir = context.workingDirectory {
+                    contextDict["workingDirectory"] = workingDir
+                }
+                paramsDict["context"] = contextDict
+            } else {
+                paramsDict["context"] = NSNull()
+            }
+            dict["params"] = paramsDict
+        case .executeTool(let p):
+            dict["params"] = [
+                "toolName": p.toolName,
+                "parameters": p.parameters,
+                "approved": p.approved
+            ]
+        case .getStatus:
+            dict["params"] = [String: Any]()
+        case .getHistory(let p):
+            dict["params"] = ["limit": p.limit, "offset": p.offset]
+        case .clearConversation:
+            dict["params"] = [String: Any]()
+        case .setApprovalMode(let p):
+            dict["params"] = ["mode": p.mode]
+        }
+        
+        return try JSONSerialization.data(withJSONObject: dict, options: [])
+    }
 }
 
 enum IPCParams: Codable {

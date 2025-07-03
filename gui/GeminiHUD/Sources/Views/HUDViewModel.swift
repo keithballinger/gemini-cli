@@ -13,7 +13,7 @@ class HUDViewModel: ObservableObject {
     @Published var connectionError: String?
     
     private var cancellables = Set<AnyCancellable>()
-    private let ipcService = IPCService()
+    private let cliService = SimpleCLIService() // Create a single, persistent instance
     private var currentStreamMessage: Message?
     
     private init() {
@@ -21,90 +21,65 @@ class HUDViewModel: ObservableObject {
     }
     
     private func setupBindings() {
-        // Monitor connection status
-        ipcService.$isConnected
+        // Set up bindings to the single cliService instance
+        cliService.outputStream
             .receive(on: DispatchQueue.main)
-            .assign(to: &$isConnected)
+            .sink { [weak self] output in
+                self?.handleCLIOutput(output)
+            }
+            .store(in: &cancellables)
         
-        // Monitor errors
-        ipcService.$lastError
+        cliService.$isRunning
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isRunning in
+                if !isRunning {
+                    self?.isProcessing = false
+                }
+            }
+            .store(in: &cancellables)
+        
+        cliService.$lastError
             .receive(on: DispatchQueue.main)
             .sink { [weak self] error in
                 self?.connectionError = error?.localizedDescription
+                if error != nil {
+                    self?.isConnected = false
+                } else {
+                    self?.isConnected = true
+                }
             }
             .store(in: &cancellables)
+    }
+    
+    private func handleCLIOutput(_ output: String) {
+        print("HUDViewModel: handleCLIOutput called with: \(output)")
         
-        // Handle stream events
-        ipcService.streamEvents
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] event in
-                self?.handleStreamEvent(event)
-            }
-            .store(in: &cancellables)
-    }
-    
-    private func handleStreamEvent(_ event: IPCStreamEvent) {
-        switch event.type {
-        case .messageChunk:
-            if case .messageChunk(let chunk) = event.data {
-                handleMessageChunk(chunk)
-            }
-        case .toolApprovalRequest:
-            if case .toolApproval(let request) = event.data {
-                handleToolApprovalRequest(request)
-            }
-        case .toolExecutionStart:
-            if case .toolStart(let info) = event.data {
-                handleToolExecutionStart(info)
-            }
-        case .toolExecutionEnd:
-            if case .toolEnd(let info) = event.data {
-                handleToolExecutionEnd(info)
-            }
-        case .error:
-            if case .error(let message) = event.data {
-                handleStreamError(message)
-            }
-        }
-    }
-    
-    private func handleMessageChunk(_ chunk: String) {
+        // Create new message if needed
         if currentStreamMessage == nil {
-            currentStreamMessage = Message(
+            let newMessage = Message(
                 id: UUID().uuidString,
                 role: .assistant,
                 content: "",
                 timestamp: Date()
             )
-            messages.append(currentStreamMessage!)
+            currentStreamMessage = newMessage
+            messages.append(newMessage)
+            print("HUDViewModel: Created new assistant message")
         }
         
-        if let index = messages.firstIndex(where: { $0.id == currentStreamMessage?.id }) {
-            messages[index].content += chunk
+        // Append output to current message
+        if let currentMessage = currentStreamMessage,
+           let index = messages.firstIndex(where: { $0.id == currentMessage.id }) {
+            messages[index].content += output
+            print("HUDViewModel: Updated message content, total length: \(messages[index].content.count)")
         }
     }
     
-    private func handleToolApprovalRequest(_ request: ToolApprovalRequest) {
-        // TODO: Show tool approval UI
-        print("Tool approval requested: \(request)")
-    }
-    
-    private func handleToolExecutionStart(_ info: ToolExecutionInfo) {
-        // TODO: Show tool execution indicator
-        print("Tool execution started: \(info)")
-    }
-    
-    private func handleToolExecutionEnd(_ info: ToolExecutionInfo) {
-        // TODO: Update tool execution status
-        print("Tool execution ended: \(info)")
-    }
-    
-    private func handleStreamError(_ message: String) {
-        connectionError = message
-    }
     
     func sendMessage() {
         guard !inputText.isEmpty else { return }
+        
+        print("HUDViewModel: Sending message: \(inputText)")
         
         let userMessage = Message(
             id: UUID().uuidString,
@@ -119,43 +94,9 @@ class HUDViewModel: ObservableObject {
         isProcessing = true
         currentStreamMessage = nil
         
-        if isConnected {
-            // Use real IPC service
-            Task { @MainActor in
-                do {
-                    let result = try await ipcService.sendMessage(query)
-                    
-                    // If not streaming, add the complete message
-                    if currentStreamMessage == nil {
-                        let assistantMessage = Message(
-                            id: UUID().uuidString,
-                            role: .assistant,
-                            content: result.response,
-                            timestamp: Date(),
-                            tools: result.tools?.map { toolCall in
-                                ToolCall(
-                                    name: toolCall.name,
-                                    parameters: toolCall.parameters,
-                                    approved: toolCall.approved
-                                )
-                            }
-                        )
-                        messages.append(assistantMessage)
-                    }
-                    
-                    isProcessing = false
-                } catch {
-                    connectionError = error.localizedDescription
-                    isProcessing = false
-                    
-                    // Fall back to mock response
-                    sendMockResponse(for: query)
-                }
-            }
-        } else {
-            // Use mock response
-            sendMockResponse(for: query)
-        }
+        // Use CLI service
+        print("HUDViewModel: Sending message via CLI: \(query)")
+        cliService.sendMessage(query)
     }
     
     private func sendMockResponse(for query: String) {
@@ -176,7 +117,10 @@ class HUDViewModel: ObservableObject {
     }
     
     func connectToIPC() {
-        ipcService.start()
+        // This function now simply ensures the service is started.
+        // The actual service is already created and bound.
+        cliService.start()
+        isConnected = true
     }
     
     private func generateMockResponse(for query: String) -> String {

@@ -3,7 +3,15 @@
  * Provides a JSON-RPC based IPC interface for external GUI applications
  */
 
-import { Config } from '@google/gemini-cli-core';
+import { 
+  Config, 
+  GeminiEventType,
+  ServerGeminiStreamEvent,
+  ServerGeminiContentEvent,
+  ServerGeminiToolCallRequestEvent,
+  ServerGeminiToolCallResponseEvent,
+  ServerGeminiErrorEvent
+} from '@google/gemini-cli-core';
 import * as readline from 'node:readline';
 import { EventEmitter } from 'node:events';
 
@@ -62,10 +70,13 @@ export class IPCServer extends EventEmitter {
 
     // Listen for incoming requests
     this.rl.on('line', async (line) => {
+      console.error(`IPC: Received line: ${line}`);
       try {
         const request = JSON.parse(line) as IPCRequest;
+        console.error(`IPC: Parsed request: ${JSON.stringify(request)}`);
         await this.handleRequest(request);
       } catch (error) {
+        console.error(`IPC: Parse error:`, error);
         this.sendError('parse-error', -32700, 'Parse error: Invalid JSON');
       }
     });
@@ -100,12 +111,14 @@ export class IPCServer extends EventEmitter {
           this.sendError(request.id, -32601, `Method not found: ${request.method}`);
       }
     } catch (error) {
-      this.sendError(request.id, -32603, `Internal error: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.sendError(request.id, -32603, `Internal error: ${errorMessage}`);
     }
   }
 
   private async handleChatSend(request: IPCRequest) {
     const { message, context } = request.params;
+    console.error(`IPC: handleChatSend called with message: "${message}"`);
     
     try {
       // Get the Gemini client from config
@@ -115,40 +128,89 @@ export class IPCServer extends EventEmitter {
         throw new Error('Gemini client not initialized');
       }
 
-      // Set up streaming chunks collection
-      const chunks: string[] = [];
+      // Create an abort controller for cancellation
+      const abortController = new AbortController();
+      const signal = abortController.signal;
       
-      // Send the message with streaming
-      const streamingResponse = await geminiClient.sendMessageStream(message, (chunk) => {
-        chunks.push(chunk);
-        this.sendStreamEvent({
-          type: 'message.chunk',
-          data: chunk,
-        });
-      });
+      // Send the message and handle the complete conversation turn
+      const turn = await geminiClient.sendMessageStream(message, signal);
+      
+      // Process all events from the turn
+      let responseText = '';
+      const toolCalls: any[] = [];
+      
+      for await (const event of turn) {
+        switch (event.type) {
+          case GeminiEventType.Content:
+            // Accumulate content and send chunks
+            const contentEvent = event as ServerGeminiContentEvent;
+            responseText += contentEvent.value;
+            this.sendStreamEvent({
+              type: 'message.chunk',
+              data: contentEvent.value,
+            });
+            break;
+            
+          case GeminiEventType.ToolCallRequest:
+            // Notify about tool call
+            const toolEvent = event as ServerGeminiToolCallRequestEvent;
+            toolCalls.push({
+              name: toolEvent.value.name,
+              parameters: toolEvent.value.args || {},
+              approved: false,
+            });
+            this.sendStreamEvent({
+              type: 'tool.start',
+              data: {
+                name: toolEvent.value.name,
+                parameters: toolEvent.value.args || {},
+              },
+            });
+            break;
+            
+          case GeminiEventType.Error:
+            // Handle errors in the stream
+            const errorEvent = event as ServerGeminiErrorEvent;
+            this.sendStreamEvent({
+              type: 'error',
+              data: errorEvent.value.error,
+            });
+            break;
+            
+          // Handle other event types as needed
+          case GeminiEventType.Thought:
+          case GeminiEventType.ChatCompressed:
+          case GeminiEventType.ToolCallConfirmation:
+          case GeminiEventType.ToolCallResponse:
+            // Tool was executed by the client
+            const toolResponseEvent = event as ServerGeminiToolCallResponseEvent;
+            console.error(`IPC: Tool response event: ${JSON.stringify(toolResponseEvent)}`);
+            this.sendStreamEvent({
+              type: 'tool.end',
+              data: {
+                name: toolResponseEvent.value.callId,
+                success: true,
+                output: 'Tool executed',
+              },
+            });
+            break;
+            
+          case GeminiEventType.UserCancelled:
+            // User cancelled the request
+            break;
+        }
+      }
 
-      // Wait for the complete response
-      const response = await streamingResponse.response;
-      const text = response.text();
-
-      // Extract function calls if any
-      const functionCalls = response.functionCalls();
-      const tools = functionCalls ? functionCalls.map(fc => ({
-        name: fc.name,
-        parameters: fc.args || {},
-        approved: false,
-      })) : [];
-
-      // Send complete response
+      // Send final response
       this.sendResponse({
         id: request.id,
         result: {
           type: 'message',
           data: {
-            response: text,
-            tools,
+            response: responseText,
+            tools: toolCalls,
             tokenUsage: {
-              prompt: 0, // TODO: Get actual token counts from response.usageMetadata
+              prompt: 0, // TODO: Get actual token counts from Turn object
               completion: 0,
               total: 0,
             },
