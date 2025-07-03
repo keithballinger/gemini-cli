@@ -408,4 +408,27 @@ class SimpleCLIService: ObservableObject {
             }
         }
     }
+    
+    func changeWorkingDirectory(_ path: String) {
+        guard let inputPipe = inputPipe else { return }
+        
+        messageQueue.async { [weak self] in
+            let request: [String: Any] = [
+                "id": UUID().uuidString,
+                "method": "config.changeWorkingDirectory",
+                "params": ["path": path]
+            ]
+            
+            self?.log("Changing working directory to: \(path)")
+            
+            do {
+                let jsonData = try JSONSerialization.data(withJSONObject: request)
+                let jsonString = String(data: jsonData, encoding: .utf8)! + "\n"
+                let messageData = jsonString.data(using: .utf8)!
+                inputPipe.fileHandleForWriting.write(messageData)
+            } catch {
+                print("Failed to send working directory change request: \(error)")
+            }
+        }
+    }
 }

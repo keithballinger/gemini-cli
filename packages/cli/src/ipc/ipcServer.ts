@@ -115,6 +115,9 @@ export class IPCServer extends EventEmitter {
         case 'config.setApprovalMode':
           await this.handleSetApprovalMode(request);
           break;
+        case 'config.changeWorkingDirectory':
+          await this.handleChangeWorkingDirectory(request);
+          break;
         case 'tool.approve':
           await this.handleToolApprove(request);
           break;
@@ -604,6 +607,27 @@ export class IPCServer extends EventEmitter {
         type: 'success',
       },
     });
+  }
+
+  private async handleChangeWorkingDirectory(request: IPCRequest) {
+    const { path } = request.params;
+    
+    try {
+      // Change the working directory
+      process.chdir(path);
+      console.error(`IPC: Changed working directory to: ${path}`);
+      
+      this.sendResponse({
+        id: request.id,
+        result: {
+          type: 'success',
+        },
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`IPC: Failed to change working directory to ${path}: ${errorMessage}`);
+      this.sendError(request.id, -32603, `Failed to change working directory: ${errorMessage}`);
+    }
   }
   
   private async handleToolApprove(request: IPCRequest) {

@@ -621,3 +621,395 @@ Would you like me to list the files in `/Users/keithballinger/Desktop/projects/g
 }, "id": 5225A0EA-7246-4A59-8B18-FB7B51344C4A]
 7/3/25, 4:32:04 AM PDT: IPC Response: message
 7/3/25, 4:32:04 AM PDT: Message complete for ID: 5225A0EA-7246-4A59-8B18-FB7B51344C4A
+7/3/25, 4:35:07 AM PDT: SimpleCLIService: Initialized
+7/3/25, 4:35:08 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 4:35:08 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+
+7/3/25, 4:35:08 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 4:35:08 AM PDT: Parsed JSON: ["result": {
+    data =     {
+        connected = 1;
+        model = "gemini-2.5-pro";
+        workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+    };
+    type = status;
+}, "id": init]
+7/3/25, 4:35:08 AM PDT: IPC Response: status
+7/3/25, 4:35:08 AM PDT: IPC Connected: ["data": {
+    connected = 1;
+    model = "gemini-2.5-pro";
+    workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+}, "type": status]
+7/3/25, 4:35:59 AM PDT: SimpleCLIService: Initialized
+7/3/25, 4:36:00 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 4:36:00 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+
+7/3/25, 4:36:00 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 4:36:00 AM PDT: Parsed JSON: ["id": init, "result": {
+    data =     {
+        connected = 1;
+        model = "gemini-2.5-pro";
+        workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+    };
+    type = status;
+}]
+7/3/25, 4:36:00 AM PDT: IPC Response: status
+7/3/25, 4:36:00 AM PDT: IPC Connected: ["data": {
+    connected = 1;
+    model = "gemini-2.5-pro";
+    workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+}, "type": status]
+7/3/25, 4:37:17 AM PDT: SimpleCLIService: Initialized
+7/3/25, 4:37:20 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 4:37:20 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+
+7/3/25, 4:37:20 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 4:37:20 AM PDT: Parsed JSON: ["id": init, "result": {
+    data =     {
+        connected = 1;
+        model = "gemini-2.5-pro";
+        workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+    };
+    type = status;
+}]
+7/3/25, 4:37:20 AM PDT: IPC Response: status
+7/3/25, 4:37:20 AM PDT: IPC Connected: ["data": {
+    connected = 1;
+    model = "gemini-2.5-pro";
+    workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+}, "type": status]
+7/3/25, 4:37:29 AM PDT: SimpleCLIService: Initialized
+7/3/25, 4:37:30 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 4:37:30 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+
+7/3/25, 4:37:30 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 4:37:30 AM PDT: Parsed JSON: ["id": init, "result": {
+    data =     {
+        connected = 1;
+        model = "gemini-2.5-pro";
+        workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+    };
+    type = status;
+}]
+7/3/25, 4:37:30 AM PDT: IPC Response: status
+7/3/25, 4:37:30 AM PDT: IPC Connected: ["data": {
+    connected = 1;
+    model = "gemini-2.5-pro";
+    workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+}, "type": status]
+7/3/25, 4:38:20 AM PDT: SimpleCLIService: Initialized
+7/3/25, 4:38:21 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 4:38:22 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+
+7/3/25, 4:38:22 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 4:38:22 AM PDT: Parsed JSON: ["id": init, "result": {
+    data =     {
+        connected = 1;
+        model = "gemini-2.5-pro";
+        workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+    };
+    type = status;
+}]
+7/3/25, 4:38:22 AM PDT: IPC Response: status
+7/3/25, 4:38:22 AM PDT: IPC Connected: ["type": status, "data": {
+    connected = 1;
+    model = "gemini-2.5-pro";
+    workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+}]
+7/3/25, 4:38:32 AM PDT: Sending request with ID: E4FF3FEE-52CA-4DF7-8BD3-4BD30993035D for message: what is your current directory?
+7/3/25, 4:38:36 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"I'm in `/Users/keithballinger/Desktop/projects/"}
+
+7/3/25, 4:38:36 AM PDT: Processing line: {"type":"message.chunk","data":"I'm in `/Users/keithballinger/Desktop/projects/"}
+7/3/25, 4:38:36 AM PDT: Parsed JSON: ["data": I'm in `/Users/keithballinger/Desktop/projects/, "type": message.chunk]
+7/3/25, 4:38:36 AM PDT: Message chunk received: I'm in `/Users/keithballinger/Desktop/projects/
+7/3/25, 4:38:36 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"gemini-cli/gui`."}
+
+7/3/25, 4:38:36 AM PDT: Processing line: {"type":"message.chunk","data":"gemini-cli/gui`."}
+7/3/25, 4:38:36 AM PDT: Parsed JSON: ["type": message.chunk, "data": gemini-cli/gui`.]
+7/3/25, 4:38:36 AM PDT: Message chunk received: gemini-cli/gui`.
+7/3/25, 4:38:38 AM PDT: CLI Raw Output: {"id":"E4FF3FEE-52CA-4DF7-8BD3-4BD30993035D","result":{"type":"message","data":{"response":"I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+
+7/3/25, 4:38:38 AM PDT: Processing line: {"id":"E4FF3FEE-52CA-4DF7-8BD3-4BD30993035D","result":{"type":"message","data":{"response":"I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+7/3/25, 4:38:38 AM PDT: Parsed JSON: ["id": E4FF3FEE-52CA-4DF7-8BD3-4BD30993035D, "result": {
+    data =     {
+        response = "I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.";
+        tokenUsage =         {
+            completion = 0;
+            prompt = 0;
+            total = 0;
+        };
+        tools =         (
+        );
+    };
+    type = message;
+}]
+7/3/25, 4:38:38 AM PDT: IPC Response: message
+7/3/25, 4:38:38 AM PDT: Message complete for ID: E4FF3FEE-52CA-4DF7-8BD3-4BD30993035D
+7/3/25, 4:39:05 AM PDT: SimpleCLIService: Initialized
+7/3/25, 4:39:06 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 4:39:06 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+
+7/3/25, 4:39:06 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 4:39:06 AM PDT: Parsed JSON: ["result": {
+    data =     {
+        connected = 1;
+        model = "gemini-2.5-pro";
+        workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+    };
+    type = status;
+}, "id": init]
+7/3/25, 4:39:06 AM PDT: IPC Response: status
+7/3/25, 4:39:06 AM PDT: IPC Connected: ["data": {
+    connected = 1;
+    model = "gemini-2.5-pro";
+    workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+}, "type": status]
+7/3/25, 4:39:17 AM PDT: Sending request with ID: 2E28F5D3-D3A4-4E9A-8E66-94FB7B8DAED7 for message: what is your curecnt direcotry
+7/3/25, 4:39:22 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"I am in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`."}
+
+7/3/25, 4:39:22 AM PDT: Processing line: {"type":"message.chunk","data":"I am in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`."}
+7/3/25, 4:39:22 AM PDT: Parsed JSON: ["data": I am in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`., "type": message.chunk]
+7/3/25, 4:39:22 AM PDT: Message chunk received: I am in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.
+7/3/25, 4:39:24 AM PDT: CLI Raw Output: {"id":"2E28F5D3-D3A4-4E9A-8E66-94FB7B8DAED7","result":{"type":"message","data":{"response":"I am in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+
+7/3/25, 4:39:24 AM PDT: Processing line: {"id":"2E28F5D3-D3A4-4E9A-8E66-94FB7B8DAED7","result":{"type":"message","data":{"response":"I am in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+7/3/25, 4:39:24 AM PDT: Parsed JSON: ["id": 2E28F5D3-D3A4-4E9A-8E66-94FB7B8DAED7, "result": {
+    data =     {
+        response = "I am in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.";
+        tokenUsage =         {
+            completion = 0;
+            prompt = 0;
+            total = 0;
+        };
+        tools =         (
+        );
+    };
+    type = message;
+}]
+7/3/25, 4:39:24 AM PDT: IPC Response: message
+7/3/25, 4:39:24 AM PDT: Message complete for ID: 2E28F5D3-D3A4-4E9A-8E66-94FB7B8DAED7
+7/3/25, 4:42:43 AM PDT: SimpleCLIService: Initialized
+7/3/25, 4:42:44 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 4:42:45 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+
+7/3/25, 4:42:45 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 4:42:45 AM PDT: Parsed JSON: ["id": init, "result": {
+    data =     {
+        connected = 1;
+        model = "gemini-2.5-pro";
+        workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+    };
+    type = status;
+}]
+7/3/25, 4:42:45 AM PDT: IPC Response: status
+7/3/25, 4:42:45 AM PDT: IPC Connected: ["data": {
+    connected = 1;
+    model = "gemini-2.5-pro";
+    workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+}, "type": status]
+7/3/25, 4:44:26 AM PDT: SimpleCLIService: Initialized
+7/3/25, 4:44:27 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 4:44:28 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+
+7/3/25, 4:44:28 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 4:44:28 AM PDT: Parsed JSON: ["result": {
+    data =     {
+        connected = 1;
+        model = "gemini-2.5-pro";
+        workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+    };
+    type = status;
+}, "id": init]
+7/3/25, 4:44:28 AM PDT: IPC Response: status
+7/3/25, 4:44:28 AM PDT: IPC Connected: ["type": status, "data": {
+    connected = 1;
+    model = "gemini-2.5-pro";
+    workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+}]
+7/3/25, 4:44:34 AM PDT: Sending request with ID: 9A966A23-8A57-47CD-9A3D-0ADAC4F06903 for message: whgat is your current directory?
+7/3/25, 4:44:40 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`."}
+
+7/3/25, 4:44:40 AM PDT: Processing line: {"type":"message.chunk","data":"I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`."}
+7/3/25, 4:44:40 AM PDT: Parsed JSON: ["data": I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`., "type": message.chunk]
+7/3/25, 4:44:40 AM PDT: Message chunk received: I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.
+7/3/25, 4:44:42 AM PDT: CLI Raw Output: {"id":"9A966A23-8A57-47CD-9A3D-0ADAC4F06903","result":{"type":"message","data":{"response":"I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+
+7/3/25, 4:44:42 AM PDT: Processing line: {"id":"9A966A23-8A57-47CD-9A3D-0ADAC4F06903","result":{"type":"message","data":{"response":"I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+7/3/25, 4:44:42 AM PDT: Parsed JSON: ["result": {
+    data =     {
+        response = "I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.";
+        tokenUsage =         {
+            completion = 0;
+            prompt = 0;
+            total = 0;
+        };
+        tools =         (
+        );
+    };
+    type = message;
+}, "id": 9A966A23-8A57-47CD-9A3D-0ADAC4F06903]
+7/3/25, 4:44:42 AM PDT: IPC Response: message
+7/3/25, 4:44:42 AM PDT: Message complete for ID: 9A966A23-8A57-47CD-9A3D-0ADAC4F06903
+7/3/25, 4:45:08 AM PDT: SimpleCLIService: Initialized
+7/3/25, 4:45:09 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 4:45:10 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+
+7/3/25, 4:45:10 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 4:45:10 AM PDT: Parsed JSON: ["result": {
+    data =     {
+        connected = 1;
+        model = "gemini-2.5-pro";
+        workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+    };
+    type = status;
+}, "id": init]
+7/3/25, 4:45:10 AM PDT: IPC Response: status
+7/3/25, 4:45:10 AM PDT: IPC Connected: ["type": status, "data": {
+    connected = 1;
+    model = "gemini-2.5-pro";
+    workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+}]
+7/3/25, 4:45:14 AM PDT: Sending request with ID: 23C5DFD2-87F9-4592-AE3B-D98610307EAE for message: whgat ius your current directory
+7/3/25, 4:45:19 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"I'm in `/Users/keithballinger/Desktop/projects/"}
+
+7/3/25, 4:45:19 AM PDT: Processing line: {"type":"message.chunk","data":"I'm in `/Users/keithballinger/Desktop/projects/"}
+7/3/25, 4:45:19 AM PDT: Parsed JSON: ["data": I'm in `/Users/keithballinger/Desktop/projects/, "type": message.chunk]
+7/3/25, 4:45:19 AM PDT: Message chunk received: I'm in `/Users/keithballinger/Desktop/projects/
+7/3/25, 4:45:19 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"gemini-cli/gui`."}
+
+7/3/25, 4:45:19 AM PDT: Processing line: {"type":"message.chunk","data":"gemini-cli/gui`."}
+7/3/25, 4:45:19 AM PDT: Parsed JSON: ["type": message.chunk, "data": gemini-cli/gui`.]
+7/3/25, 4:45:19 AM PDT: Message chunk received: gemini-cli/gui`.
+7/3/25, 4:45:21 AM PDT: CLI Raw Output: {"id":"23C5DFD2-87F9-4592-AE3B-D98610307EAE","result":{"type":"message","data":{"response":"I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+
+7/3/25, 4:45:21 AM PDT: Processing line: {"id":"23C5DFD2-87F9-4592-AE3B-D98610307EAE","result":{"type":"message","data":{"response":"I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+7/3/25, 4:45:21 AM PDT: Parsed JSON: ["id": 23C5DFD2-87F9-4592-AE3B-D98610307EAE, "result": {
+    data =     {
+        response = "I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.";
+        tokenUsage =         {
+            completion = 0;
+            prompt = 0;
+            total = 0;
+        };
+        tools =         (
+        );
+    };
+    type = message;
+}]
+7/3/25, 4:45:21 AM PDT: IPC Response: message
+7/3/25, 4:45:21 AM PDT: Message complete for ID: 23C5DFD2-87F9-4592-AE3B-D98610307EAE
+7/3/25, 4:48:41 AM PDT: SimpleCLIService: Initialized
+7/3/25, 4:48:44 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 4:48:45 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+
+7/3/25, 4:48:45 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 4:48:45 AM PDT: Parsed JSON: ["id": init, "result": {
+    data =     {
+        connected = 1;
+        model = "gemini-2.5-pro";
+        workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+    };
+    type = status;
+}]
+7/3/25, 4:48:45 AM PDT: IPC Response: status
+7/3/25, 4:48:45 AM PDT: IPC Connected: ["data": {
+    connected = 1;
+    model = "gemini-2.5-pro";
+    workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+}, "type": status]
+7/3/25, 4:48:49 AM PDT: Sending request with ID: 2B73B8F2-2398-48D1-A737-C2D9BD119244 for message: what is your current directory?
+7/3/25, 4:48:53 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"I'm in `/Users/keithballinger/Desktop/projects/gem"}
+
+7/3/25, 4:48:53 AM PDT: Processing line: {"type":"message.chunk","data":"I'm in `/Users/keithballinger/Desktop/projects/gem"}
+7/3/25, 4:48:53 AM PDT: Parsed JSON: ["type": message.chunk, "data": I'm in `/Users/keithballinger/Desktop/projects/gem]
+7/3/25, 4:48:53 AM PDT: Message chunk received: I'm in `/Users/keithballinger/Desktop/projects/gem
+7/3/25, 4:48:53 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"ini-cli/gui`."}
+
+7/3/25, 4:48:53 AM PDT: Processing line: {"type":"message.chunk","data":"ini-cli/gui`."}
+7/3/25, 4:48:53 AM PDT: Parsed JSON: ["type": message.chunk, "data": ini-cli/gui`.]
+7/3/25, 4:48:53 AM PDT: Message chunk received: ini-cli/gui`.
+7/3/25, 4:48:55 AM PDT: CLI Raw Output: {"id":"2B73B8F2-2398-48D1-A737-C2D9BD119244","result":{"type":"message","data":{"response":"I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+
+7/3/25, 4:48:55 AM PDT: Processing line: {"id":"2B73B8F2-2398-48D1-A737-C2D9BD119244","result":{"type":"message","data":{"response":"I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+7/3/25, 4:48:55 AM PDT: Parsed JSON: ["result": {
+    data =     {
+        response = "I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.";
+        tokenUsage =         {
+            completion = 0;
+            prompt = 0;
+            total = 0;
+        };
+        tools =         (
+        );
+    };
+    type = message;
+}, "id": 2B73B8F2-2398-48D1-A737-C2D9BD119244]
+7/3/25, 4:48:55 AM PDT: IPC Response: message
+7/3/25, 4:48:55 AM PDT: Message complete for ID: 2B73B8F2-2398-48D1-A737-C2D9BD119244
+7/3/25, 4:49:32 AM PDT: SimpleCLIService: Initialized
+7/3/25, 4:49:33 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 4:49:33 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+
+7/3/25, 4:49:33 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 4:49:33 AM PDT: Parsed JSON: ["result": {
+    data =     {
+        connected = 1;
+        model = "gemini-2.5-pro";
+        workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+    };
+    type = status;
+}, "id": init]
+7/3/25, 4:49:33 AM PDT: IPC Response: status
+7/3/25, 4:49:33 AM PDT: IPC Connected: ["type": status, "data": {
+    connected = 1;
+    model = "gemini-2.5-pro";
+    workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+}]
+7/3/25, 4:49:57 AM PDT: SimpleCLIService: Initialized
+7/3/25, 4:49:59 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 4:49:59 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+
+7/3/25, 4:49:59 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 4:49:59 AM PDT: Parsed JSON: ["id": init, "result": {
+    data =     {
+        connected = 1;
+        model = "gemini-2.5-pro";
+        workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+    };
+    type = status;
+}]
+7/3/25, 4:49:59 AM PDT: IPC Response: status
+7/3/25, 4:49:59 AM PDT: IPC Connected: ["type": status, "data": {
+    connected = 1;
+    model = "gemini-2.5-pro";
+    workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+}]
+7/3/25, 4:50:06 AM PDT: Sending request with ID: 65A73C56-3A43-4456-A9C7-34023F28B226 for message: what is your current directory?
+7/3/25, 4:50:10 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"I'm in `/Users/keithballinger/Desktop/projects/gem"}
+
+7/3/25, 4:50:10 AM PDT: Processing line: {"type":"message.chunk","data":"I'm in `/Users/keithballinger/Desktop/projects/gem"}
+7/3/25, 4:50:10 AM PDT: Parsed JSON: ["data": I'm in `/Users/keithballinger/Desktop/projects/gem, "type": message.chunk]
+7/3/25, 4:50:10 AM PDT: Message chunk received: I'm in `/Users/keithballinger/Desktop/projects/gem
+7/3/25, 4:50:10 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"ini-cli/gui`."}
+
+7/3/25, 4:50:10 AM PDT: Processing line: {"type":"message.chunk","data":"ini-cli/gui`."}
+7/3/25, 4:50:10 AM PDT: Parsed JSON: ["data": ini-cli/gui`., "type": message.chunk]
+7/3/25, 4:50:10 AM PDT: Message chunk received: ini-cli/gui`.
+7/3/25, 4:50:12 AM PDT: CLI Raw Output: {"id":"65A73C56-3A43-4456-A9C7-34023F28B226","result":{"type":"message","data":{"response":"I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+
+7/3/25, 4:50:12 AM PDT: Processing line: {"id":"65A73C56-3A43-4456-A9C7-34023F28B226","result":{"type":"message","data":{"response":"I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+7/3/25, 4:50:12 AM PDT: Parsed JSON: ["id": 65A73C56-3A43-4456-A9C7-34023F28B226, "result": {
+    data =     {
+        response = "I'm in `/Users/keithballinger/Desktop/projects/gemini-cli/gui`.";
+        tokenUsage =         {
+            completion = 0;
+            prompt = 0;
+            total = 0;
+        };
+        tools =         (
+        );
+    };
+    type = message;
+}]
+7/3/25, 4:50:12 AM PDT: IPC Response: message
+7/3/25, 4:50:12 AM PDT: Message complete for ID: 65A73C56-3A43-4456-A9C7-34023F28B226

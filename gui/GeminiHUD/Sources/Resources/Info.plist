@@ -30,11 +30,15 @@
     <array>
         <dict>
             <key>CFBundleURLName</key>
-            <string>Gemini HUD URL</string>
+            <string>Gemini HUD URL Handler</string>
             <key>CFBundleURLSchemes</key>
             <array>
                 <string>gemini</string>
             </array>
+            <key>CFBundleURLRole</key>
+            <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
         </dict>
     </array>
 </dict>
