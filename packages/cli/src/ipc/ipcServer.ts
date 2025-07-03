@@ -148,7 +148,7 @@ export class IPCServer extends EventEmitter {
       const toolCalls: any[] = [];
       const toolCallRequests: ToolCallRequestInfo[] = [];
       
-      // Create a tool scheduler for this conversation turn
+      // Create a tool scheduler for this conversation turn with React loop support
       const toolScheduler = new CoreToolScheduler({
         config: this.config,
         toolRegistry: this.config.getToolRegistry(),
@@ -208,46 +208,21 @@ export class IPCServer extends EventEmitter {
         onAllToolCallsComplete: async (completedCalls) => {
           console.error(`IPC: All tools complete. Count: ${completedCalls.length}`);
           
-          // Send tool responses back to Gemini
+          // Collect tool responses to send back to Gemini for React loop
           const responseParts = completedCalls.map(call => call.response.responseParts).flat();
           if (responseParts.length > 0) {
-            console.error(`IPC: Sending ${responseParts.length} tool responses back to Gemini`);
-            const continuationTurn = await geminiClient.sendMessageStream(responseParts, signal);
+            console.error(`IPC: Sending ${responseParts.length} tool responses back to Gemini for React loop`);
             
-            // Process the continuation
-            for await (const event of continuationTurn) {
-              if (event.type === GeminiEventType.Content) {
-                const contentEvent = event as ServerGeminiContentEvent;
-                responseText += contentEvent.value;
-                this.sendStreamEvent({
-                  type: 'message.chunk',
-                  data: contentEvent.value,
-                });
-              }
-              // Handle other events as needed
-            }
+            // Continue the React loop by sending tool responses back to Gemini
+            await this.continueReactLoop(responseParts, signal, request.id, responseText, toolCalls);
+          } else {
+            // No tool responses to send back, end the conversation
+            this.sendFinalResponse(request.id, responseText, toolCalls);
           }
-          
-          // Send final response after tools complete
-          this.sendResponse({
-            id: request.id,
-            result: {
-              type: 'message',
-              data: {
-                response: responseText,
-                tools: toolCalls,
-                tokenUsage: {
-                  prompt: 0, // TODO: Get actual token counts from Turn object
-                  completion: 0,
-                  total: 0,
-                },
-              },
-            },
-          });
         },
       });
       
-      // Send the message and handle the complete conversation turn
+      // Start the conversation turn
       const turn = await geminiClient.sendMessageStream(message, signal);
       
       for await (const event of turn) {
@@ -263,7 +238,7 @@ export class IPCServer extends EventEmitter {
             break;
             
           case GeminiEventType.ToolCallRequest:
-            // Collect tool call requests
+            // Collect tool call requests for CoreToolScheduler
             const toolEvent = event as ServerGeminiToolCallRequestEvent;
             console.error(`IPC: Tool call requested: ${toolEvent.value.name}`);
             toolCallRequests.push(toolEvent.value);
@@ -272,7 +247,7 @@ export class IPCServer extends EventEmitter {
             toolCalls.push({
               name: toolEvent.value.name,
               parameters: toolEvent.value.args || {},
-              approved: true, // Will be auto-approved
+              approved: true, // Will be handled by approval mode
             });
             break;
             
@@ -285,7 +260,6 @@ export class IPCServer extends EventEmitter {
             });
             break;
             
-          // Handle other event types as needed
           case GeminiEventType.Thought:
             // Just log thoughts for debugging
             console.error(`IPC: Thought event: ${JSON.stringify(event)}`);
@@ -293,23 +267,8 @@ export class IPCServer extends EventEmitter {
             
           case GeminiEventType.ChatCompressed:
           case GeminiEventType.ToolCallConfirmation:
-            // These are informational events
-            break;
-            
           case GeminiEventType.ToolCallResponse:
-            // This event is sent after tool execution by the model
-            const toolResponseEvent = event as ServerGeminiToolCallResponseEvent;
-            console.error(`IPC: Tool response completed for callId: ${toolResponseEvent.value.callId}`);
-            
-            // Notify about tool completion
-            this.sendStreamEvent({
-              type: 'tool.end',
-              data: {
-                name: toolResponseEvent.value.callId,
-                success: !toolResponseEvent.value.error,
-                output: toolResponseEvent.value.resultDisplay || 'Tool executed',
-              },
-            });
+            // These are informational events
             break;
             
           case GeminiEventType.UserCancelled:
@@ -318,34 +277,186 @@ export class IPCServer extends EventEmitter {
         }
       }
 
-      // Schedule any tool calls that were requested
+      // Execute any tool calls that were requested
       if (toolCallRequests.length > 0) {
         console.error(`IPC: Scheduling ${toolCallRequests.length} tool calls`);
         await toolScheduler.schedule(toolCallRequests, signal);
-        
-        // The onAllToolCallsComplete callback will handle sending responses back to Gemini
-        // and updating responseText with any continuation
+        // The onAllToolCallsComplete callback will handle React loop continuation
       } else {
         // No tools to execute, send response now
-        this.sendResponse({
-          id: request.id,
-          result: {
-            type: 'message',
-            data: {
-              response: responseText,
-              tools: toolCalls,
-              tokenUsage: {
-                prompt: 0, // TODO: Get actual token counts from Turn object
-                completion: 0,
-                total: 0,
-              },
-            },
-          },
-        });
+        this.sendFinalResponse(request.id, responseText, toolCalls);
       }
     } catch (error: any) {
       this.sendError(request.id, -32000, `Chat error: ${error.message}`);
     }
+  }
+
+  private async continueReactLoop(
+    responseParts: any[],
+    signal: AbortSignal,
+    requestId: string,
+    accumulatedResponse: string,
+    accumulatedTools: any[]
+  ) {
+    try {
+      const geminiClient = this.config.getGeminiClient();
+      if (!geminiClient) {
+        throw new Error('Gemini client not initialized');
+      }
+
+      console.error(`IPC: Continuing React loop with ${responseParts.length} tool responses`);
+      
+      // Send tool responses back to Gemini to continue the conversation
+      const continuationTurn = await geminiClient.sendMessageStream(responseParts, signal);
+      
+      let responseText = accumulatedResponse;
+      const toolCalls = [...accumulatedTools];
+      const toolCallRequests: ToolCallRequestInfo[] = [];
+      
+      // Create a new tool scheduler for the continuation
+      const toolScheduler = new CoreToolScheduler({
+        config: this.config,
+        toolRegistry: this.config.getToolRegistry(),
+        approvalMode: this.approvalMode,
+        getPreferredEditor: () => undefined,
+        outputUpdateHandler: (callId, output) => {
+          console.error(`IPC: Tool ${callId} output: ${output}`);
+        },
+        onToolCallsUpdate: (toolCalls) => {
+          // Handle tool status updates for continuation
+          for (const toolCall of toolCalls) {
+            if (toolCall.status === 'awaiting_approval') {
+              this.pendingApprovals.set(toolCall.request.callId, toolCall);
+              this.sendStreamEvent({
+                type: 'tool.approval',
+                data: {
+                  id: toolCall.request.callId,
+                  name: toolCall.request.name,
+                  parameters: toolCall.request.args || {},
+                },
+              });
+            } else if (toolCall.status === 'executing') {
+              this.sendStreamEvent({
+                type: 'tool.start',
+                data: {
+                  name: toolCall.request.name,
+                  parameters: toolCall.request.args || {},
+                },
+              });
+            } else if (toolCall.status === 'success' || toolCall.status === 'error') {
+              const success = toolCall.status === 'success';
+              let output = '';
+              
+              if (toolCall.status === 'success' && toolCall.response.resultDisplay) {
+                output = typeof toolCall.response.resultDisplay === 'string' 
+                  ? toolCall.response.resultDisplay 
+                  : JSON.stringify(toolCall.response.resultDisplay);
+              } else if (toolCall.status === 'error' && toolCall.response.error) {
+                output = toolCall.response.error.message;
+              }
+              
+              this.sendStreamEvent({
+                type: 'tool.end',
+                data: {
+                  name: toolCall.request.name,
+                  success,
+                  output: output || 'Tool executed',
+                },
+              });
+            }
+          }
+        },
+        onAllToolCallsComplete: async (completedCalls) => {
+          console.error(`IPC: Continuation tools complete. Count: ${completedCalls.length}`);
+          
+          // Check if we need to continue the React loop further
+          const newResponseParts = completedCalls.map(call => call.response.responseParts).flat();
+          if (newResponseParts.length > 0) {
+            console.error(`IPC: Continuing React loop further with ${newResponseParts.length} more tool responses`);
+            await this.continueReactLoop(newResponseParts, signal, requestId, responseText, toolCalls);
+          } else {
+            // React loop is complete
+            this.sendFinalResponse(requestId, responseText, toolCalls);
+          }
+        },
+      });
+      
+      // Process continuation events
+      for await (const event of continuationTurn) {
+        switch (event.type) {
+          case GeminiEventType.Content:
+            const contentEvent = event as ServerGeminiContentEvent;
+            responseText += contentEvent.value;
+            this.sendStreamEvent({
+              type: 'message.chunk',
+              data: contentEvent.value,
+            });
+            break;
+            
+          case GeminiEventType.ToolCallRequest:
+            const toolEvent = event as ServerGeminiToolCallRequestEvent;
+            console.error(`IPC: Continuation tool call requested: ${toolEvent.value.name}`);
+            toolCallRequests.push(toolEvent.value);
+            
+            toolCalls.push({
+              name: toolEvent.value.name,
+              parameters: toolEvent.value.args || {},
+              approved: true,
+            });
+            break;
+            
+          case GeminiEventType.Error:
+            const errorEvent = event as ServerGeminiErrorEvent;
+            this.sendStreamEvent({
+              type: 'error',
+              data: errorEvent.value.error,
+            });
+            break;
+            
+          case GeminiEventType.Thought:
+            console.error(`IPC: Continuation thought event: ${JSON.stringify(event)}`);
+            break;
+            
+          case GeminiEventType.ChatCompressed:
+          case GeminiEventType.ToolCallConfirmation:
+          case GeminiEventType.ToolCallResponse:
+          case GeminiEventType.UserCancelled:
+            // Handle other events
+            break;
+        }
+      }
+
+      // Execute any additional tool calls from the continuation
+      if (toolCallRequests.length > 0) {
+        console.error(`IPC: Scheduling ${toolCallRequests.length} continuation tool calls`);
+        await toolScheduler.schedule(toolCallRequests, signal);
+        // onAllToolCallsComplete will handle further continuation or completion
+      } else {
+        // No more tools, React loop is complete
+        this.sendFinalResponse(requestId, responseText, toolCalls);
+      }
+    } catch (error: any) {
+      this.sendError(requestId, -32000, `React loop continuation error: ${error.message}`);
+    }
+  }
+
+  private sendFinalResponse(requestId: string, responseText: string, toolCalls: any[]) {
+    console.error(`IPC: Sending final response. Response length: ${responseText.length}, Tools: ${toolCalls.length}`);
+    this.sendResponse({
+      id: requestId,
+      result: {
+        type: 'message',
+        data: {
+          response: responseText,
+          tools: toolCalls,
+          tokenUsage: {
+            prompt: 0, // TODO: Get actual token counts from Turn object
+            completion: 0,
+            total: 0,
+          },
+        },
+      },
+    });
   }
 
   private async handleToolExecute(request: IPCRequest) {
