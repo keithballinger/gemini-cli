@@ -14,12 +14,6 @@ struct HeaderBar: View {
                 Text("Gemini HUD")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(appState.currentTheme.foregroundColor)
-                
-                if !viewModel.isConnected {
-                    Text("(Offline)")
-                        .font(.system(size: 10))
-                        .foregroundColor(.orange)
-                }
             }
             
             Spacer()

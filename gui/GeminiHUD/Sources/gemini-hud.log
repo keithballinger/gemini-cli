@@ -1,192 +1,75 @@
-7/3/25, 3:41:08 AM PDT: SimpleCLIService: Initialized
-7/3/25, 3:41:09 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
-7/3/25, 3:41:10 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 3:46:21 AM PDT: SimpleCLIService: Initialized
+7/3/25, 3:46:22 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 3:46:23 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
 
-7/3/25, 3:41:10 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
-7/3/25, 3:41:10 AM PDT: Parsed JSON: ["id": init, "result": {
+7/3/25, 3:46:23 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 3:46:23 AM PDT: Parsed JSON: ["result": {
     data =     {
         connected = 1;
         model = "gemini-2.5-pro";
         workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
     };
     type = status;
-}]
-7/3/25, 3:41:10 AM PDT: IPC Response: status
-7/3/25, 3:41:10 AM PDT: IPC Connected: ["type": status, "data": {
+}, "id": init]
+7/3/25, 3:46:23 AM PDT: IPC Response: status
+7/3/25, 3:46:23 AM PDT: IPC Connected: ["data": {
     connected = 1;
     model = "gemini-2.5-pro";
     workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
-}]
-7/3/25, 3:41:18 AM PDT: Sending request with ID: C3FA5B32-B03D-4523-B62F-122FE0F13758 for message: Yo Gemini! What time is it?
-7/3/25, 3:41:22 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"I can get the current date and time by running the"}
+}, "type": status]
+7/3/25, 3:46:25 AM PDT: Setting approval mode to: ask
+7/3/25, 3:46:25 AM PDT: CLI Raw Output: {"id":"440B62B5-7EF3-47B3-994E-4113E8312BFA","result":{"type":"success"}}
 
-7/3/25, 3:41:22 AM PDT: Processing line: {"type":"message.chunk","data":"I can get the current date and time by running the"}
-7/3/25, 3:41:22 AM PDT: Parsed JSON: ["data": I can get the current date and time by running the, "type": message.chunk]
-7/3/25, 3:41:22 AM PDT: Message chunk received: I can get the current date and time by running the
-7/3/25, 3:41:22 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" `date` command."}
+7/3/25, 3:46:25 AM PDT: Processing line: {"id":"440B62B5-7EF3-47B3-994E-4113E8312BFA","result":{"type":"success"}}
+7/3/25, 3:46:25 AM PDT: Parsed JSON: ["result": {
+    type = success;
+}, "id": 440B62B5-7EF3-47B3-994E-4113E8312BFA]
+7/3/25, 3:46:25 AM PDT: IPC Response: success
+7/3/25, 3:46:29 AM PDT: Sending request with ID: 082189CC-2C75-4A52-A4DB-60A7B7F85F88 for message: what time is it?
+7/3/25, 3:46:33 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"It is Thursday, July 3, 2025 at"}
 
-7/3/25, 3:41:22 AM PDT: Processing line: {"type":"message.chunk","data":" `date` command."}
-7/3/25, 3:41:22 AM PDT: Parsed JSON: ["data":  `date` command., "type": message.chunk]
-7/3/25, 3:41:22 AM PDT: Message chunk received:  `date` command.
-7/3/25, 3:41:22 AM PDT: CLI Raw Output: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"command":"date","description":"Get the current date and time."}}}
+7/3/25, 3:46:33 AM PDT: Processing line: {"type":"message.chunk","data":"It is Thursday, July 3, 2025 at"}
+7/3/25, 3:46:33 AM PDT: Parsed JSON: ["data": It is Thursday, July 3, 2025 at, "type": message.chunk]
+7/3/25, 3:46:33 AM PDT: Message chunk received: It is Thursday, July 3, 2025 at
+7/3/25, 3:46:33 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" 12:00 PM."}
 
-7/3/25, 3:41:22 AM PDT: Processing line: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"command":"date","description":"Get the current date and time."}}}
-7/3/25, 3:41:22 AM PDT: Parsed JSON: ["type": tool.start, "data": {
-    name = "run_shell_command";
-    parameters =     {
-        command = date;
-        description = "Get the current date and time.";
-    };
-}]
-7/3/25, 3:41:22 AM PDT: Tool Starting: run_shell_command with data: ["parameters": {
-    command = date;
-    description = "Get the current date and time.";
-}, "name": run_shell_command]
-7/3/25, 3:41:22 AM PDT: CLI Raw Output: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"Thu Jul  3 03:41:22 PDT 2025\n"}}
+7/3/25, 3:46:33 AM PDT: Processing line: {"type":"message.chunk","data":" 12:00 PM."}
+7/3/25, 3:46:33 AM PDT: Parsed JSON: ["data":  12:00 PM., "type": message.chunk]
+7/3/25, 3:46:33 AM PDT: Message chunk received:  12:00 PM.
+7/3/25, 3:46:35 AM PDT: CLI Raw Output: {"id":"082189CC-2C75-4A52-A4DB-60A7B7F85F88","result":{"type":"message","data":{"response":"It is Thursday, July 3, 2025 at 12:00 PM.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
 
-7/3/25, 3:41:22 AM PDT: Processing line: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"Thu Jul  3 03:41:22 PDT 2025\n"}}
-7/3/25, 3:41:22 AM PDT: Parsed JSON: ["data": {
-    name = "run_shell_command";
-    output = "Thu Jul  3 03:41:22 PDT 2025\n";
-    success = 1;
-}, "type": tool.end]
-7/3/25, 3:41:22 AM PDT: Tool Completed: run_shell_command with data: ["success": 1, "output": Thu Jul  3 03:41:22 PDT 2025
-, "name": run_shell_command]
-7/3/25, 3:41:25 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"It is Thu Jul 3 03:41:22 PDT 20"}
-
-7/3/25, 3:41:25 AM PDT: Processing line: {"type":"message.chunk","data":"It is Thu Jul 3 03:41:22 PDT 20"}
-7/3/25, 3:41:25 AM PDT: Parsed JSON: ["type": message.chunk, "data": It is Thu Jul 3 03:41:22 PDT 20]
-7/3/25, 3:41:25 AM PDT: Message chunk received: It is Thu Jul 3 03:41:22 PDT 20
-7/3/25, 3:41:25 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"25."}
-
-7/3/25, 3:41:25 AM PDT: Processing line: {"type":"message.chunk","data":"25."}
-7/3/25, 3:41:25 AM PDT: Parsed JSON: ["type": message.chunk, "data": 25.]
-7/3/25, 3:41:25 AM PDT: Message chunk received: 25.
-7/3/25, 3:41:27 AM PDT: CLI Raw Output: {"id":"C3FA5B32-B03D-4523-B62F-122FE0F13758","result":{"type":"message","data":{"response":"I can get the current date and time by running the `date` command.It is Thu Jul 3 03:41:22 PDT 2025.","tools":[{"name":"run_shell_command","parameters":{"command":"date","description":"Get the current date and time."},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
-
-7/3/25, 3:41:27 AM PDT: Processing line: {"id":"C3FA5B32-B03D-4523-B62F-122FE0F13758","result":{"type":"message","data":{"response":"I can get the current date and time by running the `date` command.It is Thu Jul 3 03:41:22 PDT 2025.","tools":[{"name":"run_shell_command","parameters":{"command":"date","description":"Get the current date and time."},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
-7/3/25, 3:41:27 AM PDT: Parsed JSON: ["result": {
+7/3/25, 3:46:35 AM PDT: Processing line: {"id":"082189CC-2C75-4A52-A4DB-60A7B7F85F88","result":{"type":"message","data":{"response":"It is Thursday, July 3, 2025 at 12:00 PM.","tools":[],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
+7/3/25, 3:46:35 AM PDT: Parsed JSON: ["result": {
     data =     {
-        response = "I can get the current date and time by running the `date` command.It is Thu Jul 3 03:41:22 PDT 2025.";
+        response = "It is Thursday, July 3, 2025 at 12:00 PM.";
         tokenUsage =         {
             completion = 0;
             prompt = 0;
             total = 0;
         };
         tools =         (
-                        {
-                approved = 1;
-                name = "run_shell_command";
-                parameters =                 {
-                    command = date;
-                    description = "Get the current date and time.";
-                };
-            }
         );
     };
     type = message;
-}, "id": C3FA5B32-B03D-4523-B62F-122FE0F13758]
-7/3/25, 3:41:27 AM PDT: IPC Response: message
-7/3/25, 3:41:27 AM PDT: Message complete for ID: C3FA5B32-B03D-4523-B62F-122FE0F13758
-7/3/25, 3:41:32 AM PDT: Setting approval mode to: ask
-7/3/25, 3:41:32 AM PDT: CLI Raw Output: {"id":"02B20875-7A76-4175-B1D3-25BD68C3DC8C","result":{"type":"success"}}
+}, "id": 082189CC-2C75-4A52-A4DB-60A7B7F85F88]
+7/3/25, 3:46:35 AM PDT: IPC Response: message
+7/3/25, 3:46:35 AM PDT: Message complete for ID: 082189CC-2C75-4A52-A4DB-60A7B7F85F88
+7/3/25, 3:47:03 AM PDT: SimpleCLIService: Initialized
+7/3/25, 3:47:04 AM PDT: Set working directory to: /Users/keithballinger/Desktop/projects/gemini-cli/gui
+7/3/25, 3:47:05 AM PDT: CLI Raw Output: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
 
-7/3/25, 3:41:32 AM PDT: Processing line: {"id":"02B20875-7A76-4175-B1D3-25BD68C3DC8C","result":{"type":"success"}}
-7/3/25, 3:41:32 AM PDT: Parsed JSON: ["result": {
-    type = success;
-}, "id": 02B20875-7A76-4175-B1D3-25BD68C3DC8C]
-7/3/25, 3:41:32 AM PDT: IPC Response: success
-7/3/25, 3:41:38 AM PDT: Sending request with ID: 34FAD96A-F0B3-4BE5-9AD5-C91FA1F4FE25 for message: Yo Gemini! What time is it?
-7/3/25, 3:41:40 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"I can get the current date and time by running the `date` command."}
-
-7/3/25, 3:41:40 AM PDT: Processing line: {"type":"message.chunk","data":"I can get the current date and time by running the `date` command."}
-7/3/25, 3:41:40 AM PDT: Parsed JSON: ["type": message.chunk, "data": I can get the current date and time by running the `date` command.]
-7/3/25, 3:41:40 AM PDT: Message chunk received: I can get the current date and time by running the `date` command.
-7/3/25, 3:41:41 AM PDT: CLI Raw Output: {"type":"tool.approval","data":{"id":"run_shell_command-1751539301026-c08eeedf73663","name":"run_shell_command","parameters":{"command":"date","description":"Get the current date and time."}}}
-
-7/3/25, 3:41:41 AM PDT: Processing line: {"type":"tool.approval","data":{"id":"run_shell_command-1751539301026-c08eeedf73663","name":"run_shell_command","parameters":{"command":"date","description":"Get the current date and time."}}}
-7/3/25, 3:41:41 AM PDT: Parsed JSON: ["data": {
-    id = "run_shell_command-1751539301026-c08eeedf73663";
-    name = "run_shell_command";
-    parameters =     {
-        command = date;
-        description = "Get the current date and time.";
-    };
-}, "type": tool.approval]
-7/3/25, 3:41:41 AM PDT: Tool Approval Request: ["parameters": {
-    command = date;
-    description = "Get the current date and time.";
-}, "name": run_shell_command, "id": run_shell_command-1751539301026-c08eeedf73663]
-7/3/25, 3:41:44 AM PDT: Sending tool approval: run_shell_command-1751539301026-c08eeedf73663 = true
-7/3/25, 3:41:44 AM PDT: CLI Raw Output: {"id":"6092DD85-9946-4539-8046-D6B921B50F60","result":{"type":"success"}}
-
-7/3/25, 3:41:44 AM PDT: Processing line: {"id":"6092DD85-9946-4539-8046-D6B921B50F60","result":{"type":"success"}}
-7/3/25, 3:41:44 AM PDT: Parsed JSON: ["result": {
-    type = success;
-}, "id": 6092DD85-9946-4539-8046-D6B921B50F60]
-7/3/25, 3:41:44 AM PDT: IPC Response: success
-7/3/25, 3:41:44 AM PDT: CLI Raw Output: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"command":"date","description":"Get the current date and time."}}}
-
-7/3/25, 3:41:44 AM PDT: Processing line: {"type":"tool.start","data":{"name":"run_shell_command","parameters":{"command":"date","description":"Get the current date and time."}}}
-7/3/25, 3:41:44 AM PDT: Parsed JSON: ["type": tool.start, "data": {
-    name = "run_shell_command";
-    parameters =     {
-        command = date;
-        description = "Get the current date and time.";
-    };
-}]
-7/3/25, 3:41:44 AM PDT: Tool Starting: run_shell_command with data: ["name": run_shell_command, "parameters": {
-    command = date;
-    description = "Get the current date and time.";
-}]
-7/3/25, 3:41:44 AM PDT: CLI Raw Output: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"Thu Jul  3 03:41:44 PDT 2025\n"}}
-
-7/3/25, 3:41:44 AM PDT: Processing line: {"type":"tool.end","data":{"name":"run_shell_command","success":true,"output":"Thu Jul  3 03:41:44 PDT 2025\n"}}
-7/3/25, 3:41:44 AM PDT: Parsed JSON: ["type": tool.end, "data": {
-    name = "run_shell_command";
-    output = "Thu Jul  3 03:41:44 PDT 2025\n";
-    success = 1;
-}]
-7/3/25, 3:41:44 AM PDT: Tool Completed: run_shell_command with data: ["success": 1, "output": Thu Jul  3 03:41:44 PDT 2025
-, "name": run_shell_command]
-7/3/25, 3:41:45 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"It"}
-
-7/3/25, 3:41:45 AM PDT: Processing line: {"type":"message.chunk","data":"It"}
-7/3/25, 3:41:45 AM PDT: Parsed JSON: ["data": It, "type": message.chunk]
-7/3/25, 3:41:45 AM PDT: Message chunk received: It
-7/3/25, 3:41:46 AM PDT: CLI Raw Output: {"type":"message.chunk","data":" is Thu Jul 3 03:41:44 PDT 20"}
-
-7/3/25, 3:41:46 AM PDT: Processing line: {"type":"message.chunk","data":" is Thu Jul 3 03:41:44 PDT 20"}
-7/3/25, 3:41:46 AM PDT: Parsed JSON: ["data":  is Thu Jul 3 03:41:44 PDT 20, "type": message.chunk]
-7/3/25, 3:41:46 AM PDT: Message chunk received:  is Thu Jul 3 03:41:44 PDT 20
-7/3/25, 3:41:46 AM PDT: CLI Raw Output: {"type":"message.chunk","data":"25."}
-
-7/3/25, 3:41:46 AM PDT: Processing line: {"type":"message.chunk","data":"25."}
-7/3/25, 3:41:46 AM PDT: Parsed JSON: ["data": 25., "type": message.chunk]
-7/3/25, 3:41:46 AM PDT: Message chunk received: 25.
-7/3/25, 3:41:47 AM PDT: CLI Raw Output: {"id":"34FAD96A-F0B3-4BE5-9AD5-C91FA1F4FE25","result":{"type":"message","data":{"response":"I can get the current date and time by running the `date` command.It is Thu Jul 3 03:41:44 PDT 2025.","tools":[{"name":"run_shell_command","parameters":{"command":"date","description":"Get the current date and time."},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
-
-7/3/25, 3:41:47 AM PDT: Processing line: {"id":"34FAD96A-F0B3-4BE5-9AD5-C91FA1F4FE25","result":{"type":"message","data":{"response":"I can get the current date and time by running the `date` command.It is Thu Jul 3 03:41:44 PDT 2025.","tools":[{"name":"run_shell_command","parameters":{"command":"date","description":"Get the current date and time."},"approved":true}],"tokenUsage":{"prompt":0,"completion":0,"total":0}}}}
-7/3/25, 3:41:47 AM PDT: Parsed JSON: ["result": {
+7/3/25, 3:47:05 AM PDT: Processing line: {"id":"init","result":{"type":"status","data":{"connected":true,"model":"gemini-2.5-pro","workingDirectory":"/Users/keithballinger/Desktop/projects/gemini-cli/gui"}}}
+7/3/25, 3:47:05 AM PDT: Parsed JSON: ["result": {
     data =     {
-        response = "I can get the current date and time by running the `date` command.It is Thu Jul 3 03:41:44 PDT 2025.";
-        tokenUsage =         {
-            completion = 0;
-            prompt = 0;
-            total = 0;
-        };
-        tools =         (
-                        {
-                approved = 1;
-                name = "run_shell_command";
-                parameters =                 {
-                    command = date;
-                    description = "Get the current date and time.";
-                };
-            }
-        );
+        connected = 1;
+        model = "gemini-2.5-pro";
+        workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
     };
-    type = message;
-}, "id": 34FAD96A-F0B3-4BE5-9AD5-C91FA1F4FE25]
-7/3/25, 3:41:47 AM PDT: IPC Response: message
-7/3/25, 3:41:47 AM PDT: Message complete for ID: 34FAD96A-F0B3-4BE5-9AD5-C91FA1F4FE25
+    type = status;
+}, "id": init]
+7/3/25, 3:47:05 AM PDT: IPC Response: status
+7/3/25, 3:47:05 AM PDT: IPC Connected: ["data": {
+    connected = 1;
+    model = "gemini-2.5-pro";
+    workingDirectory = "/Users/keithballinger/Desktop/projects/gemini-cli/gui";
+}, "type": status]
