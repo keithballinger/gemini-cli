@@ -135,11 +135,18 @@ class SimpleCLIService: ObservableObject {
         process.environment = environment
 
         // Set working directory to the gemini-cli project root
-        let workingDirectory = URL(fileURLWithPath: #file)
-            .deletingLastPathComponent() // Services
-            .deletingLastPathComponent() // Sources
-            .deletingLastPathComponent() // GeminiHUD
-            .deletingLastPathComponent() // gui
+        let fileURL = URL(fileURLWithPath: #file)
+        log("File URL: \(fileURL.path)")
+        let servicesURL = fileURL.deletingLastPathComponent()
+        log("After removing SimpleCLIService.swift: \(servicesURL.path)")
+        let sourcesURL = servicesURL.deletingLastPathComponent()
+        log("After removing Services: \(sourcesURL.path)")
+        let hudURL = sourcesURL.deletingLastPathComponent()
+        log("After removing Sources: \(hudURL.path)")
+        let guiURL = hudURL.deletingLastPathComponent()
+        log("After removing GeminiHUD: \(guiURL.path)")
+        let workingDirectory = guiURL.deletingLastPathComponent()
+        log("After removing gui: \(workingDirectory.path)")
         process.currentDirectoryURL = workingDirectory
         log("Set working directory to: \(workingDirectory.path)")
         

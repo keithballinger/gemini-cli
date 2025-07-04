@@ -1,6 +1,20 @@
 import SwiftUI
 import AppKit
 
+extension String {
+    func appendToFile(at path: String) throws {
+        let url = URL(fileURLWithPath: path)
+        if FileManager.default.fileExists(atPath: path) {
+            let fileHandle = try FileHandle(forWritingTo: url)
+            defer { fileHandle.closeFile() }
+            fileHandle.seekToEndOfFile()
+            fileHandle.write(self.data(using: .utf8)!)
+        } else {
+            try self.write(to: url, atomically: true, encoding: .utf8)
+        }
+    }
+}
+
 @main
 struct GeminiHUDApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -50,13 +64,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Request accessibility permissions if needed
         // KeyboardShortcutManager.requestAccessibilityPermissions()
         
-        // Handle URL scheme events for launching with folder
-        NSAppleEventManager.shared().setEventHandler(
-            self,
-            andSelector: #selector(handleGetURLEvent(_:withReplyEvent:)),
-            forEventClass: AEEventClass(kInternetEventClass),
-            andEventID: AEEventID(kAEGetURL)
-        )
+        // Register URL scheme handler after app is fully launched
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            print("AppDelegate: Registering URL scheme handler...")
+            NSAppleEventManager.shared().setEventHandler(
+                self,
+                andSelector: #selector(self.handleGetURLEvent(_:withReplyEvent:)),
+                forEventClass: AEEventClass(kInternetEventClass),
+                andEventID: AEEventID(kAEGetURL)
+            )
+        }
         
         // Auto-connect to IPC on startup
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -110,12 +127,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     
     @objc func handleGetURLEvent(_ event: NSAppleEventDescriptor, withReplyEvent: NSAppleEventDescriptor) {
+        // Create a debug file to confirm this is being called
+        let debugPath = "/tmp/gemini_url_debug.txt"
+        let timestamp = Date().description
+        try? "URL event received at \(timestamp)\n".appendToFile(at: debugPath)
+        
+        // Log to system console so we can see it
+        NSLog("AppDelegate: Received URL event!")
+        print("AppDelegate: Received URL event!")
+        
         guard let urlString = event.paramDescriptor(forKeyword: AEKeyword(keyDirectObject))?.stringValue,
-              let url = URL(string: urlString) else { return }
+              let url = URL(string: urlString) else { 
+            NSLog("AppDelegate: Failed to parse URL from event")
+            print("AppDelegate: Failed to parse URL from event")
+            try? "Failed to parse URL from event\n".appendToFile(at: debugPath)
+            return 
+        }
+        
+        NSLog("AppDelegate: Handling URL: \(url)")
+        print("AppDelegate: Handling URL: \(url)")
+        try? "Handling URL: \(url)\n".appendToFile(at: debugPath)
         
         if url.scheme == "gemini" && url.host == "launch" {
             // Extract folder path from URL
             let folderPath = url.path
+            NSLog("AppDelegate: Extracted folder path: \(folderPath)")
+            print("AppDelegate: Extracted folder path: \(folderPath)")
+            try? "Extracted folder path: \(folderPath)\n".appendToFile(at: debugPath)
             if !folderPath.isEmpty {
                 launchGeminiInFolder(folderPath)
             } else {

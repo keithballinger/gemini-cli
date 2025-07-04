@@ -18,6 +18,7 @@ import {
   ToolCallResponseInfo
 } from '@google/gemini-cli-core';
 import * as readline from 'node:readline';
+import * as path from 'node:path';
 import { EventEmitter } from 'node:events';
 
 interface IPCRequest {
@@ -46,11 +47,13 @@ export class IPCServer extends EventEmitter {
   private isRunning = false;
   private toolScheduler: CoreToolScheduler | null = null;
   private approvalMode: ApprovalMode = ApprovalMode.YOLO;
+  private currentWorkingDirectory: string;
   private pendingApprovals = new Map<string, any>();
 
   constructor(config: Config) {
     super();
     this.config = config;
+    this.currentWorkingDirectory = config.getTargetDir();
     
     // Set up readline interface for stdin/stdout
     this.rl = readline.createInterface({
@@ -283,6 +286,12 @@ export class IPCServer extends EventEmitter {
       // Execute any tool calls that were requested
       if (toolCallRequests.length > 0) {
         console.error(`IPC: Scheduling ${toolCallRequests.length} tool calls`);
+        console.error(`IPC: About to update shell command directories...`);
+        
+        // Modify shell commands to use the current working directory
+        this.updateShellCommandWorkingDirectories(toolCallRequests);
+        console.error(`IPC: Finished updating shell command directories`);
+        
         await toolScheduler.schedule(toolCallRequests, signal);
         // The onAllToolCallsComplete callback will handle React loop continuation
       } else {
@@ -432,6 +441,10 @@ export class IPCServer extends EventEmitter {
       // Execute any additional tool calls from the continuation
       if (toolCallRequests.length > 0) {
         console.error(`IPC: Scheduling ${toolCallRequests.length} continuation tool calls`);
+        
+        // Modify shell commands to use the current working directory
+        this.updateShellCommandWorkingDirectories(toolCallRequests);
+        
         await toolScheduler.schedule(toolCallRequests, signal);
         // onAllToolCallsComplete will handle further continuation or completion
       } else {
@@ -609,12 +622,40 @@ export class IPCServer extends EventEmitter {
     });
   }
 
+  private updateShellCommandWorkingDirectories(toolCallRequests: ToolCallRequestInfo[]) {
+    console.error(`IPC: Checking ${toolCallRequests.length} tool calls for shell commands`);
+    console.error(`IPC: Current working directory is: ${this.currentWorkingDirectory}`);
+    console.error(`IPC: Original target directory is: ${this.config.getTargetDir()}`);
+    
+    for (const request of toolCallRequests) {
+      console.error(`IPC: Tool call: ${request.name}`);
+      if (request.name === 'run_shell_command') {
+        // Calculate the relative path from the original target dir to the current working dir
+        const originalTargetDir = this.config.getTargetDir();
+        const relativePath = path.relative(originalTargetDir, this.currentWorkingDirectory);
+        
+        // Update the directory parameter to point to the current working directory
+        if (!request.args) {
+          request.args = {};
+        }
+        
+        console.error(`IPC: Original directory param: ${request.args.directory}`);
+        request.args.directory = relativePath || '.';
+        console.error(`IPC: Updated directory param to: ${request.args.directory} (absolute: ${this.currentWorkingDirectory})`);
+      }
+    }
+  }
+
   private async handleChangeWorkingDirectory(request: IPCRequest) {
     const { path } = request.params;
     
     try {
-      // Change the working directory
+      // Change the working directory for the current process
       process.chdir(path);
+      
+      // Store the new working directory for future use
+      this.currentWorkingDirectory = path;
+      
       console.error(`IPC: Changed working directory to: ${path}`);
       
       this.sendResponse({

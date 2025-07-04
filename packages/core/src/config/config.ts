@@ -303,6 +303,7 @@ export class Config {
     return this.targetDir;
   }
 
+
   getProjectRoot(): string {
     return this.targetDir;
   }
