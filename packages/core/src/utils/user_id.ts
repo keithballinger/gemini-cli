@@ -4,32 +4,29 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as os from 'os';
-import * as fs from 'fs';
-import * as path from 'path';
-import { randomUUID } from 'crypto';
+import { platform } from '../platform.js';
 import { GEMINI_DIR } from './paths.js';
 
-const homeDir = os.homedir() ?? '';
-const geminiDir = path.join(homeDir, GEMINI_DIR);
-const installationIdFile = path.join(geminiDir, 'installation_id');
+const homeDir = platform.os.homedir() ?? '';
+const geminiDir = platform.path.join(homeDir, GEMINI_DIR);
+const installationIdFile = platform.path.join(geminiDir, 'installation_id');
 
 function ensureGeminiDirExists() {
-  if (!fs.existsSync(geminiDir)) {
-    fs.mkdirSync(geminiDir, { recursive: true });
+  if (!platform.fs.existsSync(geminiDir)) {
+    platform.fs.mkdirSync(geminiDir, { recursive: true });
   }
 }
 
 function readInstallationIdFromFile(): string | null {
-  if (fs.existsSync(installationIdFile)) {
-    const installationid = fs.readFileSync(installationIdFile, 'utf-8').trim();
+  if (platform.fs.existsSync(installationIdFile)) {
+    const installationid = (platform.fs.readFileSync(installationIdFile, 'utf-8') as string).trim();
     return installationid || null;
   }
   return null;
 }
 
 function writeInstallationIdToFile(installationId: string) {
-  fs.writeFileSync(installationIdFile, installationId, 'utf-8');
+  platform.fs.writeFileSync(installationIdFile, installationId, 'utf-8');
 }
 
 /**
@@ -43,7 +40,7 @@ export function getInstallationId(): string {
     let installationId = readInstallationIdFromFile();
 
     if (!installationId) {
-      installationId = randomUUID();
+      installationId = platform.crypto.randomUUID();
       writeInstallationIdToFile(installationId);
     }
 

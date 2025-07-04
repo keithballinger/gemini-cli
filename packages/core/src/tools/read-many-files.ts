@@ -7,7 +7,7 @@
 import { BaseTool, ToolResult } from './tools.js';
 import { SchemaValidator } from '../utils/schemaValidator.js';
 import { getErrorMessage } from '../utils/errors.js';
-import * as path from 'path';
+import { platform } from '../platform.js';
 import { glob } from 'glob';
 import { getCurrentGeminiMdFilename } from './memoryTool.js';
 import {
@@ -195,7 +195,7 @@ This tool is useful when you need to understand or analyze a collection of files
 Use this tool when the user's query implies needing the content of several files simultaneously for context, analysis, or summarization. For text files, it uses default UTF-8 encoding and a '--- {filePath} ---' separator between file contents. Ensure paths are relative to the target directory. Glob patterns like 'src/**/*.js' are supported. Avoid using for single files if a more specific single-file reading tool is available, unless the user specifically requests to process a list containing just one file via this tool. Other binary files (not explicitly requested as image/PDF) are generally skipped. Default excludes apply to common non-text files (except for explicitly requested images/PDFs) and large dependency directories unless 'useDefaultExcludes' is false.`,
       parameterSchema,
     );
-    this.targetDir = path.resolve(targetDir);
+    this.targetDir = platform.path.resolve(targetDir);
     this.geminiIgnorePatterns = config
       .getFileService()
       .getGeminiIgnorePatterns();
@@ -333,12 +333,12 @@ Use this tool when the user's query implies needing the content of several files
       const filteredEntries = respectGitIgnore
         ? fileDiscovery
             .filterFiles(
-              entries.map((p) => path.relative(toolBaseDir, p)),
+              entries.map((p) => platform.path.relative(toolBaseDir, p)),
               {
                 respectGitIgnore,
               },
             )
-            .map((p) => path.resolve(toolBaseDir, p))
+            .map((p) => platform.path.resolve(toolBaseDir, p))
         : entries;
 
       let gitIgnoredCount = 0;
@@ -378,15 +378,15 @@ Use this tool when the user's query implies needing the content of several files
     const sortedFiles = Array.from(filesToConsider).sort();
 
     for (const filePath of sortedFiles) {
-      const relativePathForDisplay = path
+      const relativePathForDisplay = platform.path
         .relative(toolBaseDir, filePath)
         .replace(/\\/g, '/');
 
       const fileType = detectFileType(filePath);
 
       if (fileType === 'image' || fileType === 'pdf') {
-        const fileExtension = path.extname(filePath).toLowerCase();
-        const fileNameWithoutExtension = path.basename(filePath, fileExtension);
+        const fileExtension = platform.path.extname(filePath).toLowerCase();
+        const fileNameWithoutExtension = platform.path.basename(filePath, fileExtension);
         const requestedExplicitly = inputPatterns.some(
           (pattern: string) =>
             pattern.toLowerCase().includes(fileExtension) ||
@@ -435,7 +435,7 @@ Use this tool when the user's query implies needing the content of several files
           FileOperation.READ,
           lines,
           mimetype,
-          path.extname(filePath),
+          platform.path.extname(filePath),
         );
       }
     }

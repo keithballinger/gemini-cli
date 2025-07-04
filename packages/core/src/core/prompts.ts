@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import path from 'node:path';
-import fs from 'node:fs';
+import { platform } from '../platform.js';
 import { LSTool } from '../tools/ls.js';
 import { EditTool } from '../tools/edit.js';
 import { GlobTool } from '../tools/glob.js';
@@ -14,7 +13,6 @@ import { ReadFileTool } from '../tools/read-file.js';
 import { ReadManyFilesTool } from '../tools/read-many-files.js';
 import { ShellTool } from '../tools/shell.js';
 import { WriteFileTool } from '../tools/write-file.js';
-import process from 'node:process';
 import { isGitRepository } from '../utils/gitUtils.js';
 import { MemoryTool, GEMINI_CONFIG_DIR } from '../tools/memoryTool.js';
 
@@ -22,20 +20,20 @@ export function getCoreSystemPrompt(userMemory?: string): string {
   // if GEMINI_SYSTEM_MD is set (and not 0|false), override system prompt from file
   // default path is .gemini/system.md but can be modified via custom path in GEMINI_SYSTEM_MD
   let systemMdEnabled = false;
-  let systemMdPath = path.join(GEMINI_CONFIG_DIR, 'system.md');
-  const systemMdVar = process.env.GEMINI_SYSTEM_MD?.toLowerCase();
+  let systemMdPath = platform.path.join(GEMINI_CONFIG_DIR, 'system.md');
+  const systemMdVar = platform.process.env.GEMINI_SYSTEM_MD?.toLowerCase();
   if (systemMdVar && !['0', 'false'].includes(systemMdVar)) {
     systemMdEnabled = true; // enable system prompt override
     if (!['1', 'true'].includes(systemMdVar)) {
       systemMdPath = systemMdVar; // use custom path from GEMINI_SYSTEM_MD
     }
     // require file to exist when override is enabled
-    if (!fs.existsSync(systemMdPath)) {
+    if (!platform.fs.existsSync(systemMdPath)) {
       throw new Error(`missing system prompt file '${systemMdPath}'`);
     }
   }
   const basePrompt = systemMdEnabled
-    ? fs.readFileSync(systemMdPath, 'utf8')
+    ? platform.fs.readFileSync(systemMdPath, 'utf8')
     : `
 You are an interactive CLI agent specializing in software engineering tasks. Your primary goal is to help users safely and efficiently, adhering strictly to the following instructions and utilizing your available tools.
 
@@ -110,8 +108,8 @@ When requested to perform tasks like fixing bugs, adding features, refactoring, 
 
 ${(function () {
   // Determine sandbox status based on environment variables
-  const isSandboxExec = process.env.SANDBOX === 'sandbox-exec';
-  const isGenericSandbox = !!process.env.SANDBOX; // Check if SANDBOX is set to any non-empty value
+  const isSandboxExec = platform.process.env.SANDBOX === 'sandbox-exec';
+  const isGenericSandbox = !!platform.process.env.SANDBOX; // Check if SANDBOX is set to any non-empty value
 
   if (isSandboxExec) {
     return `
@@ -132,7 +130,7 @@ You are running outside of a sandbox container, directly on the user's system. F
 })()}
 
 ${(function () {
-  if (isGitRepository(process.cwd())) {
+  if (isGitRepository(platform.process.cwd())) {
     return `
 # Git Repository
 - The current working (project) directory is being managed by a git repository.
@@ -202,7 +200,7 @@ Refactoring complete. Running verification...
 (After verification passes)
 All checks passed. This is a stable checkpoint.
 ${(function () {
-  if (isGitRepository(process.cwd())) {
+  if (isGitRepository(platform.process.cwd())) {
     return `Would you like me to write a commit message and commit these changes?`;
   }
   return '';
@@ -255,12 +253,12 @@ Your core function is efficient and safe assistance. Balance extreme conciseness
 `.trim();
 
   // if GEMINI_WRITE_SYSTEM_MD is set (and not 0|false), write base system prompt to file
-  const writeSystemMdVar = process.env.GEMINI_WRITE_SYSTEM_MD?.toLowerCase();
+  const writeSystemMdVar = platform.process.env.GEMINI_WRITE_SYSTEM_MD?.toLowerCase();
   if (writeSystemMdVar && !['0', 'false'].includes(writeSystemMdVar)) {
     if (['1', 'true'].includes(writeSystemMdVar)) {
-      fs.writeFileSync(systemMdPath, basePrompt); // write to default path, can be modified via GEMINI_SYSTEM_MD
+      platform.fs.writeFileSync(systemMdPath, basePrompt); // write to default path, can be modified via GEMINI_SYSTEM_MD
     } else {
-      fs.writeFileSync(writeSystemMdVar, basePrompt); // write to custom path from GEMINI_WRITE_SYSTEM_MD
+      platform.fs.writeFileSync(writeSystemMdVar, basePrompt); // write to custom path from GEMINI_WRITE_SYSTEM_MD
     }
   }
 

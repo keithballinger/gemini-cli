@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import path from 'node:path';
-import os from 'os';
-import * as crypto from 'crypto';
+import { platform } from '../platform.js';
 
 export const GEMINI_DIR = '.gemini';
 const TMP_DIR_NAME = 'tmp';
@@ -17,7 +15,7 @@ const TMP_DIR_NAME = 'tmp';
  * @returns The tildeified path.
  */
 export function tildeifyPath(path: string): string {
-  const homeDir = os.homedir();
+  const homeDir = platform.os.homedir();
   if (path.startsWith(homeDir)) {
     return path.replace(homeDir, '~');
   }
@@ -33,9 +31,9 @@ export function shortenPath(filePath: string, maxLen: number = 35): string {
     return filePath;
   }
 
-  const parsedPath = path.parse(filePath);
+  const parsedPath = platform.path.parse(filePath);
   const root = parsedPath.root;
-  const separator = path.sep;
+  const separator = platform.path.sep;
 
   // Get segments of the path *after* the root
   const relativePath = filePath.substring(root.length);
@@ -107,10 +105,10 @@ export function makeRelative(
   targetPath: string,
   rootDirectory: string,
 ): string {
-  const resolvedTargetPath = path.resolve(targetPath);
-  const resolvedRootDirectory = path.resolve(rootDirectory);
+  const resolvedTargetPath = platform.path.resolve(targetPath);
+  const resolvedRootDirectory = platform.path.resolve(rootDirectory);
 
-  const relativePath = path.relative(resolvedRootDirectory, resolvedTargetPath);
+  const relativePath = platform.path.relative(resolvedRootDirectory, resolvedTargetPath);
 
   // If the paths are the same, path.relative returns '', return '.' instead
   return relativePath || '.';
@@ -145,7 +143,7 @@ export function unescapePath(filePath: string): string {
  * @returns A SHA256 hash of the project root path.
  */
 export function getProjectHash(projectRoot: string): string {
-  return crypto.createHash('sha256').update(projectRoot).digest('hex');
+  return platform.crypto.createHash('sha256').update(projectRoot).digest('hex');
 }
 
 /**
@@ -155,5 +153,5 @@ export function getProjectHash(projectRoot: string): string {
  */
 export function getProjectTempDir(projectRoot: string): string {
   const hash = getProjectHash(projectRoot);
-  return path.join(os.homedir(), GEMINI_DIR, TMP_DIR_NAME, hash);
+  return platform.path.join(platform.os.homedir(), GEMINI_DIR, TMP_DIR_NAME, hash);
 }

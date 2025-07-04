@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import { platform } from '../platform.js';
 import * as Diff from 'diff';
 import {
   BaseTool,
@@ -124,7 +123,7 @@ Expectation for required parameters:
       },
     );
     this.config = config;
-    this.rootDirectory = path.resolve(this.config.getTargetDir());
+    this.rootDirectory = platform.path.resolve(this.config.getTargetDir());
     this.client = config.getGeminiClient();
   }
 
@@ -134,11 +133,11 @@ Expectation for required parameters:
    * @returns True if the path is within the root directory, false otherwise.
    */
   private isWithinRoot(pathToCheck: string): boolean {
-    const normalizedPath = path.normalize(pathToCheck);
+    const normalizedPath = platform.path.normalize(pathToCheck);
     const normalizedRoot = this.rootDirectory;
-    const rootWithSep = normalizedRoot.endsWith(path.sep)
+    const rootWithSep = normalizedRoot.endsWith(platform.path.sep)
       ? normalizedRoot
-      : normalizedRoot + path.sep;
+      : normalizedRoot + platform.path.sep;
     return (
       normalizedPath === normalizedRoot ||
       normalizedPath.startsWith(rootWithSep)
@@ -161,7 +160,7 @@ Expectation for required parameters:
       return 'Parameters failed schema validation.';
     }
 
-    if (!path.isAbsolute(params.file_path)) {
+    if (!platform.path.isAbsolute(params.file_path)) {
       return `File path must be absolute: ${params.file_path}`;
     }
 
@@ -212,9 +211,9 @@ Expectation for required parameters:
     let error: { display: string; raw: string } | undefined = undefined;
 
     try {
-      currentContent = fs.readFileSync(params.file_path, 'utf8');
+      currentContent = platform.fs.readFileSync(params.file_path, 'utf8') as string;
       // Normalize line endings to LF for consistent processing.
-      currentContent = currentContent.replace(/\r\n/g, '\n');
+      currentContent = currentContent!.replace(/\r\n/g, '\n');
       fileExists = true;
     } catch (err: unknown) {
       if (!isNodeError(err) || err.code !== 'ENOENT') {
@@ -322,7 +321,7 @@ Expectation for required parameters:
       return false;
     }
 
-    const fileName = path.basename(params.file_path);
+    const fileName = platform.path.basename(params.file_path);
     const fileDiff = Diff.createPatch(
       fileName,
       editData.currentContent ?? '',
@@ -404,7 +403,7 @@ Expectation for required parameters:
 
     try {
       this.ensureParentDirectoriesExist(params.file_path);
-      fs.writeFileSync(params.file_path, editData.newContent, 'utf8');
+      platform.fs.writeFileSync(params.file_path, editData.newContent, 'utf8');
 
       let displayResult: ToolResultDisplay;
       if (editData.isNewFile) {
@@ -412,7 +411,7 @@ Expectation for required parameters:
       } else {
         // Generate diff for display, even though core logic doesn't technically need it
         // The CLI wrapper will use this part of the ToolResult
-        const fileName = path.basename(params.file_path);
+        const fileName = platform.path.basename(params.file_path);
         const fileDiff = Diff.createPatch(
           fileName,
           editData.currentContent ?? '', // Should not be null here if not isNewFile
@@ -452,9 +451,9 @@ Expectation for required parameters:
    * Creates parent directories if they don't exist
    */
   private ensureParentDirectoriesExist(filePath: string): void {
-    const dirName = path.dirname(filePath);
-    if (!fs.existsSync(dirName)) {
-      fs.mkdirSync(dirName, { recursive: true });
+    const dirName = platform.path.dirname(filePath);
+    if (!platform.fs.existsSync(dirName)) {
+      platform.fs.mkdirSync(dirName, { recursive: true });
     }
   }
 
@@ -463,7 +462,7 @@ Expectation for required parameters:
       getFilePath: (params: EditToolParams) => params.file_path,
       getCurrentContent: async (params: EditToolParams): Promise<string> => {
         try {
-          return fs.readFileSync(params.file_path, 'utf8');
+          return platform.fs.readFileSync(params.file_path, 'utf8') as string;
         } catch (err) {
           if (!isNodeError(err) || err.code !== 'ENOENT') throw err;
           return '';
@@ -471,9 +470,9 @@ Expectation for required parameters:
       },
       getProposedContent: async (params: EditToolParams): Promise<string> => {
         try {
-          const currentContent = fs.readFileSync(params.file_path, 'utf8');
+          const currentContent = platform.fs.readFileSync(params.file_path, 'utf8') as string;
           return this._applyReplacement(
-            currentContent,
+            currentContent as string,
             params.old_string,
             params.new_string,
             params.old_string === '' && currentContent === '',

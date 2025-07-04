@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import { platform } from '../platform.js';
 
 // Simple console logger for import processing
 const logger = {
@@ -91,7 +90,7 @@ export async function processImports(
       continue;
     }
 
-    const fullPath = path.resolve(basePath, importPath);
+    const fullPath = platform.path.resolve(basePath, importPath);
 
     if (debugMode) {
       logger.debug(`Processing import: ${importPath} -> ${fullPath}`);
@@ -125,8 +124,8 @@ export async function processImports(
 
     // Check for potential circular imports by looking at the import chain
     if (importState.currentFile) {
-      const currentFileDir = path.dirname(importState.currentFile);
-      const potentialCircularPath = path.resolve(currentFileDir, importPath);
+      const currentFileDir = platform.path.dirname(importState.currentFile);
+      const potentialCircularPath = platform.path.resolve(currentFileDir, importPath);
       if (potentialCircularPath === importState.currentFile) {
         if (debugMode) {
           logger.warn(`Circular import detected: ${importPath}`);
@@ -142,10 +141,10 @@ export async function processImports(
 
     try {
       // Check if the file exists
-      await fs.access(fullPath);
+      await platform.fs.promises.access(fullPath);
 
       // Read the imported file content
-      const importedContent = await fs.readFile(fullPath, 'utf-8');
+      const importedContent = await platform.fs.promises.readFile(fullPath, 'utf-8') as string;
 
       if (debugMode) {
         logger.debug(`Successfully read imported file: ${fullPath}`);
@@ -154,7 +153,7 @@ export async function processImports(
       // Recursively process imports in the imported content
       const processedImportedContent = await processImports(
         importedContent,
-        path.dirname(fullPath),
+        platform.path.dirname(fullPath),
         debugMode,
         {
           ...importState,
@@ -205,10 +204,10 @@ export function validateImportPath(
     return false;
   }
 
-  const resolvedPath = path.resolve(basePath, importPath);
+  const resolvedPath = platform.path.resolve(basePath, importPath);
 
   return allowedDirectories.some((allowedDir) => {
-    const normalizedAllowedDir = path.resolve(allowedDir);
+    const normalizedAllowedDir = platform.path.resolve(allowedDir);
     return resolvedPath.startsWith(normalizedAllowedDir);
   });
 }

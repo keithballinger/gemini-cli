@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import path from 'node:path';
-import { promises as fs } from 'node:fs';
+import { platform } from '../platform.js';
+const fs = platform.fs.promises;
 import { Content } from '@google/genai';
 import { getProjectTempDir } from '../utils/paths.js';
 
@@ -40,7 +40,7 @@ export class Logger {
       throw new Error('Log file path not set during read attempt.');
     }
     try {
-      const fileContent = await fs.readFile(this.logFilePath, 'utf-8');
+      const fileContent = await fs.readFile(this.logFilePath, 'utf-8') as string;
       const parsedLogs = JSON.parse(fileContent);
       if (!Array.isArray(parsedLogs)) {
         console.debug(
@@ -94,8 +94,8 @@ export class Logger {
       return;
     }
 
-    this.geminiDir = getProjectTempDir(process.cwd());
-    this.logFilePath = path.join(this.geminiDir, LOG_FILE_NAME);
+    this.geminiDir = getProjectTempDir(platform.process.cwd());
+    this.logFilePath = platform.path.join(this.geminiDir, LOG_FILE_NAME);
 
     try {
       await fs.mkdir(this.geminiDir, { recursive: true });
@@ -107,7 +107,7 @@ export class Logger {
       }
       this.logs = await this._readLogFile();
       if (!fileExisted && this.logs.length === 0) {
-        await fs.writeFile(this.logFilePath, '[]', 'utf-8');
+        await fs.writeFile(this.logFilePath, '[]');
       }
       const sessionLogs = this.logs.filter(
         (entry) => entry.sessionId === this.sessionId,
@@ -179,7 +179,6 @@ export class Logger {
       await fs.writeFile(
         this.logFilePath,
         JSON.stringify(currentLogsOnDisk, null, 2),
-        'utf-8',
       );
       this.logs = currentLogsOnDisk;
       return entryToAppend; // Return the successfully appended entry
@@ -238,7 +237,7 @@ export class Logger {
     if (!this.geminiDir) {
       throw new Error('Checkpoint file path not set.');
     }
-    return path.join(this.geminiDir, `checkpoint-${tag}.json`);
+    return platform.path.join(this.geminiDir, `checkpoint-${tag}.json`);
   }
 
   async saveCheckpoint(conversation: Content[], tag: string): Promise<void> {
@@ -250,7 +249,7 @@ export class Logger {
     }
     const path = this._checkpointPath(tag);
     try {
-      await fs.writeFile(path, JSON.stringify(conversation, null, 2), 'utf-8');
+      await fs.writeFile(path, JSON.stringify(conversation, null, 2));
     } catch (error) {
       console.error('Error writing to checkpoint file:', error);
     }
@@ -266,7 +265,7 @@ export class Logger {
 
     const path = this._checkpointPath(tag);
     try {
-      const fileContent = await fs.readFile(path, 'utf-8');
+      const fileContent = await fs.readFile(path, 'utf-8') as string;
       const parsedContent = JSON.parse(fileContent);
       if (!Array.isArray(parsedContent)) {
         console.warn(

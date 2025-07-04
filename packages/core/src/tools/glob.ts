@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import fs from 'fs';
-import path from 'path';
+import { platform } from '../platform.js';
 import { glob } from 'glob';
 import { SchemaValidator } from '../utils/schemaValidator.js';
 import { BaseTool, ToolResult } from './tools.js';
@@ -118,7 +117,7 @@ export class GlobTool extends BaseTool<GlobToolParams, ToolResult> {
       },
     );
 
-    this.rootDirectory = path.resolve(rootDirectory);
+    this.rootDirectory = platform.path.resolve(rootDirectory);
   }
 
   /**
@@ -129,12 +128,12 @@ export class GlobTool extends BaseTool<GlobToolParams, ToolResult> {
    * @returns True if the path is within the root directory, false otherwise
    */
   private isWithinRoot(pathToCheck: string): boolean {
-    const absolutePathToCheck = path.resolve(pathToCheck);
-    const normalizedPath = path.normalize(absolutePathToCheck);
-    const normalizedRoot = path.normalize(this.rootDirectory);
-    const rootWithSep = normalizedRoot.endsWith(path.sep)
+    const absolutePathToCheck = platform.path.resolve(pathToCheck);
+    const normalizedPath = platform.path.normalize(absolutePathToCheck);
+    const normalizedRoot = platform.path.normalize(this.rootDirectory);
+    const rootWithSep = normalizedRoot.endsWith(platform.path.sep)
       ? normalizedRoot
-      : normalizedRoot + path.sep;
+      : normalizedRoot + platform.path.sep;
     return (
       normalizedPath === normalizedRoot ||
       normalizedPath.startsWith(rootWithSep)
@@ -155,7 +154,7 @@ export class GlobTool extends BaseTool<GlobToolParams, ToolResult> {
       return "Parameters failed schema validation. Ensure 'pattern' is a string, 'path' (if provided) is a string, and 'case_sensitive' (if provided) is a boolean.";
     }
 
-    const searchDirAbsolute = path.resolve(
+    const searchDirAbsolute = platform.path.resolve(
       this.rootDirectory,
       params.path || '.',
     );
@@ -166,10 +165,10 @@ export class GlobTool extends BaseTool<GlobToolParams, ToolResult> {
 
     const targetDir = searchDirAbsolute || this.rootDirectory;
     try {
-      if (!fs.existsSync(targetDir)) {
+      if (!platform.fs.existsSync(targetDir)) {
         return `Search path does not exist ${targetDir}`;
       }
-      if (!fs.statSync(targetDir).isDirectory()) {
+      if (!platform.fs.statSync(targetDir).isDirectory()) {
         return `Search path is not a directory: ${targetDir}`;
       }
     } catch (e: unknown) {
@@ -193,7 +192,7 @@ export class GlobTool extends BaseTool<GlobToolParams, ToolResult> {
   getDescription(params: GlobToolParams): string {
     let description = `'${params.pattern}'`;
     if (params.path) {
-      const searchDir = path.resolve(this.rootDirectory, params.path || '.');
+      const searchDir = platform.path.resolve(this.rootDirectory, params.path || '.');
       const relativePath = makeRelative(searchDir, this.rootDirectory);
       description += ` within ${shortenPath(relativePath)}`;
     }
@@ -216,7 +215,7 @@ export class GlobTool extends BaseTool<GlobToolParams, ToolResult> {
     }
 
     try {
-      const searchDirAbsolute = path.resolve(
+      const searchDirAbsolute = platform.path.resolve(
         this.rootDirectory,
         params.path || '.',
       );
@@ -245,13 +244,13 @@ export class GlobTool extends BaseTool<GlobToolParams, ToolResult> {
 
       if (respectGitIgnore) {
         const relativePaths = entries.map((p) =>
-          path.relative(this.rootDirectory, p.fullpath()),
+          platform.path.relative(this.rootDirectory, p.fullpath()),
         );
         const filteredRelativePaths = fileDiscovery.filterFiles(relativePaths, {
           respectGitIgnore,
         });
         const filteredAbsolutePaths = new Set(
-          filteredRelativePaths.map((p) => path.resolve(this.rootDirectory, p)),
+          filteredRelativePaths.map((p) => platform.path.resolve(this.rootDirectory, p)),
         );
 
         filteredEntries = entries.filter((entry) =>

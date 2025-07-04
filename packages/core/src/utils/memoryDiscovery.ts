@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as fs from 'fs/promises';
-import * as fsSync from 'fs';
-import * as path from 'path';
-import { homedir } from 'os';
+import { platform } from '../platform.js';
 import { bfsFileSearch } from './bfsFileSearch.js';
 import {
   GEMINI_CONFIG_DIR,
@@ -37,11 +34,11 @@ interface GeminiFileContent {
 }
 
 async function findProjectRoot(startDir: string): Promise<string | null> {
-  let currentDir = path.resolve(startDir);
+  let currentDir = platform.path.resolve(startDir);
   while (true) {
-    const gitPath = path.join(currentDir, '.git');
+    const gitPath = platform.path.join(currentDir, '.git');
     try {
-      const stats = await fs.stat(gitPath);
+      const stats = await platform.fs.promises.stat(gitPath);
       if (stats.isDirectory()) {
         return currentDir;
       }
@@ -71,7 +68,7 @@ async function findProjectRoot(startDir: string): Promise<string | null> {
         }
       }
     }
-    const parentDir = path.dirname(currentDir);
+    const parentDir = platform.path.dirname(currentDir);
     if (parentDir === currentDir) {
       return null;
     }
@@ -90,9 +87,9 @@ async function getGeminiMdFilePathsInternal(
   const geminiMdFilenames = getAllGeminiMdFilenames();
 
   for (const geminiMdFilename of geminiMdFilenames) {
-    const resolvedCwd = path.resolve(currentWorkingDirectory);
-    const resolvedHome = path.resolve(userHomePath);
-    const globalMemoryPath = path.join(
+    const resolvedCwd = platform.path.resolve(currentWorkingDirectory);
+    const resolvedHome = platform.path.resolve(userHomePath);
+    const globalMemoryPath = platform.path.join(
       resolvedHome,
       GEMINI_CONFIG_DIR,
       geminiMdFilename,
@@ -105,7 +102,7 @@ async function getGeminiMdFilePathsInternal(
     if (debugMode) logger.debug(`User home directory: ${resolvedHome}`);
 
     try {
-      await fs.access(globalMemoryPath, fsSync.constants.R_OK);
+      await platform.fs.promises.access(globalMemoryPath);
       allPaths.add(globalMemoryPath);
       if (debugMode)
         logger.debug(
@@ -126,10 +123,10 @@ async function getGeminiMdFilePathsInternal(
     let currentDir = resolvedCwd;
     // Determine the directory that signifies the top of the project or user-specific space.
     const ultimateStopDir = projectRoot
-      ? path.dirname(projectRoot)
-      : path.dirname(resolvedHome);
+      ? platform.path.dirname(projectRoot)
+      : platform.path.dirname(resolvedHome);
 
-    while (currentDir && currentDir !== path.dirname(currentDir)) {
+    while (currentDir && currentDir !== platform.path.dirname(currentDir)) {
       // Loop until filesystem root or currentDir is empty
       if (debugMode) {
         logger.debug(
@@ -139,7 +136,7 @@ async function getGeminiMdFilePathsInternal(
 
       // Skip the global .gemini directory itself during upward scan from CWD,
       // as global is handled separately and explicitly first.
-      if (currentDir === path.join(resolvedHome, GEMINI_CONFIG_DIR)) {
+      if (currentDir === platform.path.join(resolvedHome, GEMINI_CONFIG_DIR)) {
         if (debugMode) {
           logger.debug(
             `Upward scan reached global config dir path, stopping upward search here: ${currentDir}`,
@@ -148,9 +145,9 @@ async function getGeminiMdFilePathsInternal(
         break;
       }
 
-      const potentialPath = path.join(currentDir, geminiMdFilename);
+      const potentialPath = platform.path.join(currentDir, geminiMdFilename);
       try {
-        await fs.access(potentialPath, fsSync.constants.R_OK);
+        await platform.fs.promises.access(potentialPath);
         // Add to upwardPaths only if it's not the already added globalMemoryPath
         if (potentialPath !== globalMemoryPath) {
           upwardPaths.unshift(potentialPath);
@@ -177,7 +174,7 @@ async function getGeminiMdFilePathsInternal(
         break;
       }
 
-      currentDir = path.dirname(currentDir);
+      currentDir = platform.path.dirname(currentDir);
     }
     upwardPaths.forEach((p) => allPaths.add(p));
 
@@ -223,12 +220,12 @@ async function readGeminiMdFiles(
   const results: GeminiFileContent[] = [];
   for (const filePath of filePaths) {
     try {
-      const content = await fs.readFile(filePath, 'utf-8');
+      const content = await platform.fs.promises.readFile(filePath, 'utf-8') as string;
 
       // Process imports in the content
       const processedContent = await processImports(
         content,
-        path.dirname(filePath),
+        platform.path.dirname(filePath),
         debugMode,
       );
 
@@ -264,8 +261,8 @@ function concatenateInstructions(
       if (trimmedContent.length === 0) {
         return null;
       }
-      const displayPath = path.isAbsolute(item.filePath)
-        ? path.relative(currentWorkingDirectoryForDisplay, item.filePath)
+      const displayPath = platform.path.isAbsolute(item.filePath)
+        ? platform.path.relative(currentWorkingDirectoryForDisplay, item.filePath)
         : item.filePath;
       return `--- Context from: ${displayPath} ---\n${trimmedContent}\n--- End of Context from: ${displayPath} ---`;
     })
@@ -289,7 +286,7 @@ export async function loadServerHierarchicalMemory(
     );
   // For the server, homedir() refers to the server process's home.
   // This is consistent with how MemoryTool already finds the global path.
-  const userHomePath = homedir();
+  const userHomePath = platform.os.homedir();
   const filePaths = await getGeminiMdFilePathsInternal(
     currentWorkingDirectory,
     userHomePath,

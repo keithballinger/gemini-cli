@@ -4,12 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import * as os from 'os';
+import { platform } from '../platform.js';
 import { isNodeError } from '../utils/errors.js';
 import { isGitRepository } from '../utils/gitUtils.js';
-import { exec } from 'node:child_process';
 import { simpleGit, SimpleGit, CheckRepoActions } from 'simple-git';
 import { getProjectHash, GEMINI_DIR } from '../utils/paths.js';
 
@@ -17,12 +14,12 @@ export class GitService {
   private projectRoot: string;
 
   constructor(projectRoot: string) {
-    this.projectRoot = path.resolve(projectRoot);
+    this.projectRoot = platform.path.resolve(projectRoot);
   }
 
   private getHistoryDir(): string {
     const hash = getProjectHash(this.projectRoot);
-    return path.join(os.homedir(), GEMINI_DIR, 'history', hash);
+    return platform.path.join(platform.os.homedir(), GEMINI_DIR, 'history', hash);
   }
 
   async initialize(): Promise<void> {
@@ -38,13 +35,12 @@ export class GitService {
 
   verifyGitAvailability(): Promise<boolean> {
     return new Promise((resolve) => {
-      exec('git --version', (error) => {
-        if (error) {
-          resolve(false);
-        } else {
-          resolve(true);
-        }
-      });
+      try {
+        platform.childProcess.execSync('git --version');
+        resolve(true);
+      } catch (error) {
+        resolve(false);
+      }
     });
   }
 
@@ -54,15 +50,15 @@ export class GitService {
    */
   async setupShadowGitRepository() {
     const repoDir = this.getHistoryDir();
-    const gitConfigPath = path.join(repoDir, '.gitconfig');
+    const gitConfigPath = platform.path.join(repoDir, '.gitconfig');
 
-    await fs.mkdir(repoDir, { recursive: true });
+    await platform.fs.promises.mkdir(repoDir, { recursive: true });
 
     // We don't want to inherit the user's name, email, or gpg signing
     // preferences for the shadow repository, so we create a dedicated gitconfig.
     const gitConfigContent =
       '[user]\n  name = Gemini CLI\n  email = gemini-cli@google.com\n[commit]\n  gpgsign = false\n';
-    await fs.writeFile(gitConfigPath, gitConfigContent);
+    await platform.fs.promises.writeFile(gitConfigPath, gitConfigContent);
 
     const repo = simpleGit(repoDir);
     const isRepoDefined = await repo.checkIsRepo(CheckRepoActions.IS_REPO_ROOT);
@@ -75,25 +71,25 @@ export class GitService {
       await repo.commit('Initial commit', { '--allow-empty': null });
     }
 
-    const userGitIgnorePath = path.join(this.projectRoot, '.gitignore');
-    const shadowGitIgnorePath = path.join(repoDir, '.gitignore');
+    const userGitIgnorePath = platform.path.join(this.projectRoot, '.gitignore');
+    const shadowGitIgnorePath = platform.path.join(repoDir, '.gitignore');
 
     let userGitIgnoreContent = '';
     try {
-      userGitIgnoreContent = await fs.readFile(userGitIgnorePath, 'utf-8');
+      userGitIgnoreContent = await platform.fs.promises.readFile(userGitIgnorePath, 'utf-8') as string;
     } catch (error) {
       if (isNodeError(error) && error.code !== 'ENOENT') {
         throw error;
       }
     }
 
-    await fs.writeFile(shadowGitIgnorePath, userGitIgnoreContent);
+    await platform.fs.promises.writeFile(shadowGitIgnorePath, userGitIgnoreContent);
   }
 
   private get shadowGitRepository(): SimpleGit {
     const repoDir = this.getHistoryDir();
     return simpleGit(this.projectRoot).env({
-      GIT_DIR: path.join(repoDir, '.git'),
+      GIT_DIR: platform.path.join(repoDir, '.git'),
       GIT_WORK_TREE: this.projectRoot,
       // Prevent git from using the user's global git config.
       HOME: repoDir,

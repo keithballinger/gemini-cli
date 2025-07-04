@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import { platform } from '../platform.js';
 
 /**
  * Checks if a directory is within a git repository
@@ -14,17 +13,17 @@ import * as path from 'path';
  */
 export function isGitRepository(directory: string): boolean {
   try {
-    let currentDir = path.resolve(directory);
+    let currentDir = platform.path.resolve(directory);
 
     while (true) {
-      const gitDir = path.join(currentDir, '.git');
+      const gitDir = platform.path.join(currentDir, '.git');
 
       // Check if .git exists (either as directory or file for worktrees)
-      if (fs.existsSync(gitDir)) {
+      if (platform.fs.existsSync(gitDir)) {
         return true;
       }
 
-      const parentDir = path.dirname(currentDir);
+      const parentDir = platform.path.dirname(currentDir);
 
       // If we've reached the root directory, stop searching
       if (parentDir === currentDir) {
@@ -48,16 +47,16 @@ export function isGitRepository(directory: string): boolean {
  */
 export function findGitRoot(directory: string): string | null {
   try {
-    let currentDir = path.resolve(directory);
+    let currentDir = platform.path.resolve(directory);
 
     while (true) {
-      const gitDir = path.join(currentDir, '.git');
+      const gitDir = platform.path.join(currentDir, '.git');
 
-      if (fs.existsSync(gitDir)) {
+      if (platform.fs.existsSync(gitDir)) {
         return currentDir;
       }
 
-      const parentDir = path.dirname(currentDir);
+      const parentDir = platform.path.dirname(currentDir);
 
       if (parentDir === currentDir) {
         break;

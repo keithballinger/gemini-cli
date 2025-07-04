@@ -7,7 +7,7 @@
 import { FunctionDeclaration } from '@google/genai';
 import { Tool, ToolResult, BaseTool } from './tools.js';
 import { Config } from '../config/config.js';
-import { spawn, execSync } from 'node:child_process';
+import { platform } from '../platform.js';
 import { discoverMcpTools } from './mcp-client.js';
 import { DiscoveredMCPTool } from './mcp-tool.js';
 
@@ -50,7 +50,7 @@ Signal: Signal number or \`(none)\` if no signal was received.
 
   async execute(params: ToolParams): Promise<ToolResult> {
     const callCommand = this.config.getToolCallCommand()!;
-    const child = spawn(callCommand, [this.name]);
+    const child = platform.childProcess.spawn(callCommand, [this.name]);
     child.stdin.write(JSON.stringify(params));
     child.stdin.end();
 
@@ -162,7 +162,7 @@ export class ToolRegistry {
     if (discoveryCmd) {
       // execute discovery command and extract function declarations (w/ or w/o "tool" wrappers)
       const functions: FunctionDeclaration[] = [];
-      for (const tool of JSON.parse(execSync(discoveryCmd).toString().trim())) {
+      for (const tool of JSON.parse(platform.childProcess.execSync(discoveryCmd).toString().trim())) {
         if (tool['function_declarations']) {
           functions.push(...tool['function_declarations']);
         } else if (tool['functionDeclarations']) {

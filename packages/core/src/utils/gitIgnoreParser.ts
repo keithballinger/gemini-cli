@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import { platform } from '../platform.js';
 import ignore, { type Ignore } from 'ignore';
 import { isGitRepository } from './gitUtils.js';
 
@@ -20,7 +19,7 @@ export class GitIgnoreParser implements GitIgnoreFilter {
   private patterns: string[] = [];
 
   constructor(projectRoot: string) {
-    this.projectRoot = path.resolve(projectRoot);
+    this.projectRoot = platform.path.resolve(projectRoot);
   }
 
   loadGitRepoPatterns(): void {
@@ -29,17 +28,17 @@ export class GitIgnoreParser implements GitIgnoreFilter {
     // Always ignore .git directory regardless of .gitignore content
     this.addPatterns(['.git']);
 
-    const patternFiles = ['.gitignore', path.join('.git', 'info', 'exclude')];
+    const patternFiles = ['.gitignore', platform.path.join('.git', 'info', 'exclude')];
     for (const pf of patternFiles) {
       this.loadPatterns(pf);
     }
   }
 
   loadPatterns(patternsFileName: string): void {
-    const patternsFilePath = path.join(this.projectRoot, patternsFileName);
+    const patternsFilePath = platform.path.join(this.projectRoot, patternsFileName);
     let content: string;
     try {
-      content = fs.readFileSync(patternsFilePath, 'utf-8');
+      content = platform.fs.readFileSync(patternsFilePath, 'utf-8') as string;
     } catch (_error) {
       // ignore file not found
       return;
@@ -57,8 +56,8 @@ export class GitIgnoreParser implements GitIgnoreFilter {
   }
 
   isIgnored(filePath: string): boolean {
-    const relativePath = path.isAbsolute(filePath)
-      ? path.relative(this.projectRoot, filePath)
+    const relativePath = platform.path.isAbsolute(filePath)
+      ? platform.path.relative(this.projectRoot, filePath)
       : filePath;
 
     if (relativePath === '' || relativePath.startsWith('..')) {

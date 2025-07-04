@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Buffer } from 'buffer';
-import * as https from 'https';
+import { platform } from '../../platform.js';
 import {
   StartSessionEvent,
   EndSessionEvent,
@@ -19,6 +18,7 @@ import { EventMetadataKey } from './event-metadata-key.js';
 import { Config } from '../../config/config.js';
 import { getInstallationId } from '../../utils/user_id.js';
 import { getGoogleAccountId } from '../../utils/user_id.js';
+import * as https from 'https';
 
 const start_session_event_name = 'start_session';
 const new_prompt_event_name = 'new_prompt';

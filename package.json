@@ -44,6 +44,7 @@
     "prerelease:dev": "npm run prerelease:version --workspaces && npm run prerelease:deps --workspaces",
     "bundle": "npm run generate && node esbuild.config.js && node scripts/copy_bundle_assets.js",
     "build:packages": "npm run build --workspaces",
+    "build:browser": "npm run build --workspace=@google/gemini-cli-browser",
     "build:sandbox:fast": "node scripts/build_sandbox.js --skip-npm-install-build",
     "prepare:package": "node scripts/prepare-package.js",
     "publish:sandbox": "node scripts/publish-sandbox.js",

@@ -6,7 +6,7 @@
 
 import { GitIgnoreParser, GitIgnoreFilter } from '../utils/gitIgnoreParser.js';
 import { isGitRepository } from '../utils/gitUtils.js';
-import * as path from 'path';
+import { platform } from '../platform.js';
 
 const GEMINI_IGNORE_FILE_NAME = '.geminiignore';
 
@@ -21,7 +21,7 @@ export class FileDiscoveryService {
   private projectRoot: string;
 
   constructor(projectRoot: string) {
-    this.projectRoot = path.resolve(projectRoot);
+    this.projectRoot = platform.path.resolve(projectRoot);
     if (isGitRepository(this.projectRoot)) {
       const parser = new GitIgnoreParser(this.projectRoot);
       try {

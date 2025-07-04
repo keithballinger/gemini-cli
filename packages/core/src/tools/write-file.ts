@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import fs from 'fs';
-import path from 'path';
+import { platform } from '../platform.js';
 import * as Diff from 'diff';
 import { Config, ApprovalMode } from '../config/config.js';
 import {
@@ -104,11 +103,11 @@ export class WriteFileTool
    * @returns True if the path is within the root directory, false otherwise
    */
   private isWithinRoot(pathToCheck: string): boolean {
-    const normalizedPath = path.normalize(pathToCheck);
-    const normalizedRoot = path.normalize(this.config.getTargetDir());
-    const rootWithSep = normalizedRoot.endsWith(path.sep)
+    const normalizedPath = platform.path.normalize(pathToCheck);
+    const normalizedRoot = platform.path.normalize(this.config.getTargetDir());
+    const rootWithSep = normalizedRoot.endsWith(platform.path.sep)
       ? normalizedRoot
-      : normalizedRoot + path.sep;
+      : normalizedRoot + platform.path.sep;
     return (
       normalizedPath === normalizedRoot ||
       normalizedPath.startsWith(rootWithSep)
@@ -126,7 +125,7 @@ export class WriteFileTool
       return 'Parameters failed schema validation.';
     }
     const filePath = params.file_path;
-    if (!path.isAbsolute(filePath)) {
+    if (!platform.path.isAbsolute(filePath)) {
       return `File path must be absolute: ${filePath}`;
     }
     if (!this.isWithinRoot(filePath)) {
@@ -136,8 +135,8 @@ export class WriteFileTool
     try {
       // This check should be performed only if the path exists.
       // If it doesn't exist, it's a new file, which is valid for writing.
-      if (fs.existsSync(filePath)) {
-        const stats = fs.lstatSync(filePath);
+      if (platform.fs.existsSync(filePath)) {
+        const stats = platform.fs.lstatSync(filePath);
         if (stats.isDirectory()) {
           return `Path is a directory, not a file: ${filePath}`;
         }
@@ -194,7 +193,7 @@ export class WriteFileTool
       params.file_path,
       this.config.getTargetDir(),
     );
-    const fileName = path.basename(params.file_path);
+    const fileName = platform.path.basename(params.file_path);
 
     const fileDiff = Diff.createPatch(
       fileName,
@@ -259,15 +258,15 @@ export class WriteFileTool
         !correctedContentResult.fileExists);
 
     try {
-      const dirName = path.dirname(params.file_path);
-      if (!fs.existsSync(dirName)) {
-        fs.mkdirSync(dirName, { recursive: true });
+      const dirName = platform.path.dirname(params.file_path);
+      if (!platform.fs.existsSync(dirName)) {
+        platform.fs.mkdirSync(dirName, { recursive: true });
       }
 
-      fs.writeFileSync(params.file_path, fileContent, 'utf8');
+      platform.fs.writeFileSync(params.file_path, fileContent, 'utf8');
 
       // Generate diff for display result
-      const fileName = path.basename(params.file_path);
+      const fileName = platform.path.basename(params.file_path);
       // If there was a readError, originalContent in correctedContentResult is '',
       // but for the diff, we want to show the original content as it was before the write if possible.
       // However, if it was unreadable, currentContentForDiff will be empty.
@@ -299,7 +298,7 @@ export class WriteFileTool
 
       const lines = fileContent.split('\n').length;
       const mimetype = getSpecificMimeType(params.file_path);
-      const extension = path.extname(params.file_path); // Get extension
+      const extension = platform.path.extname(params.file_path); // Get extension
       if (isNewFile) {
         recordFileOperationMetric(
           this.config,
@@ -341,7 +340,7 @@ export class WriteFileTool
     let correctedContent = proposedContent;
 
     try {
-      originalContent = fs.readFileSync(filePath, 'utf8');
+      originalContent = platform.fs.readFileSync(filePath, 'utf8') as string;
       fileExists = true; // File exists and was read
     } catch (err) {
       if (isNodeError(err) && err.code === 'ENOENT') {

@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import fs from 'fs';
-import fsPromises from 'fs/promises';
-import path from 'path';
-import { EOL } from 'os';
-import { spawn } from 'child_process';
+import { platform } from '../platform.js';
+const fs = platform.fs;
+const fsPromises = platform.fs.promises;
+const EOL = platform.os.EOL;
 import { globStream } from 'glob';
 import { BaseTool, ToolResult } from './tools.js';
 import { SchemaValidator } from '../utils/schemaValidator.js';
@@ -87,7 +86,7 @@ export class GrepTool extends BaseTool<GrepToolParams, ToolResult> {
       },
     );
     // Ensure rootDirectory is absolute and normalized
-    this.rootDirectory = path.resolve(rootDirectory);
+    this.rootDirectory = platform.path.resolve(rootDirectory);
   }
 
   // --- Validation Methods ---
@@ -99,7 +98,7 @@ export class GrepTool extends BaseTool<GrepToolParams, ToolResult> {
    * @throws {Error} If path is outside root, doesn't exist, or isn't a directory.
    */
   private resolveAndValidatePath(relativePath?: string): string {
-    const targetPath = path.resolve(this.rootDirectory, relativePath || '.');
+    const targetPath = platform.path.resolve(this.rootDirectory, relativePath || '.');
 
     // Security Check: Ensure the resolved path is still within the root directory.
     if (
@@ -199,10 +198,10 @@ export class GrepTool extends BaseTool<GrepToolParams, ToolResult> {
       const matchesByFile = matches.reduce(
         (acc, match) => {
           const relativeFilePath =
-            path.relative(
+            platform.path.relative(
               searchDirAbs,
-              path.resolve(searchDirAbs, match.filePath),
-            ) || path.basename(match.filePath);
+              platform.path.resolve(searchDirAbs, match.filePath),
+            ) || platform.path.basename(match.filePath);
           if (!acc[relativeFilePath]) {
             acc[relativeFilePath] = [];
           }
@@ -254,11 +253,11 @@ export class GrepTool extends BaseTool<GrepToolParams, ToolResult> {
       const checkArgs =
         process.platform === 'win32' ? [command] : ['-v', command];
       try {
-        const child = spawn(checkCommand, checkArgs, {
+        const child = platform.childProcess.spawn(checkCommand, checkArgs, {
           stdio: 'ignore',
           shell: process.platform === 'win32',
         });
-        child.on('close', (code) => resolve(code === 0));
+        child.on('close', (code: number | null) => resolve(code === 0));
         child.on('error', () => resolve(false));
       } catch {
         resolve(false);
@@ -302,11 +301,11 @@ export class GrepTool extends BaseTool<GrepToolParams, ToolResult> {
       const lineNumber = parseInt(lineNumberStr, 10);
 
       if (!isNaN(lineNumber)) {
-        const absoluteFilePath = path.resolve(basePath, filePathRaw);
-        const relativeFilePath = path.relative(basePath, absoluteFilePath);
+        const absoluteFilePath = platform.path.resolve(basePath, filePathRaw);
+        const relativeFilePath = platform.path.relative(basePath, absoluteFilePath);
 
         results.push({
-          filePath: relativeFilePath || path.basename(absoluteFilePath),
+          filePath: relativeFilePath || platform.path.basename(absoluteFilePath),
           lineNumber,
           line: lineContent,
         });
@@ -326,7 +325,7 @@ export class GrepTool extends BaseTool<GrepToolParams, ToolResult> {
       description += ` in ${params.include}`;
     }
     if (params.path) {
-      const resolvedPath = path.resolve(this.rootDirectory, params.path);
+      const resolvedPath = platform.path.resolve(this.rootDirectory, params.path);
       if (resolvedPath === this.rootDirectory || params.path === '.') {
         description += ` within ./`;
       } else {
@@ -372,19 +371,19 @@ export class GrepTool extends BaseTool<GrepToolParams, ToolResult> {
 
         try {
           const output = await new Promise<string>((resolve, reject) => {
-            const child = spawn('git', gitArgs, {
+            const child = platform.childProcess.spawn('git', gitArgs, {
               cwd: absolutePath,
               windowsHide: true,
             });
             const stdoutChunks: Buffer[] = [];
             const stderrChunks: Buffer[] = [];
 
-            child.stdout.on('data', (chunk) => stdoutChunks.push(chunk));
-            child.stderr.on('data', (chunk) => stderrChunks.push(chunk));
-            child.on('error', (err) =>
+            child.stdout.on('data', (chunk: Buffer) => stdoutChunks.push(chunk));
+            child.stderr.on('data', (chunk: Buffer) => stderrChunks.push(chunk));
+            child.on('error', (err: Error) =>
               reject(new Error(`Failed to start git grep: ${err.message}`)),
             );
-            child.on('close', (code) => {
+            child.on('close', (code: number | null) => {
               const stdoutData = Buffer.concat(stdoutChunks).toString('utf8');
               const stderrData = Buffer.concat(stderrChunks).toString('utf8');
               if (code === 0) resolve(stdoutData);
@@ -419,7 +418,7 @@ export class GrepTool extends BaseTool<GrepToolParams, ToolResult> {
 
         try {
           const output = await new Promise<string>((resolve, reject) => {
-            const child = spawn('grep', grepArgs, {
+            const child = platform.childProcess.spawn('grep', grepArgs, {
               cwd: absolutePath,
               windowsHide: true,
             });
@@ -513,14 +512,14 @@ export class GrepTool extends BaseTool<GrepToolParams, ToolResult> {
       for await (const filePath of filesStream) {
         const fileAbsolutePath = filePath as string;
         try {
-          const content = await fsPromises.readFile(fileAbsolutePath, 'utf8');
+          const content = await fsPromises.readFile(fileAbsolutePath, 'utf8') as string;
           const lines = content.split(/\r?\n/);
-          lines.forEach((line, index) => {
+          lines.forEach((line: string, index: number) => {
             if (regex.test(line)) {
               allMatches.push({
                 filePath:
-                  path.relative(absolutePath, fileAbsolutePath) ||
-                  path.basename(fileAbsolutePath),
+                  platform.path.relative(absolutePath, fileAbsolutePath) ||
+                  platform.path.basename(fileAbsolutePath),
                 lineNumber: index + 1,
                 line,
               });

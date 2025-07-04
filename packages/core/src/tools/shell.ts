@@ -4,10 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-import crypto from 'crypto';
+import { platform } from '../platform.js';
 import { Config } from '../config/config.js';
 import {
   BaseTool,
@@ -25,7 +22,6 @@ export interface ShellToolParams {
   description?: string;
   directory?: string;
 }
-import { spawn } from 'child_process';
 
 const OUTPUT_UPDATE_INTERVAL_MS = 1000;
 
@@ -215,14 +211,14 @@ Process Group PGID: Process group started or \`(none)\``,
       return 'Could not identify command root to obtain permission from user.';
     }
     if (params.directory) {
-      if (path.isAbsolute(params.directory)) {
+      if (platform.path.isAbsolute(params.directory)) {
         return 'Directory cannot be absolute. Must be relative to the project root directory.';
       }
-      const directory = path.resolve(
+      const directory = platform.path.resolve(
         this.config.getTargetDir(),
         params.directory,
       );
-      if (!fs.existsSync(directory)) {
+      if (!platform.fs.existsSync(directory)) {
         return 'Directory must exist.';
       }
     }
@@ -277,11 +273,11 @@ Process Group PGID: Process group started or \`(none)\``,
       };
     }
 
-    const isWindows = os.platform() === 'win32';
-    const tempFileName = `shell_pgrep_${crypto
+    const isWindows = platform.os.platform() === 'win32';
+    const tempFileName = `shell_pgrep_${platform.crypto
       .randomBytes(6)
       .toString('hex')}.tmp`;
-    const tempFilePath = path.join(os.tmpdir(), tempFileName);
+    const tempFilePath = platform.path.join(platform.os.tmpdir(), tempFileName);
 
     // pgrep is not available on Windows, so we can't get background PIDs
     const command = isWindows
@@ -295,15 +291,15 @@ Process Group PGID: Process group started or \`(none)\``,
 
     // spawn command in specified directory (or project root if not specified)
     const shell = isWindows
-      ? spawn('cmd.exe', ['/c', command], {
+      ? platform.childProcess.spawn('cmd.exe', ['/c', command], {
           stdio: ['ignore', 'pipe', 'pipe'],
           // detached: true, // ensure subprocess starts its own process group (esp. in Linux)
-          cwd: path.resolve(this.config.getTargetDir(), params.directory || ''),
+          cwd: platform.path.resolve(this.config.getTargetDir(), params.directory || ''),
         })
-      : spawn('bash', ['-c', command], {
+      : platform.childProcess.spawn('bash', ['-c', command], {
           stdio: ['ignore', 'pipe', 'pipe'],
           detached: true, // ensure subprocess starts its own process group (esp. in Linux)
-          cwd: path.resolve(this.config.getTargetDir(), params.directory || ''),
+          cwd: platform.path.resolve(this.config.getTargetDir(), params.directory || ''),
         });
 
     let exited = false;
@@ -363,9 +359,9 @@ Process Group PGID: Process group started or \`(none)\``,
 
     const abortHandler = async () => {
       if (shell.pid && !exited) {
-        if (os.platform() === 'win32') {
+        if (platform.os.platform() === 'win32') {
           // For Windows, use taskkill to kill the process tree
-          spawn('taskkill', ['/pid', shell.pid.toString(), '/f', '/t']);
+          platform.childProcess.spawn('taskkill', ['/pid', shell.pid.toString(), '/f', '/t']);
         } else {
           try {
             // attempt to SIGTERM process group (negative PID)
@@ -399,10 +395,10 @@ Process Group PGID: Process group started or \`(none)\``,
 
     // parse pids (pgrep output) from temporary file and remove it
     const backgroundPIDs: number[] = [];
-    if (os.platform() !== 'win32') {
-      if (fs.existsSync(tempFilePath)) {
-        const pgrepLines = fs
-          .readFileSync(tempFilePath, 'utf8')
+    if (platform.os.platform() !== 'win32') {
+      if (platform.fs.existsSync(tempFilePath)) {
+        const pgrepLines = (platform.fs
+          .readFileSync(tempFilePath, 'utf8') as string)
           .split('\n')
           .filter(Boolean);
         for (const line of pgrepLines) {
@@ -415,7 +411,7 @@ Process Group PGID: Process group started or \`(none)\``,
             backgroundPIDs.push(pid);
           }
         }
-        fs.unlinkSync(tempFilePath);
+        platform.fs.unlinkSync(tempFilePath);
       } else {
         if (!abortSignal.aborted) {
           console.error('missing pgrep output');

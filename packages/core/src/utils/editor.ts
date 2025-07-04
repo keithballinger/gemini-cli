@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { execSync, spawn } from 'child_process';
+import { platform } from '../platform.js';
 
 export type EditorType =
   | 'vscode'
@@ -34,8 +34,8 @@ interface DiffCommand {
 
 function commandExists(cmd: string): boolean {
   try {
-    execSync(
-      process.platform === 'win32' ? `where.exe ${cmd}` : `command -v ${cmd}`,
+    platform.childProcess.execSync(
+      platform.process.platform === 'win32' ? `where.exe ${cmd}` : `command -v ${cmd}`,
       { stdio: 'ignore' },
     );
     return true;
@@ -57,12 +57,12 @@ const editorCommands: Record<EditorType, { win32: string; default: string }> = {
 export function checkHasEditorType(editor: EditorType): boolean {
   const commandConfig = editorCommands[editor];
   const command =
-    process.platform === 'win32' ? commandConfig.win32 : commandConfig.default;
+    platform.process.platform === 'win32' ? commandConfig.win32 : commandConfig.default;
   return commandExists(command);
 }
 
 export function allowEditorTypeInSandbox(editor: EditorType): boolean {
-  const notUsingSandbox = !process.env.SANDBOX;
+  const notUsingSandbox = !platform.process.env.SANDBOX;
   if (['vscode', 'vscodium', 'windsurf', 'cursor', 'zed'].includes(editor)) {
     return notUsingSandbox;
   }
@@ -93,7 +93,7 @@ export function getDiffCommand(
   }
   const commandConfig = editorCommands[editor];
   const command =
-    process.platform === 'win32' ? commandConfig.win32 : commandConfig.default;
+    platform.process.platform === 'win32' ? commandConfig.win32 : commandConfig.default;
   switch (editor) {
     case 'vscode':
     case 'vscodium':
@@ -160,12 +160,12 @@ export async function openDiff(
       case 'zed':
         // Use spawn for GUI-based editors to avoid blocking the entire process
         return new Promise((resolve, reject) => {
-          const childProcess = spawn(diffCommand.command, diffCommand.args, {
+          const childProcess = platform.childProcess.spawn(diffCommand.command, diffCommand.args, {
             stdio: 'inherit',
             shell: true,
           });
 
-          childProcess.on('close', (code) => {
+          childProcess.on('close', (code: number | null) => {
             if (code === 0) {
               resolve();
             } else {
@@ -173,7 +173,7 @@ export async function openDiff(
             }
           });
 
-          childProcess.on('error', (error) => {
+          childProcess.on('error', (error: Error) => {
             reject(error);
           });
         });
@@ -182,10 +182,10 @@ export async function openDiff(
       case 'neovim': {
         // Use execSync for terminal-based editors
         const command =
-          process.platform === 'win32'
+          platform.process.platform === 'win32'
             ? `${diffCommand.command} ${diffCommand.args.join(' ')}`
             : `${diffCommand.command} ${diffCommand.args.map((arg) => `"${arg}"`).join(' ')}`;
-        execSync(command, {
+        platform.childProcess.execSync(command, {
           stdio: 'inherit',
           encoding: 'utf8',
         });

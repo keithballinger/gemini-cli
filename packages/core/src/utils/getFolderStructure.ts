@@ -4,9 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as fs from 'fs/promises';
-import { Dirent } from 'fs';
-import * as path from 'path';
+import { platform } from '../platform.js';
+import { DirectoryEntry } from '../platform.js';
 import { getErrorMessage, isNodeError } from './errors.js';
 import { FileDiscoveryService } from '../services/fileDiscoveryService.js';
 
@@ -59,7 +58,7 @@ async function readFullStructure(
   rootPath: string,
   options: MergedFolderStructureOptions,
 ): Promise<FullFolderInfo | null> {
-  const rootName = path.basename(rootPath);
+  const rootName = platform.path.basename(rootPath);
   const rootNode: FullFolderInfo = {
     name: rootName,
     path: rootPath,
@@ -92,9 +91,9 @@ async function readFullStructure(
       continue;
     }
 
-    let entries: Dirent[];
+    let entries: DirectoryEntry[];
     try {
-      const rawEntries = await fs.readdir(currentPath, { withFileTypes: true });
+      const rawEntries = await platform.fs.readdir(currentPath);
       // Sort entries alphabetically by name for consistent processing order
       entries = rawEntries.sort((a, b) => a.name.localeCompare(b.name));
     } catch (error: unknown) {
@@ -125,7 +124,7 @@ async function readFullStructure(
           break;
         }
         const fileName = entry.name;
-        const filePath = path.join(currentPath, fileName);
+        const filePath = platform.path.join(currentPath, fileName);
         if (options.respectGitIgnore && options.fileService) {
           if (options.fileService.shouldGitIgnoreFile(filePath)) {
             continue;
@@ -158,7 +157,7 @@ async function readFullStructure(
         // This logic is tricky. Let's try a simpler: if we can't add this item, mark and break.
 
         const subFolderName = entry.name;
-        const subFolderPath = path.join(currentPath, subFolderName);
+        const subFolderPath = platform.path.join(currentPath, subFolderName);
 
         let isIgnoredByGit = false;
         if (options.respectGitIgnore && options.fileService) {
@@ -289,7 +288,7 @@ export async function getFolderStructure(
   directory: string,
   options?: FolderStructureOptions,
 ): Promise<string> {
-  const resolvedPath = path.resolve(directory);
+  const resolvedPath = platform.path.resolve(directory);
   const mergedOptions: MergedFolderStructureOptions = {
     maxItems: options?.maxItems ?? MAX_ITEMS,
     ignoredFolders: options?.ignoredFolders ?? DEFAULT_IGNORED_FOLDERS,

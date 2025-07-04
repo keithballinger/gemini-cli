@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import fs from 'fs';
-import path from 'path';
+import { platform } from '../platform.js';
 import { PartUnion } from '@google/genai';
 import mime from 'mime-types';
 
@@ -36,16 +35,16 @@ export function isWithinRoot(
   pathToCheck: string,
   rootDirectory: string,
 ): boolean {
-  const normalizedPathToCheck = path.normalize(pathToCheck);
-  const normalizedRootDirectory = path.normalize(rootDirectory);
+  const normalizedPathToCheck = platform.path.normalize(pathToCheck);
+  const normalizedRootDirectory = platform.path.normalize(rootDirectory);
 
   // Ensure the rootDirectory path ends with a separator for correct startsWith comparison,
   // unless it's the root path itself (e.g., '/' or 'C:\').
   const rootWithSeparator =
-    normalizedRootDirectory === path.sep ||
-    normalizedRootDirectory.endsWith(path.sep)
+    normalizedRootDirectory === platform.path.sep ||
+    normalizedRootDirectory.endsWith(platform.path.sep)
       ? normalizedRootDirectory
-      : normalizedRootDirectory + path.sep;
+      : normalizedRootDirectory + platform.path.sep;
 
   return (
     normalizedPathToCheck === normalizedRootDirectory ||
@@ -60,18 +59,18 @@ export function isWithinRoot(
  */
 export function isBinaryFile(filePath: string): boolean {
   try {
-    const fd = fs.openSync(filePath, 'r');
+    const fd = platform.fs.openSync(filePath, 'r');
     // Read up to 4KB or file size, whichever is smaller
-    const fileSize = fs.fstatSync(fd).size;
+    const fileSize = platform.fs.fstatSync(fd).size;
     if (fileSize === 0) {
       // Empty file is not considered binary for content checking
-      fs.closeSync(fd);
+      platform.fs.closeSync(fd);
       return false;
     }
     const bufferSize = Math.min(4096, fileSize);
     const buffer = Buffer.alloc(bufferSize);
-    const bytesRead = fs.readSync(fd, buffer, 0, buffer.length, 0);
-    fs.closeSync(fd);
+    const bytesRead = platform.fs.readSync(fd, buffer, 0, buffer.length, 0);
+    platform.fs.closeSync(fd);
 
     if (bytesRead === 0) return false;
 
@@ -99,7 +98,7 @@ export function isBinaryFile(filePath: string): boolean {
 export function detectFileType(
   filePath: string,
 ): 'text' | 'image' | 'pdf' | 'audio' | 'video' | 'binary' {
-  const ext = path.extname(filePath).toLowerCase();
+  const ext = platform.path.extname(filePath).toLowerCase();
 
   // The mimetype for "ts" is MPEG transport stream (a video format) but we want
   // to assume these are typescript files instead.
@@ -193,7 +192,7 @@ export async function processSingleFileContent(
   limit?: number,
 ): Promise<ProcessedFileReadResult> {
   try {
-    if (!fs.existsSync(filePath)) {
+    if (!platform.fs.existsSync(filePath)) {
       // Sync check is acceptable before async read
       return {
         llmContent: '',
@@ -201,7 +200,7 @@ export async function processSingleFileContent(
         error: `File not found: ${filePath}`,
       };
     }
-    const stats = await fs.promises.stat(filePath);
+    const stats = await platform.fs.promises.stat(filePath);
     if (stats.isDirectory()) {
       return {
         llmContent: '',
@@ -224,7 +223,7 @@ export async function processSingleFileContent(
     }
 
     const fileType = detectFileType(filePath);
-    const relativePathForDisplay = path
+    const relativePathForDisplay = platform.path
       .relative(rootDirectory, filePath)
       .replace(/\\/g, '/');
 
@@ -236,7 +235,7 @@ export async function processSingleFileContent(
         };
       }
       case 'text': {
-        const content = await fs.promises.readFile(filePath, 'utf8');
+        const content = await platform.fs.promises.readFile(filePath, 'utf8') as string;
         const lines = content.split('\n');
         const originalLineCount = lines.length;
 
@@ -250,7 +249,7 @@ export async function processSingleFileContent(
         const selectedLines = lines.slice(actualStartLine, endLine);
 
         let linesWereTruncatedInLength = false;
-        const formattedLines = selectedLines.map((line) => {
+        const formattedLines = selectedLines.map((line: string) => {
           if (line.length > MAX_LINE_LENGTH_TEXT_FILE) {
             linesWereTruncatedInLength = true;
             return (
@@ -283,7 +282,7 @@ export async function processSingleFileContent(
       case 'pdf':
       case 'audio':
       case 'video': {
-        const contentBuffer = await fs.promises.readFile(filePath);
+        const contentBuffer = await platform.fs.promises.readFile(filePath);
         const base64Data = contentBuffer.toString('base64');
         return {
           llmContent: {
@@ -307,7 +306,7 @@ export async function processSingleFileContent(
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const displayPath = path
+    const displayPath = platform.path
       .relative(rootDirectory, filePath)
       .replace(/\\/g, '/');
     return {

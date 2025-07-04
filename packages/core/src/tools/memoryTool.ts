@@ -5,9 +5,8 @@
  */
 
 import { BaseTool, ToolResult } from './tools.js';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import { homedir } from 'os';
+import { platform } from '../platform.js';
+const fs = platform.fs.promises;
 
 const memoryToolSchemaData = {
   name: 'save_memory',
@@ -82,7 +81,7 @@ interface SaveMemoryParams {
 }
 
 function getGlobalMemoryFilePath(): string {
-  return path.join(homedir(), GEMINI_CONFIG_DIR, getCurrentGeminiMdFilename());
+  return platform.path.join(platform.os.homedir(), GEMINI_CONFIG_DIR, getCurrentGeminiMdFilename());
 }
 
 /**
@@ -130,7 +129,7 @@ export class MemoryTool extends BaseTool<SaveMemoryParams, ToolResult> {
     const newMemoryItem = `- ${processedText}`;
 
     try {
-      await fsAdapter.mkdir(path.dirname(memoryFilePath), { recursive: true });
+      await fsAdapter.mkdir(platform.path.dirname(memoryFilePath), { recursive: true });
       let content = '';
       try {
         content = await fsAdapter.readFile(memoryFilePath, 'utf-8');
@@ -195,9 +194,9 @@ export class MemoryTool extends BaseTool<SaveMemoryParams, ToolResult> {
     try {
       // Use the static method with actual fs promises
       await MemoryTool.performAddMemoryEntry(fact, getGlobalMemoryFilePath(), {
-        readFile: fs.readFile,
+        readFile: async (path: string, encoding: 'utf-8') => (await fs.readFile(path, encoding)) as string,
         writeFile: fs.writeFile,
-        mkdir: fs.mkdir,
+        mkdir: async (path: string, options: { recursive: boolean }) => { await fs.mkdir(path, options); return undefined; },
       });
       const successMessage = `Okay, I've remembered that: "${fact}"`;
       return {

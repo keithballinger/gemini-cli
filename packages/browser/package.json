@@ -1,0 +1,44 @@
+{
+  "name": "@google/gemini-cli-browser",
+  "version": "0.1.9",
+  "description": "Gemini CLI Browser",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/google-gemini/gemini-cli.git"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "node esbuild.config.js",
+    "build:prod": "NODE_ENV=production node esbuild.config.js",
+    "dev": "node esbuild.config.js --watch",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:ci": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "serve": "npx serve dist -l 3001"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@google/gemini-cli-core": "file:../core",
+    "@google/genai": "^1.4.0",
+    "buffer": "^6.0.3",
+    "events-polyfill": "^2.1.2",
+    "process": "^0.11.10",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.3.3",
+    "vitest": "^3.1.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

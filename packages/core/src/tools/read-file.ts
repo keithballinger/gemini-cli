@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import path from 'path';
+import { platform } from '../platform.js';
 import { SchemaValidator } from '../utils/schemaValidator.js';
 import { makeRelative, shortenPath } from '../utils/paths.js';
 import { BaseTool, ToolResult } from './tools.js';
@@ -76,7 +76,7 @@ export class ReadFileTool extends BaseTool<ReadFileToolParams, ToolResult> {
         type: 'object',
       },
     );
-    this.rootDirectory = path.resolve(rootDirectory);
+    this.rootDirectory = platform.path.resolve(rootDirectory);
   }
 
   validateToolParams(params: ReadFileToolParams): string | null {
@@ -90,7 +90,7 @@ export class ReadFileTool extends BaseTool<ReadFileToolParams, ToolResult> {
       return 'Parameters failed schema validation.';
     }
     const filePath = params.absolute_path;
-    if (!path.isAbsolute(filePath)) {
+    if (!platform.path.isAbsolute(filePath)) {
       return `File path must be absolute, but was relative: ${filePath}. You must provide an absolute path.`;
     }
     if (!isWithinRoot(filePath, this.rootDirectory)) {
@@ -163,7 +163,7 @@ export class ReadFileTool extends BaseTool<ReadFileToolParams, ToolResult> {
       FileOperation.READ,
       lines,
       mimetype,
-      path.extname(params.absolute_path),
+      platform.path.extname(params.absolute_path),
     );
 
     return {

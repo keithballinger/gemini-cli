@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import fs from 'fs';
-import path from 'path';
+import { platform } from '../platform.js';
 import { BaseTool, ToolResult } from './tools.js';
 import { SchemaValidator } from '../utils/schemaValidator.js';
 import { makeRelative, shortenPath } from '../utils/paths.js';
@@ -105,7 +104,7 @@ export class LSTool extends BaseTool<LSToolParams, ToolResult> {
     );
 
     // Set the root directory
-    this.rootDirectory = path.resolve(rootDirectory);
+    this.rootDirectory = platform.path.resolve(rootDirectory);
   }
 
   /**
@@ -114,12 +113,12 @@ export class LSTool extends BaseTool<LSToolParams, ToolResult> {
    * @returns True if the path is within the root directory, false otherwise
    */
   private isWithinRoot(dirpath: string): boolean {
-    const normalizedPath = path.normalize(dirpath);
-    const normalizedRoot = path.normalize(this.rootDirectory);
+    const normalizedPath = platform.path.normalize(dirpath);
+    const normalizedRoot = platform.path.normalize(this.rootDirectory);
     // Ensure the normalizedRoot ends with a path separator for proper path comparison
-    const rootWithSep = normalizedRoot.endsWith(path.sep)
+    const rootWithSep = normalizedRoot.endsWith(platform.path.sep)
       ? normalizedRoot
-      : normalizedRoot + path.sep;
+      : normalizedRoot + platform.path.sep;
     return (
       normalizedPath === normalizedRoot ||
       normalizedPath.startsWith(rootWithSep)
@@ -141,7 +140,7 @@ export class LSTool extends BaseTool<LSToolParams, ToolResult> {
     ) {
       return 'Parameters failed schema validation.';
     }
-    if (!path.isAbsolute(params.path)) {
+    if (!platform.path.isAbsolute(params.path)) {
       return `Path must be absolute: ${params.path}`;
     }
     if (!this.isWithinRoot(params.path)) {
@@ -211,7 +210,7 @@ export class LSTool extends BaseTool<LSToolParams, ToolResult> {
     }
 
     try {
-      const stats = fs.statSync(params.path);
+      const stats = platform.fs.statSync(params.path);
       if (!stats) {
         // fs.statSync throws on non-existence, so this check might be redundant
         // but keeping for clarity. Error message adjusted.
@@ -227,7 +226,7 @@ export class LSTool extends BaseTool<LSToolParams, ToolResult> {
         );
       }
 
-      const files = fs.readdirSync(params.path);
+      const files = platform.fs.readdirSync(params.path);
 
       // Get centralized file discovery service
       const respectGitIgnore =
@@ -251,8 +250,8 @@ export class LSTool extends BaseTool<LSToolParams, ToolResult> {
           continue;
         }
 
-        const fullPath = path.join(params.path, file);
-        const relativePath = path.relative(this.rootDirectory, fullPath);
+        const fullPath = platform.path.join(params.path, file);
+        const relativePath = platform.path.relative(this.rootDirectory, fullPath);
 
         // Check if this file should be git-ignored (only in git repositories)
         if (
@@ -264,7 +263,7 @@ export class LSTool extends BaseTool<LSToolParams, ToolResult> {
         }
 
         try {
-          const stats = fs.statSync(fullPath);
+          const stats = platform.fs.statSync(fullPath);
           const isDir = stats.isDirectory();
           entries.push({
             name: file,

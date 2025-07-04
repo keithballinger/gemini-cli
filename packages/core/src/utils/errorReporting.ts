@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import fs from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
+import { platform } from '../platform.js';
 import { Content } from '@google/genai';
 
 interface ErrorReportData {
@@ -30,7 +28,7 @@ export async function reportError(
 ): Promise<void> {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const reportFileName = `gemini-client-error-${type}-${timestamp}.json`;
-  const reportPath = path.join(os.tmpdir(), reportFileName);
+  const reportPath = platform.path.join(platform.os.tmpdir(), reportFileName);
 
   let errorToReport: { message: string; stack?: string };
   if (error instanceof Error) {
@@ -73,7 +71,7 @@ export async function reportError(
       const minimalReportContent = { error: errorToReport };
       stringifiedReportContent = JSON.stringify(minimalReportContent, null, 2);
       // Still try to write the minimal report
-      await fs.writeFile(reportPath, stringifiedReportContent);
+      await platform.fs.promises.writeFile(reportPath, stringifiedReportContent);
       console.error(
         `${baseMessage} Partial report (excluding context) available at: ${reportPath}`,
       );
@@ -87,7 +85,7 @@ export async function reportError(
   }
 
   try {
-    await fs.writeFile(reportPath, stringifiedReportContent);
+    await platform.fs.promises.writeFile(reportPath, stringifiedReportContent);
     console.error(`${baseMessage} Full report available at: ${reportPath}`);
   } catch (writeError) {
     console.error(

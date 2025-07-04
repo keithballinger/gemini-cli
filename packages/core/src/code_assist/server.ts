@@ -31,7 +31,7 @@ import {
   toCountTokenRequest,
   toGenerateContentRequest,
 } from './converter.js';
-import { PassThrough } from 'node:stream';
+import { PassThrough } from 'stream';
 
 /** HTTP options to be used in each of the requests. */
 export interface HttpOptions {

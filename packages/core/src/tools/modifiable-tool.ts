@@ -5,9 +5,7 @@
  */
 
 import { EditorType, openDiff } from '../utils/editor.js';
-import os from 'os';
-import path from 'path';
-import fs from 'fs';
+import { platform } from '../platform.js';
 import * as Diff from 'diff';
 import { DEFAULT_DIFF_OPTIONS } from './diffOptions.js';
 import { isNodeError } from '../utils/errors.js';
@@ -50,27 +48,27 @@ function createTempFilesForModify(
   proposedContent: string,
   file_path: string,
 ): { oldPath: string; newPath: string } {
-  const tempDir = os.tmpdir();
-  const diffDir = path.join(tempDir, 'gemini-cli-tool-modify-diffs');
+  const tempDir = platform.os.tmpdir();
+  const diffDir = platform.path.join(tempDir, 'gemini-cli-tool-modify-diffs');
 
-  if (!fs.existsSync(diffDir)) {
-    fs.mkdirSync(diffDir, { recursive: true });
+  if (!platform.fs.existsSync(diffDir)) {
+    platform.fs.mkdirSync(diffDir, { recursive: true });
   }
 
-  const ext = path.extname(file_path);
-  const fileName = path.basename(file_path, ext);
+  const ext = platform.path.extname(file_path);
+  const fileName = platform.path.basename(file_path, ext);
   const timestamp = Date.now();
-  const tempOldPath = path.join(
+  const tempOldPath = platform.path.join(
     diffDir,
     `gemini-cli-modify-${fileName}-old-${timestamp}${ext}`,
   );
-  const tempNewPath = path.join(
+  const tempNewPath = platform.path.join(
     diffDir,
     `gemini-cli-modify-${fileName}-new-${timestamp}${ext}`,
   );
 
-  fs.writeFileSync(tempOldPath, currentContent, 'utf8');
-  fs.writeFileSync(tempNewPath, proposedContent, 'utf8');
+  platform.fs.writeFileSync(tempOldPath, currentContent, 'utf8');
+  platform.fs.writeFileSync(tempNewPath, proposedContent, 'utf8');
 
   return { oldPath: tempOldPath, newPath: tempNewPath };
 }
@@ -85,14 +83,14 @@ function getUpdatedParams<ToolParams>(
   let newContent = '';
 
   try {
-    oldContent = fs.readFileSync(tmpOldPath, 'utf8');
+    oldContent = platform.fs.readFileSync(tmpOldPath, 'utf8') as string;
   } catch (err) {
     if (!isNodeError(err) || err.code !== 'ENOENT') throw err;
     oldContent = '';
   }
 
   try {
-    newContent = fs.readFileSync(tempNewPath, 'utf8');
+    newContent = platform.fs.readFileSync(tempNewPath, 'utf8') as string;
   } catch (err) {
     if (!isNodeError(err) || err.code !== 'ENOENT') throw err;
     newContent = '';
@@ -104,7 +102,7 @@ function getUpdatedParams<ToolParams>(
     originalParams,
   );
   const updatedDiff = Diff.createPatch(
-    path.basename(modifyContext.getFilePath(originalParams)),
+    platform.path.basename(modifyContext.getFilePath(originalParams)),
     oldContent,
     newContent,
     'Current',
@@ -117,13 +115,13 @@ function getUpdatedParams<ToolParams>(
 
 function deleteTempFiles(oldPath: string, newPath: string): void {
   try {
-    fs.unlinkSync(oldPath);
+    platform.fs.unlinkSync(oldPath);
   } catch {
     console.error(`Error deleting temp diff file: ${oldPath}`);
   }
 
   try {
-    fs.unlinkSync(newPath);
+    platform.fs.unlinkSync(newPath);
   } catch {
     console.error(`Error deleting temp diff file: ${newPath}`);
   }

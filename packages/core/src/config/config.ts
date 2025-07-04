@@ -4,8 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as path from 'node:path';
-import process from 'node:process';
+import { platform } from '../platform.js';
 import {
   AuthType,
   ContentGeneratorConfig,
@@ -176,7 +175,7 @@ export class Config {
     this.embeddingModel =
       params.embeddingModel ?? DEFAULT_GEMINI_EMBEDDING_MODEL;
     this.sandbox = params.sandbox;
-    this.targetDir = path.resolve(params.targetDir);
+    this.targetDir = platform.path.resolve(params.targetDir);
     this.debugMode = params.debugMode;
     this.question = params.question;
     this.fullContext = params.fullContext ?? false;
@@ -206,7 +205,7 @@ export class Config {
     };
     this.checkpointing = params.checkpointing ?? false;
     this.proxy = params.proxy;
-    this.cwd = params.cwd ?? process.cwd();
+    this.cwd = params.cwd ?? platform.process.cwd();
     this.fileDiscoveryService = params.fileDiscoveryService ?? null;
     this.bugCommand = params.bugCommand;
     this.model = params.model;
@@ -399,7 +398,7 @@ export class Config {
   }
 
   getGeminiDir(): string {
-    return path.join(this.targetDir, GEMINI_DIR);
+    return platform.path.join(this.targetDir, GEMINI_DIR);
   }
 
   getProjectTempDir(): string {

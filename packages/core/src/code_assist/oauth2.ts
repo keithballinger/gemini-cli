@@ -10,9 +10,7 @@ import url from 'url';
 import crypto from 'crypto';
 import * as net from 'net';
 import open from 'open';
-import path from 'node:path';
-import { promises as fs, existsSync, readFileSync } from 'node:fs';
-import * as os from 'os';
+import { platform } from '../platform.js';
 
 //  OAuth Client ID used to initiate OAuth2Client class.
 const OAUTH_CLIENT_ID =
@@ -194,7 +192,7 @@ async function loadCachedCredentials(client: OAuth2Client): Promise<boolean> {
     const keyFile =
       process.env.GOOGLE_APPLICATION_CREDENTIALS || getCachedCredentialPath();
 
-    const creds = await fs.readFile(keyFile, 'utf-8');
+    const creds = await platform.fs.promises.readFile(keyFile, 'utf-8');
     client.setCredentials(JSON.parse(creds));
 
     // This will verify locally that the credentials look good.
@@ -214,31 +212,31 @@ async function loadCachedCredentials(client: OAuth2Client): Promise<boolean> {
 
 async function cacheCredentials(credentials: Credentials) {
   const filePath = getCachedCredentialPath();
-  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await platform.fs.promises.mkdir(platform.path.dirname(filePath), { recursive: true });
 
   const credString = JSON.stringify(credentials, null, 2);
-  await fs.writeFile(filePath, credString);
+  await platform.fs.promises.writeFile(filePath, credString);
 }
 
 function getCachedCredentialPath(): string {
-  return path.join(os.homedir(), GEMINI_DIR, CREDENTIAL_FILENAME);
+  return platform.path.join(platform.os.homedir(), GEMINI_DIR, CREDENTIAL_FILENAME);
 }
 
 function getGoogleAccountIdCachePath(): string {
-  return path.join(os.homedir(), GEMINI_DIR, GOOGLE_ACCOUNT_ID_FILENAME);
+  return platform.path.join(platform.os.homedir(), GEMINI_DIR, GOOGLE_ACCOUNT_ID_FILENAME);
 }
 
 async function cacheGoogleAccountId(googleAccountId: string): Promise<void> {
   const filePath = getGoogleAccountIdCachePath();
-  await fs.mkdir(path.dirname(filePath), { recursive: true });
-  await fs.writeFile(filePath, googleAccountId, 'utf-8');
+  await platform.fs.promises.mkdir(platform.path.dirname(filePath), { recursive: true });
+  await platform.fs.promises.writeFile(filePath, googleAccountId, 'utf-8');
 }
 
 export function getCachedGoogleAccountId(): string | null {
   try {
     const filePath = getGoogleAccountIdCachePath();
-    if (existsSync(filePath)) {
-      return readFileSync(filePath, 'utf-8').trim() || null;
+    if (platform.fs.existsSync(filePath)) {
+      return platform.fs.readFileSync(filePath, 'utf-8').trim() || null;
     }
     return null;
   } catch (error) {
@@ -249,9 +247,9 @@ export function getCachedGoogleAccountId(): string | null {
 
 export async function clearCachedCredentialFile() {
   try {
-    await fs.rm(getCachedCredentialPath(), { force: true });
+    await platform.fs.promises.rm(getCachedCredentialPath(), { force: true });
     // Clear the Google Account ID cache when credentials are cleared
-    await fs.rm(getGoogleAccountIdCachePath(), { force: true });
+    await platform.fs.promises.rm(getGoogleAccountIdCachePath(), { force: true });
   } catch (_) {
     /* empty */
   }

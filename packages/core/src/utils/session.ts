@@ -4,6 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { randomUUID } from 'crypto';
+import { platform } from '../platform.js';
 
-export const sessionId = randomUUID();
+export const sessionId = platform.crypto.randomUUID();
