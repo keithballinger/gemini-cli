@@ -15,8 +15,10 @@ export class ShellEnvironmentManager implements ShellEnvironment {
   lastExitCode: number;
   cwd: string;
   history: string[];
+  geminiResponses: string[]; // Store Gemini response history
   
   private nextJobId: number = 1;
+  private maxGeminiResponses: number = 50; // Keep last 50 responses
   options: ShellOptions; // Made public for persistence
 
   constructor(options: Partial<ShellOptions> = {}) {
@@ -40,6 +42,7 @@ export class ShellEnvironmentManager implements ShellEnvironment {
     this.lastExitCode = 0;
     this.cwd = process.cwd();
     this.history = [];
+    this.geminiResponses = [];
 
     this.initializeEnvironment();
   }
@@ -162,6 +165,28 @@ export class ShellEnvironmentManager implements ShellEnvironment {
     if (this.history.length > this.options.historySize) {
       this.history = this.history.slice(-this.options.historySize);
     }
+  }
+
+  /**
+   * Add Gemini response to history
+   */
+  addGeminiResponse(response: string): void {
+    this.geminiResponses.push(response);
+    
+    // Limit response history size
+    if (this.geminiResponses.length > this.maxGeminiResponses) {
+      this.geminiResponses = this.geminiResponses.slice(-this.maxGeminiResponses);
+    }
+  }
+
+  /**
+   * Get Gemini response by index (0 = most recent, 1 = previous, etc.)
+   */
+  getGeminiResponse(index: number = 0): string | undefined {
+    if (index < 0 || index >= this.geminiResponses.length) {
+      return undefined;
+    }
+    return this.geminiResponses[this.geminiResponses.length - 1 - index];
   }
 
   /**

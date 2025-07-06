@@ -15,6 +15,7 @@ export interface PersistentShellState {
   history: string[];
   aliases: Record<string, string>;
   variables: Record<string, string>;
+  geminiResponses?: string[];
 }
 
 export class ShellPersistence {
@@ -44,20 +45,14 @@ export class ShellPersistence {
    * Save the current shell state
    */
   async saveState(environment: ShellEnvironmentManager): Promise<void> {
-    const allVars = Object.fromEntries(environment.variables);
-    const filteredVars = this.filterPersistentVariables(environment.variables);
-    
-    // Debug logging
-    console.error('DEBUG: All variables:', Object.keys(allVars).sort());
-    console.error('DEBUG: Filtered variables:', Object.keys(filteredVars).sort());
-    
     const state: PersistentShellState = {
       version: '1.0',
       lastUpdated: new Date().toISOString(),
       cwd: environment.cwd,
       history: environment.history,
       aliases: Object.fromEntries(environment.aliases),
-      variables: filteredVars
+      variables: this.filterPersistentVariables(environment.variables),
+      geminiResponses: environment.geminiResponses
     };
 
     try {
@@ -126,6 +121,11 @@ export class ShellPersistence {
           Object.entries(state.variables).forEach(([name, value]) => {
             environment.setVariable(name, value);
           });
+        }
+
+        // Restore Gemini responses
+        if (state.geminiResponses && Array.isArray(state.geminiResponses)) {
+          environment.geminiResponses = state.geminiResponses;
         }
       }
 

@@ -9,11 +9,18 @@ import { ShellEnvironment } from './types.js';
 
 /**
  * Expand variables in a string
- * Handles $VAR, ${VAR}, and special variables like $?, $$, $#
+ * Handles $VAR, ${VAR}, %% (Gemini responses), and special variables like $?, $$, $#
  */
 export function expandVariables(input: string, env: ShellEnvironment): string {
-  // Handle special variables first
-  let expanded = input
+  // Handle Gemini response expansion %%, %%-1, %%-2, etc.
+  let expanded = input.replace(/%%(?:-(\d+))?/g, (match, indexStr) => {
+    const index = indexStr ? parseInt(indexStr) : 0;
+    const response = env.getGeminiResponse(index);
+    return response || '';
+  });
+
+  // Handle special variables
+  expanded = expanded
     .replace(/\$\?/g, String(env.lastExitCode))
     .replace(/\$\$/g, String(process.pid))
     .replace(/\$#/g, '0') // Will be updated when we have proper arg handling

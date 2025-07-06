@@ -17,6 +17,7 @@ import { FgCommand } from './fg.js';
 import { BgCommand } from './bg.js';
 import { HistoryCommand } from './history.js';
 import { SourceCommand } from './source.js';
+import { GCommand } from './g.js';
 
 export class BuiltinRegistry {
   private builtins: Map<string, BuiltinCommand> = new Map();
@@ -47,6 +48,9 @@ export class BuiltinRegistry {
     // Additional built-ins
     this.register(new HistoryCommand());
     this.register(new SourceCommand());
+    
+    // Gemini integration
+    this.register(new GCommand());
   }
 
   register(builtin: BuiltinCommand): void {

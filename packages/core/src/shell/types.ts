@@ -58,6 +58,7 @@ export interface ShellEnvironment {
   lastExitCode: number;
   cwd: string;
   history: string[];
+  geminiResponses: string[];
   
   // Methods
   getVariable(name: string): string | undefined;
@@ -67,6 +68,8 @@ export interface ShellEnvironment {
   getExportedVariables(): Record<string, string>;
   changeDirectory(dir: string): void;
   addToHistory(command: string): void;
+  addGeminiResponse(response: string): void;
+  getGeminiResponse(index?: number): string | undefined;
   createJob(command: string, pid: number, background: boolean): Job;
   updateJobStatus(jobId: number, status: Job['status'], exitCode?: number): void;
   getJob(jobId: number): Job | undefined;

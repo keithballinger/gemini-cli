@@ -17,6 +17,7 @@ import ansiEscapes from 'ansi-escapes';
 import process from 'node:process';
 import { useKeypress } from '../hooks/useKeypress.js';
 import { useBracketedPaste } from '../hooks/useBracketedPaste.js';
+import { extractLastGeminiResponse } from '../../utils/extractPlainText.js';
 
 interface ShellWithGeminiStreamProps {
   initialDirectory?: string;
@@ -69,6 +70,20 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
     async () => {}, // performMemoryRefresh
     'shell' // invocationMode
   );
+
+  // Capture Gemini responses when streaming completes
+  useEffect(() => {
+    if (streamingState === StreamingState.Idle && history.length > 0 && shellRef.current) {
+      // Extract the last Gemini response
+      const allItems = [...history, ...pendingHistoryItems];
+      const lastResponse = extractLastGeminiResponse(allItems);
+      
+      if (lastResponse) {
+        // Add to shell's Gemini response history
+        shellRef.current.getEnvironment().addGeminiResponse(lastResponse);
+      }
+    }
+  }, [streamingState, history, pendingHistoryItems]);
 
   // Initialize shell
   useEffect(() => {
