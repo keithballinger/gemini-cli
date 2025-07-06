@@ -87,12 +87,20 @@ When set as user's default shell or launched with `--shell`:
 - Integrated detection into `gemini.tsx` main function
 - Passed invocation mode to AppWrapper component
 
-#### 0.2 Conditional Interface Loading
-- [ ] In CLI mode: Preserve existing `!` toggle functionality
-- [ ] In Shell mode: Remove `!` command toggle functionality
-- [ ] In Shell mode: Update prompt to always show shell-style prompt with current directory
-- [ ] In Shell mode: Remove yellow border and shell mode visual indicators
-- [ ] In Shell mode: Update input handling to process all commands directly
+#### 0.2 Conditional Interface Loading ✓ COMPLETED (2025-01-06)
+- [x] In CLI mode: Preserve existing `!` toggle functionality
+- [x] In Shell mode: Remove `!` command toggle functionality
+- [x] In Shell mode: Update prompt to always show shell-style prompt with current directory
+- [x] In Shell mode: Remove yellow border and shell mode visual indicators
+- [x] In Shell mode: Update input handling to process all commands directly
+
+**Implementation Notes:**
+- Modified App component to accept invocationMode and initialize shellModeActive based on mode
+- Updated InputPrompt to accept invocationMode and conditionally allow shell toggle
+- Disabled `!` toggle and escape key shell exit in shell mode
+- Changed prompt to show `$` in shell mode vs `>` or `!` in CLI mode
+- Hide ShellModeIndicator (yellow indicator) when in shell mode
+- Shell mode now starts active when invoked with --shell flag
 
 #### 0.3 Command Router Implementation (Shell Mode Only)
 - [ ] Create `CommandRouter` class with routing logic

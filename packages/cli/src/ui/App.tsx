@@ -88,7 +88,7 @@ export const AppWrapper = (props: AppProps) => (
   </SessionStatsProvider>
 );
 
-const App = ({ config, settings, startupWarnings = [] }: AppProps) => {
+const App = ({ config, settings, startupWarnings = [], invocationMode = 'cli' }: AppProps) => {
   useBracketedPaste();
   const [updateMessage, setUpdateMessage] = useState<string | null>(null);
   const { stdout } = useStdout();
@@ -120,7 +120,7 @@ const App = ({ config, settings, startupWarnings = [] }: AppProps) => {
   const [footerHeight, setFooterHeight] = useState<number>(0);
   const [corgiMode, setCorgiMode] = useState(false);
   const [currentModel, setCurrentModel] = useState(config.getModel());
-  const [shellModeActive, setShellModeActive] = useState(false);
+  const [shellModeActive, setShellModeActive] = useState(invocationMode === 'shell');
   const [showErrorDetails, setShowErrorDetails] = useState<boolean>(false);
   const [showToolDescriptions, setShowToolDescriptions] =
     useState<boolean>(false);
@@ -747,7 +747,7 @@ const App = ({ config, settings, startupWarnings = [] }: AppProps) => {
                         approvalMode={showAutoAcceptIndicator}
                       />
                     )}
-                  {shellModeActive && <ShellModeIndicator />}
+                  {shellModeActive && invocationMode === 'cli' && <ShellModeIndicator />}
                 </Box>
               </Box>
 
@@ -778,6 +778,7 @@ const App = ({ config, settings, startupWarnings = [] }: AppProps) => {
                   slashCommands={slashCommands}
                   shellModeActive={shellModeActive}
                   setShellModeActive={setShellModeActive}
+                  invocationMode={invocationMode}
                 />
               )}
             </>

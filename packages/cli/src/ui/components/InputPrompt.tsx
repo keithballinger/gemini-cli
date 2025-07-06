@@ -34,6 +34,7 @@ export interface InputPromptProps {
   suggestionsWidth: number;
   shellModeActive: boolean;
   setShellModeActive: (value: boolean) => void;
+  invocationMode?: 'cli' | 'shell';
 }
 
 export const InputPrompt: React.FC<InputPromptProps> = ({
@@ -49,6 +50,7 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
   suggestionsWidth,
   shellModeActive,
   setShellModeActive,
+  invocationMode = 'cli',
 }) => {
   const [justNavigatedHistory, setJustNavigatedHistory] = useState(false);
 
@@ -168,7 +170,8 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
       }
       const query = buffer.text;
 
-      if (key.sequence === '!' && query === '' && !completion.showSuggestions) {
+      // Only allow shell mode toggle in CLI mode
+      if (invocationMode === 'cli' && key.sequence === '!' && query === '' && !completion.showSuggestions) {
         setShellModeActive(!shellModeActive);
         buffer.setText(''); // Clear the '!' from input
         return true;
@@ -218,7 +221,8 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
           return;
         }
         if (key.name === 'escape') {
-          if (shellModeActive) {
+          // Only allow escape to exit shell mode in CLI mode
+          if (invocationMode === 'cli' && shellModeActive) {
             setShellModeActive(false);
             return;
           }
@@ -368,6 +372,7 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
       handleAutocomplete,
       handleSubmitAndClear,
       shellHistory,
+      invocationMode,
     ],
   );
 
@@ -382,13 +387,24 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
     <>
       <Box
         borderStyle="round"
-        borderColor={shellModeActive ? Colors.AccentYellow : Colors.AccentBlue}
+        borderColor={
+          invocationMode === 'shell' 
+            ? Colors.AccentBlue  // Always blue in shell mode
+            : (shellModeActive ? Colors.AccentYellow : Colors.AccentBlue)
+        }
         paddingX={1}
       >
         <Text
-          color={shellModeActive ? Colors.AccentYellow : Colors.AccentPurple}
+          color={
+            invocationMode === 'shell'
+              ? Colors.AccentPurple  // Always purple in shell mode
+              : (shellModeActive ? Colors.AccentYellow : Colors.AccentPurple)
+          }
         >
-          {shellModeActive ? '! ' : '> '}
+          {invocationMode === 'shell' 
+            ? '$ '  // Show $ prompt in shell mode
+            : (shellModeActive ? '! ' : '> ')
+          }
         </Text>
         <Box flexGrow={1} flexDirection="column">
           {buffer.text.length === 0 && placeholder ? (
