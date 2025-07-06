@@ -150,6 +150,7 @@ export const useGeminiStream = (
     onDebugMessage,
     config,
     geminiClient,
+    invocationMode === 'shell', // Use POSIX shell in shell mode
   );
 
   const streamingState = useMemo(() => {

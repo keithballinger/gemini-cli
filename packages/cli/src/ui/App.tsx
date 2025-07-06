@@ -799,7 +799,7 @@ const App = ({ config, settings, startupWarnings = [], invocationMode = 'cli' }:
                         approvalMode={showAutoAcceptIndicator}
                       />
                     )}
-                  {shellModeActive && <ShellModeIndicator />}
+                  {shellModeActive && invocationMode === 'cli' && <ShellModeIndicator />}
                 </Box>
               </Box>
 
@@ -830,6 +830,7 @@ const App = ({ config, settings, startupWarnings = [], invocationMode = 'cli' }:
                   slashCommands={slashCommands}
                   shellModeActive={shellModeActive}
                   setShellModeActive={setShellModeActive}
+                  invocationMode={invocationMode}
                 />
               )}
             </>
