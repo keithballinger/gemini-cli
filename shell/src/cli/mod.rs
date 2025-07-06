@@ -11,6 +11,10 @@ pub struct Args {
     #[arg(long)]
     pub shell: bool,
     
+    /// Enable UI mode with ratatui interface
+    #[arg(long)]
+    pub ui: bool,
+    
     /// Enable debug mode
     #[arg(long)]
     pub debug: bool,

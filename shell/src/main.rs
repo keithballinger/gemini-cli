@@ -1,5 +1,5 @@
 use clap::Parser;
-use gemini_shell::{GeminiShell, ShellConfig, cli};
+use gemini_shell::{GeminiShell, ShellConfig, cli, ui::TerminalUI};
 use tracing_subscriber;
 
 #[tokio::main]
@@ -26,20 +26,26 @@ async fn main() -> anyhow::Result<()> {
     // Create and run shell
     let mut shell = GeminiShell::new();
     
-    match invocation_mode {
-        cli::InvocationMode::Shell => {
-            println!("Running in shell mode...");
-            // TODO: Start interactive shell
-            run_interactive_shell(&mut shell).await?;
-        }
-        cli::InvocationMode::Cli => {
-            println!("Running in CLI mode...");
-            if let Some(command) = args.command {
-                // Execute single command
-                execute_single_command(&mut shell, &command).await?;
-            } else {
-                // Start CLI interaction
-                run_cli_mode(&mut shell).await?;
+    // Check if UI mode is requested
+    if args.ui {
+        println!("Starting UI mode...");
+        run_ui_mode(shell).await?;
+    } else {
+        match invocation_mode {
+            cli::InvocationMode::Shell => {
+                println!("Running in shell mode...");
+                println!("Tip: Use --ui flag for enhanced terminal interface");
+                run_interactive_shell(&mut shell).await?;
+            }
+            cli::InvocationMode::Cli => {
+                println!("Running in CLI mode...");
+                if let Some(command) = args.command {
+                    // Execute single command
+                    execute_single_command(&mut shell, &command).await?;
+                } else {
+                    // Start CLI interaction
+                    run_cli_mode(&mut shell).await?;
+                }
             }
         }
     }
@@ -122,5 +128,25 @@ async fn execute_single_command(_shell: &mut GeminiShell, command: &str) -> anyh
 async fn run_cli_mode(_shell: &mut GeminiShell) -> anyhow::Result<()> {
     println!("CLI mode not yet implemented");
     println!("This will provide traditional Gemini CLI functionality");
+    Ok(())
+}
+
+async fn run_ui_mode(mut shell: GeminiShell) -> anyhow::Result<()> {
+    // Try to initialize Gemini client
+    match gemini_shell::gemini::GeminiClient::new().await {
+        Ok(client) => {
+            shell.with_gemini(client).await;
+            println!("✅ Gemini AI integration enabled");
+        }
+        Err(e) => {
+            eprintln!("⚠️  Gemini AI not available: {}", e);
+            eprintln!("   Shell will work without AI features");
+        }
+    }
+
+    // Create and run terminal UI
+    let mut terminal_ui = TerminalUI::new(shell)?;
+    terminal_ui.run().await?;
+    
     Ok(())
 }
