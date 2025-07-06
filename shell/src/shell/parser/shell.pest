@@ -1,0 +1,187 @@
+// POSIX Shell Grammar for pest parser
+// Based on POSIX.1-2017 specification
+
+WHITESPACE = _{ " " | "\t" }
+COMMENT = _{ "#" ~ (!NEWLINE ~ ANY)* }
+
+// Top-level program
+program = { SOI ~ complete_commands? ~ EOI }
+
+complete_commands = { complete_command ~ (linebreak ~ complete_command)* ~ linebreak? }
+
+complete_command = {
+    list |
+    command
+}
+
+list = {
+    and_or ~ (separator_op ~ and_or)*
+}
+
+and_or = {
+    pipeline ~ (and_or_op ~ linebreak? ~ pipeline)*
+}
+
+pipeline = {
+    pipe_sequence |
+    bang? ~ command
+}
+
+pipe_sequence = {
+    bang? ~ command ~ (pipe_op ~ linebreak? ~ command)+
+}
+
+command = {
+    simple_command |
+    compound_command ~ redirect_list?
+}
+
+compound_command = {
+    brace_group |
+    subshell |
+    for_clause |
+    case_clause |
+    if_clause |
+    while_clause |
+    until_clause
+}
+
+// Simple command - most common case
+simple_command = {
+    cmd_prefix* ~ cmd_word ~ cmd_suffix* |
+    cmd_prefix+
+}
+
+cmd_prefix = {
+    io_redirect |
+    assignment_word
+}
+
+cmd_suffix = {
+    io_redirect |
+    word
+}
+
+// Redirections
+redirect_list = { io_redirect+ }
+
+io_redirect = {
+    io_number? ~ io_here |
+    io_number? ~ io_file
+}
+
+io_file = {
+    less ~ filename |
+    lessand ~ io_number |
+    great ~ filename |
+    greatand ~ io_number |
+    dgreat ~ filename |
+    lessgreat ~ filename |
+    clobber ~ filename
+}
+
+io_here = {
+    dless ~ here_end |
+    dlessdash ~ here_end
+}
+
+// Operators
+and_or_op = { "&&" | "||" }
+separator_op = { "&" | ";" }
+pipe_op = { "|" }
+
+// Redirection operators
+less = { "<" }
+great = { ">" }
+dless = { "<<" }
+dgreat = { ">>" }
+lessand = { "<&" }
+greatand = { ">&" }
+lessgreat = { "<>" }
+clobber = { ">|" }
+dlessdash = { "<<-" }
+
+// Background
+bang = { "!" }
+
+// Basic tokens
+word = @{
+    (quoted_string | unquoted_chars)+
+}
+
+quoted_string = {
+    single_quoted |
+    double_quoted |
+    escaped_char
+}
+
+single_quoted = @{ "'" ~ (!"'" ~ ANY)* ~ "'" }
+double_quoted = @{ "\"" ~ (!("\"" | "$" | "`" | "\\") ~ ANY | escape_sequence | variable | command_substitution)* ~ "\"" }
+
+unquoted_chars = @{
+    (
+        !(" " | "\t" | "\n" | "|" | "&" | ";" | "(" | ")" | "<" | ">" | "'" | "\"" | "\\" | "$" | "`") ~ 
+        ANY
+    )+
+}
+
+escaped_char = @{ "\\" ~ ANY }
+escape_sequence = @{ "\\" ~ ("\"" | "$" | "`" | "\\" | NEWLINE) }
+
+// Variables
+variable = {
+    simple_variable |
+    complex_variable
+}
+
+simple_variable = @{ "$" ~ name }
+complex_variable = @{ "${" ~ parameter ~ "}" }
+
+parameter = @{
+    name |
+    special_parameter
+}
+
+special_parameter = @{
+    "@" | "*" | "#" | "?" | "-" | "$" | "!" | "0" |
+    ASCII_DIGIT+
+}
+
+// Command substitution
+command_substitution = {
+    backtick_substitution |
+    dollar_substitution
+}
+
+backtick_substitution = @{ "`" ~ (!"`" ~ ANY)* ~ "`" }
+dollar_substitution = @{ "$(" ~ complete_commands ~ ")" }
+
+// Compound commands (simplified)
+brace_group = { "{" ~ complete_commands ~ "}" }
+subshell = { "(" ~ complete_commands ~ ")" }
+
+// Control structures (basic forms)
+for_clause = { "for" ~ name ~ linebreak? ~ "in" ~ word* ~ sequential_sep ~ do_group }
+case_clause = { "case" ~ word ~ linebreak? ~ "in" ~ linebreak? ~ case_list? ~ "esac" }
+if_clause = { "if" ~ complete_commands ~ "then" ~ complete_commands ~ else_part? ~ "fi" }
+while_clause = { "while" ~ complete_commands ~ do_group }
+until_clause = { "until" ~ complete_commands ~ do_group }
+
+do_group = { "do" ~ complete_commands ~ "done" }
+else_part = { "elif" ~ complete_commands ~ "then" ~ complete_commands ~ else_part | "else" ~ complete_commands }
+case_list = { case_item+ }
+case_item = { pattern ~ ")" ~ complete_commands? ~ ";;" }
+pattern = { word ~ ("|" ~ word)* }
+
+// Utility rules
+cmd_word = { word }
+assignment_word = @{ name ~ "=" ~ word? }
+filename = { word }
+here_end = { word }
+io_number = @{ ASCII_DIGIT+ }
+name = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+
+sequential_sep = { ";" | NEWLINE }
+linebreak = _{ NEWLINE+ }
+
+NEWLINE = _{ "\n" | "\r\n" }
