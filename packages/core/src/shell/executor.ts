@@ -241,16 +241,16 @@ export class ShellExecutor {
     }
     
     // Expand arguments
-    expanded.args = await Promise.all(
+    expanded.args = (await Promise.all(
       expanded.args.map(async (arg) => {
         const varExpanded = expandVariables(arg, this.env);
         if (this.options.enableGlobbing) {
           const globExpanded = await expandGlobs(varExpanded, this.env.cwd);
-          return globExpanded.length > 0 ? globExpanded.join(' ') : varExpanded;
+          return globExpanded; // Return array, not joined string
         }
-        return varExpanded;
+        return [varExpanded]; // Wrap in array for consistency
       })
-    );
+    )).flat(); // Flatten the results
     
     // Expand redirections
     expanded.redirections = expanded.redirections.map(redir => ({

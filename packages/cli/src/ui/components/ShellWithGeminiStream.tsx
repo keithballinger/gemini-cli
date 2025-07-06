@@ -3,7 +3,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Box, Text, useInput, useApp } from 'ink';
+import { Box, Text, useApp } from 'ink';
 import { GeminiShell, Config } from '@google/gemini-cli-core';
 import { Colors } from '../colors.js';
 import { CommandRouter } from '../../utils/commandRouter.js';
@@ -15,6 +15,8 @@ import { StreamingContext } from '../contexts/StreamingContext.js';
 import { HistoryItemWithoutId, MessageType, StreamingState } from '../types.js';
 import ansiEscapes from 'ansi-escapes';
 import process from 'node:process';
+import { useKeypress } from '../hooks/useKeypress.js';
+import { useBracketedPaste } from '../hooks/useBracketedPaste.js';
 
 interface ShellWithGeminiStreamProps {
   initialDirectory?: string;
@@ -39,6 +41,9 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
 
   const shellRef = useRef<GeminiShell | null>(null);
   const commandRouterRef = useRef<CommandRouter | null>(null);
+
+  // Enable bracketed paste mode
+  useBracketedPaste();
 
   // Use the history manager
   const { history, addItem, clearItems } = useHistory();
@@ -67,23 +72,26 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
 
   // Initialize shell
   useEffect(() => {
-    if (!shellRef.current) {
-      shellRef.current = new GeminiShell({
-        interactiveMode: true,
-        enableHistory: true,
-        enableAliases: true,
-        enableJobControl: true,
-        enableGlobbing: true
-      });
-      
-      // Load existing history from the shell (with a small delay to ensure it's loaded from disk)
-      setTimeout(() => {
-        if (shellRef.current) {
-          const shellHistory = shellRef.current.getEnvironment().history || [];
-          setCommandHistory(shellHistory);
-        }
-      }, 100);
-    }
+    const initShell = async () => {
+      if (!shellRef.current) {
+        shellRef.current = new GeminiShell({
+          interactiveMode: true,
+          enableHistory: true,
+          enableAliases: true,
+          enableJobControl: true,
+          enableGlobbing: true
+        });
+        
+        // Wait for shell to load persisted state
+        await shellRef.current.waitForInitialization();
+        
+        // Load existing history from the shell
+        const shellHistory = shellRef.current.getEnvironment().history || [];
+        setCommandHistory(shellHistory);
+      }
+    };
+    
+    initShell();
 
     if (!commandRouterRef.current) {
       commandRouterRef.current = new CommandRouter();
@@ -91,16 +99,43 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
 
     return () => {
       if (shellRef.current) {
-        shellRef.current.saveState();
+        // Save state synchronously before cleanup
+        shellRef.current.saveState().catch(console.error);
       }
     };
   }, []);
 
+  // Also add cleanup on process exit
+  useEffect(() => {
+    const cleanup = async () => {
+      if (shellRef.current) {
+        await shellRef.current.saveState();
+      }
+    };
+    
+    process.on('exit', cleanup);
+    process.on('SIGINT', cleanup);
+    process.on('SIGTERM', cleanup);
+    
+    return () => {
+      process.removeListener('exit', cleanup);
+      process.removeListener('SIGINT', cleanup);
+      process.removeListener('SIGTERM', cleanup);
+    };
+  }, []);
+
   // Handle input
-  useInput((input, key) => {
-    if (key.return) {
+  useKeypress((key) => {
+    // Handle complete paste at once
+    if (key.paste) {
+      setCurrentLine(prev => prev.slice(0, cursorPosition) + key.sequence + prev.slice(cursorPosition));
+      setCursorPosition(prev => prev + key.sequence.length);
+      return;
+    }
+    
+    if (key.name === 'return') {
       handleExecute();
-    } else if (key.backspace || key.delete) {
+    } else if (key.name === 'backspace' || key.name === 'delete') {
       if (key.meta) {
         // Option + Delete - delete word before cursor
         const beforeCursor = currentLine.slice(0, cursorPosition);
@@ -121,7 +156,7 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
         setCurrentLine(prev => prev.slice(0, cursorPosition - 1) + prev.slice(cursorPosition));
         setCursorPosition(prev => prev - 1);
       }
-    } else if (key.upArrow) {
+    } else if (key.name === 'up') {
       if (historyIndex < commandHistory.length - 1) {
         const newIndex = historyIndex + 1;
         setHistoryIndex(newIndex);
@@ -129,7 +164,7 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
         setCurrentLine(historyCommand);
         setCursorPosition(historyCommand.length);
       }
-    } else if (key.downArrow) {
+    } else if (key.name === 'down') {
       if (historyIndex > 0) {
         const newIndex = historyIndex - 1;
         setHistoryIndex(newIndex);
@@ -141,7 +176,7 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
         setCurrentLine('');
         setCursorPosition(0);
       }
-    } else if (key.leftArrow) {
+    } else if (key.name === 'left') {
       if (key.meta) {
         // Option + Left Arrow - move to previous word
         const beforeCursor = currentLine.slice(0, cursorPosition);
@@ -157,7 +192,7 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
         // Regular left arrow
         setCursorPosition(prev => Math.max(0, prev - 1));
       }
-    } else if (key.rightArrow) {
+    } else if (key.name === 'right') {
       if (key.meta) {
         // Option + Right Arrow - move to next word
         const remainingLine = currentLine.slice(cursorPosition);
@@ -171,20 +206,20 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
         // Regular right arrow
         setCursorPosition(prev => Math.min(currentLine.length, prev + 1));
       }
-    } else if (key.ctrl && input === 'a') {
+    } else if (key.ctrl && key.name === 'a') {
       // Ctrl+A - move to beginning of line
       setCursorPosition(0);
-    } else if (key.ctrl && input === 'e') {
+    } else if (key.ctrl && key.name === 'e') {
       // Ctrl+E - move to end of line
       setCursorPosition(currentLine.length);
-    } else if (key.ctrl && input === 'u') {
+    } else if (key.ctrl && key.name === 'u') {
       // Ctrl+U - delete from cursor to beginning of line
       setCurrentLine(prev => prev.slice(cursorPosition));
       setCursorPosition(0);
-    } else if (key.ctrl && input === 'k') {
+    } else if (key.ctrl && key.name === 'k') {
       // Ctrl+K - delete from cursor to end of line
       setCurrentLine(prev => prev.slice(0, cursorPosition));
-    } else if (key.ctrl && input === 'w') {
+    } else if (key.ctrl && key.name === 'w') {
       // Ctrl+W - delete word before cursor (this works reliably)
       const beforeCursor = currentLine.slice(0, cursorPosition);
       const words = beforeCursor.split(/\s+/);
@@ -197,7 +232,7 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
         setCurrentLine(currentLine.slice(cursorPosition));
         setCursorPosition(0);
       }
-    } else if (key.ctrl && input === 'f') {
+    } else if (key.ctrl && key.name === 'f') {
       // Ctrl+F - move forward one word (alternative to Option+Right)
       const remainingLine = currentLine.slice(cursorPosition);
       const match = remainingLine.match(/\S+/);
@@ -207,7 +242,7 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
       } else {
         setCursorPosition(currentLine.length);
       }
-    } else if (key.ctrl && input === 'b') {
+    } else if (key.ctrl && key.name === 'b') {
       // Ctrl+B - move backward one word (alternative to Option+Left)
       const words = currentLine.slice(0, cursorPosition).split(/\s+/);
       if (words.length > 1) {
@@ -216,21 +251,21 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
       } else {
         setCursorPosition(0);
       }
-    } else if (key.ctrl && input === 'c') {
+    } else if (key.ctrl && key.name === 'c') {
       setCurrentLine('');
       setCursorPosition(0);
-    } else if (key.ctrl && input === 'd') {
+    } else if (key.ctrl && key.name === 'd') {
       if (currentLine === '') {
         handleExit(0);
       }
-    } else if (key.ctrl && input === 'l') {
+    } else if (key.ctrl && key.name === 'l') {
       // Clear screen
       process.stdout.write(ansiEscapes.clearTerminal);
       clearItems();
-    } else if (key.ctrl && input === 'o') {
+    } else if (key.ctrl && key.name === 'o') {
       // Toggle all Gemini responses
       setAllGeminiCollapsed(prev => !prev);
-    } else if (key.meta && input === 'b') {
+    } else if (key.meta && key.name === 'b') {
       // Option+b (ESC+b) - move backward one word
       if (cursorPosition > 0) {
         let newPos = cursorPosition - 1;
@@ -244,7 +279,7 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
         }
         setCursorPosition(newPos);
       }
-    } else if (key.meta && input === 'f') {
+    } else if (key.meta && key.name === 'f') {
       // Option+f (ESC+f) - move forward one word
       if (cursorPosition < currentLine.length) {
         let newPos = cursorPosition;
@@ -258,12 +293,12 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
         }
         setCursorPosition(newPos);
       }
-    } else if (input && !key.ctrl && !key.meta) {
+    } else if (key.sequence && !key.ctrl && !key.meta && key.sequence.length === 1) {
       // Insert character at cursor position
-      setCurrentLine(prev => prev.slice(0, cursorPosition) + input + prev.slice(cursorPosition));
-      setCursorPosition(prev => prev + 1);
+      setCurrentLine(prev => prev.slice(0, cursorPosition) + key.sequence + prev.slice(cursorPosition));
+      setCursorPosition(prev => prev + key.sequence.length);
     }
-  });
+  }, { isActive: streamingState === StreamingState.Idle });
 
   const handleExecute = useCallback(async () => {
     const command = currentLine.trim();
@@ -333,6 +368,11 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
 
         if (command === 'exit' || command.startsWith('exit ')) {
           handleExit(result.exitCode);
+        }
+        
+        // Save state after each command to persist variables
+        if (shellRef.current) {
+          await shellRef.current.saveState();
         }
         
         setIsExecutingShell(false);

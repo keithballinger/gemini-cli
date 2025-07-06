@@ -44,6 +44,7 @@ export class GeminiShell {
   private jobControl: JobControlManager;
   private persistence: ShellPersistence;
   private options: ShellOptions;
+  private initializationPromise: Promise<void> | null = null;
 
   constructor(options: Partial<ShellOptions> = {}) {
     this.options = {
@@ -68,7 +69,8 @@ export class GeminiShell {
 
     // Load persisted state in interactive mode
     if (this.options.interactiveMode) {
-      this.loadState();
+      // Store the initialization promise
+      this.initializationPromise = this.loadState();
     }
   }
 
@@ -81,6 +83,15 @@ export class GeminiShell {
       await this.persistence.loadRCFile(this.environment);
     } catch (error) {
       console.error('Failed to load shell state:', error);
+    }
+  }
+
+  /**
+   * Wait for initialization to complete
+   */
+  async waitForInitialization(): Promise<void> {
+    if (this.initializationPromise) {
+      await this.initializationPromise;
     }
   }
 
