@@ -30,18 +30,18 @@ export class ShellExecutor {
   /**
    * Execute a parsed command
    */
-  async execute(command: ParsedCommand): Promise<number> {
+  async execute(command: ParsedCommand, execOptions?: { onOutput?: (chunk: string) => void }): Promise<number> {
     try {
       // Expand variables and globs
       const expanded = await this.expandCommand(command);
       
       // Check if it's a builtin
       if (expanded.type === 'builtin' || builtinRegistry.has(expanded.executable || '')) {
-        return this.executeBuiltin(expanded);
+        return this.executeBuiltin(expanded, execOptions);
       }
       
       // Execute as external command
-      return this.executeExternal(expanded);
+      return this.executeExternal(expanded, execOptions);
     } catch (error) {
       if (error instanceof ShellError) {
         console.error(`gemini-shell: ${error.message}`);
@@ -113,18 +113,47 @@ export class ShellExecutor {
   /**
    * Execute a builtin command
    */
-  private async executeBuiltin(command: ParsedCommand): Promise<number> {
+  private async executeBuiltin(command: ParsedCommand, execOptions?: { onOutput?: (chunk: string) => void }): Promise<number> {
     const builtin = builtinRegistry.get(command.executable || '');
     if (!builtin) {
       throw new CommandNotFoundError(command.executable || '');
     }
     
     try {
-      const exitCode = await builtin.execute(command.args, this.env, this.options);
-      this.env.lastExitCode = exitCode;
-      return exitCode;
+      // Capture console output for builtins if callback provided
+      if (execOptions?.onOutput) {
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        console.log = (...args) => {
+          const text = args.join(' ');
+          execOptions.onOutput!(text + '\n');
+        };
+        
+        console.error = (...args) => {
+          const text = args.join(' ');
+          execOptions.onOutput!(text + '\n');
+        };
+        
+        try {
+          const exitCode = await builtin.execute(command.args, this.env, this.options);
+          this.env.lastExitCode = exitCode;
+          return exitCode;
+        } finally {
+          console.log = originalLog;
+          console.error = originalError;
+        }
+      } else {
+        const exitCode = await builtin.execute(command.args, this.env, this.options);
+        this.env.lastExitCode = exitCode;
+        return exitCode;
+      }
     } catch (error) {
-      console.error(`${command.executable}: ${error instanceof Error ? error.message : String(error)}`);
+      if (execOptions?.onOutput) {
+        execOptions.onOutput(`${command.executable}: ${error instanceof Error ? error.message : String(error)}\n`);
+      } else {
+        console.error(`${command.executable}: ${error instanceof Error ? error.message : String(error)}`);
+      }
       this.env.lastExitCode = 1;
       return 1;
     }
@@ -133,7 +162,7 @@ export class ShellExecutor {
   /**
    * Execute an external command
    */
-  private async executeExternal(command: ParsedCommand): Promise<number> {
+  private async executeExternal(command: ParsedCommand, execOptions?: { onOutput?: (chunk: string) => void }): Promise<number> {
     const executable = command.executable || '';
     
     // Resolve command in PATH
@@ -143,13 +172,28 @@ export class ShellExecutor {
     }
     
     return new Promise((resolve) => {
+      // If we have an output callback and no redirections, capture output
+      const captureOutput = execOptions?.onOutput && command.redirections.length === 0;
+      const stdio = captureOutput ? ['inherit', 'pipe', 'pipe'] : this.setupStdio(command);
+      
       const child = spawn(resolvedPath, command.args, {
         cwd: this.env.cwd,
         env: this.env.getExportedVariables(),
-        stdio: this.setupStdio(command),
+        stdio,
         detached: command.background,
         shell: false
       });
+      
+      // Capture output if requested
+      if (captureOutput && child.stdout && child.stderr) {
+        child.stdout.on('data', (data) => {
+          execOptions.onOutput!(data.toString());
+        });
+        
+        child.stderr.on('data', (data) => {
+          execOptions.onOutput!(data.toString());
+        });
+      }
       
       // Track as job if background
       if (command.background && child.pid) {

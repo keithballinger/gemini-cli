@@ -165,22 +165,6 @@ export class GeminiShell {
     command: ParsedCommand,
     options: ShellExecutionOptions
   ): Promise<ShellExecutionResult> {
-    // Check if it's a builtin command
-    if (command.executable && builtinRegistry.has(command.executable)) {
-      return this.executeBuiltin(command, options);
-    }
-
-    // Execute as external command
-    return this.executeExternal(command, options);
-  }
-
-  /**
-   * Execute a builtin command
-   */
-  private async executeBuiltin(
-    command: ParsedCommand,
-    options: ShellExecutionOptions
-  ): Promise<ShellExecutionResult> {
     const result: ShellExecutionResult = {
       stdout: '',
       stderr: '',
@@ -189,170 +173,21 @@ export class GeminiShell {
     };
 
     try {
-      // Capture stdout/stderr for builtins
-      const originalLog = console.log;
-      const originalError = console.error;
-      const output: string[] = [];
-      const errors: string[] = [];
-
-      console.log = (...args) => {
-        const text = args.join(' ');
-        output.push(text);
-        options.onOutput?.(text + '\n');
-      };
-
-      console.error = (...args) => {
-        const text = args.join(' ');
-        errors.push(text);
-        options.onOutput?.(text + '\n');
-      };
-
-      try {
-        // Execute the builtin
-        result.exitCode = await this.executor.execute(command);
-        result.stdout = output.join('\n');
-        result.stderr = errors.join('\n');
-      } finally {
-        // Restore console methods
-        console.log = originalLog;
-        console.error = originalError;
-      }
-
+      // Use the executor for all commands
+      const exitCode = await this.executor.execute(command, {
+        onOutput: options.onOutput
+      });
+      result.exitCode = exitCode;
+      
+      // Update environment's last exit code
+      this.environment.lastExitCode = exitCode;
     } catch (error) {
       result.error = error instanceof Error ? error : new Error(String(error));
       result.exitCode = 1;
+      this.environment.lastExitCode = 1;
     }
 
     return result;
-  }
-
-  /**
-   * Execute an external command
-   * This uses the existing spawn-based approach for compatibility
-   */
-  private async executeExternal(
-    command: ParsedCommand,
-    options: ShellExecutionOptions
-  ): Promise<ShellExecutionResult> {
-    return new Promise((resolve) => {
-      const isWindows = os.platform() === 'win32';
-      const shell = isWindows ? 'cmd.exe' : 'bash';
-      
-      // Reconstruct the command string
-      const commandString = this.reconstructCommand(command);
-      const shellArgs = isWindows
-        ? ['/c', commandString]
-        : ['-c', commandString];
-
-      options.onDebug?.(`Executing: ${commandString}`);
-
-      const child = spawn(shell, shellArgs, {
-        cwd: this.environment.cwd,
-        env: { ...process.env, ...this.environment.getExportedVariables() },
-        stdio: ['ignore', 'pipe', 'pipe'],
-        detached: !isWindows
-      });
-
-      let stdout = '';
-      let stderr = '';
-      let error: Error | null = null;
-      let exited = false;
-
-      child.stdout.on('data', (data) => {
-        const chunk = data.toString();
-        stdout += chunk;
-        options.onOutput?.(chunk);
-      });
-
-      child.stderr.on('data', (data) => {
-        const chunk = data.toString();
-        stderr += chunk;
-        options.onOutput?.(chunk);
-      });
-
-      child.on('error', (err) => {
-        error = err;
-      });
-
-      // Handle abort signal
-      const abortHandler = () => {
-        if (child.pid && !exited) {
-          options.onDebug?.(`Aborting command (PID: ${child.pid})`);
-          if (isWindows) {
-            spawn('taskkill', ['/pid', child.pid.toString(), '/f', '/t']);
-          } else {
-            try {
-              process.kill(-child.pid, 'SIGTERM');
-              setTimeout(() => {
-                if (!exited && child.pid) {
-                  process.kill(-child.pid, 'SIGKILL');
-                }
-              }, 200);
-            } catch {
-              child.kill('SIGKILL');
-            }
-          }
-        }
-      };
-
-      if (options.abortSignal) {
-        options.abortSignal.addEventListener('abort', abortHandler, { once: true });
-      }
-
-      child.on('exit', (code, signal) => {
-        exited = true;
-        if (options.abortSignal) {
-          options.abortSignal.removeEventListener('abort', abortHandler);
-        }
-
-        resolve({
-          stdout: stdout.trim(),
-          stderr: stderr.trim(),
-          exitCode: code ?? 1,
-          signal: signal || undefined,
-          error: error || undefined,
-          aborted: options.abortSignal?.aborted || false
-        });
-      });
-    });
-  }
-
-  /**
-   * Reconstruct a command string from a parsed command
-   */
-  private reconstructCommand(command: ParsedCommand): string {
-    const parts: string[] = [];
-    
-    if (command.executable) {
-      parts.push(command.executable);
-    }
-    
-    parts.push(...command.args);
-    
-    // Add redirections
-    for (const redir of command.redirections) {
-      switch (redir.type) {
-        case 'output':
-          parts.push('>', redir.target);
-          break;
-        case 'append':
-          parts.push('>>', redir.target);
-          break;
-        case 'input':
-          parts.push('<', redir.target);
-          break;
-        case 'error':
-          parts.push('2>', redir.target);
-          break;
-      }
-    }
-    
-    // Add background operator
-    if (command.background) {
-      parts.push('&');
-    }
-    
-    return parts.join(' ');
   }
 
   /**
