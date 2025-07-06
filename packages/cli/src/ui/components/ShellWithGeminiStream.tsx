@@ -348,8 +348,8 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
       const route = await commandRouterRef.current!.route(command);
 
       if (route.type === 'gemini') {
-        // Add the user's command to history first
-        const userHistoryItem: HistoryItemWithoutId = { type: 'user', text: command };
+        // Add the user's command to history as a shell command so it's displayed separately
+        const userHistoryItem: HistoryItemWithoutId = { type: 'user_shell', text: command, cwd };
         addItem(userHistoryItem, Date.now());
         
         // Use the Gemini stream infrastructure

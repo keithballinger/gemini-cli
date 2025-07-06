@@ -33,9 +33,9 @@ export const GeminiShellResponse: React.FC<GeminiShellResponseProps> = ({
   // Use controlled state if provided, otherwise use local state
   const isCollapsed = controlledIsCollapsed !== undefined ? controlledIsCollapsed : localIsCollapsed;
 
-  // Extract the query from the first user item
+  // Extract the query from the first user item (if any)
   const queryItem = items.find(item => item.type === MessageType.USER);
-  const query = (queryItem && 'text' in queryItem) ? queryItem.text : 'Gemini query';
+  const query = (queryItem && 'text' in queryItem) ? queryItem.text : '';
 
   // Collect all response content and tool groups
   const responseContent: string[] = [];
@@ -64,7 +64,7 @@ export const GeminiShellResponse: React.FC<GeminiShellResponseProps> = ({
         marginBottom={1}
       >
         <Text>
-          ▶ {query} <Text color={Colors.Gray}>(Ctrl+O to expand)</Text>
+          ▶ {query || 'Gemini response'} <Text color={Colors.Gray}>(Ctrl+O to expand)</Text>
         </Text>
       </Box>
     );
@@ -83,7 +83,7 @@ export const GeminiShellResponse: React.FC<GeminiShellResponseProps> = ({
       {/* Header */}
       <Box marginBottom={1}>
         <Text color={Colors.AccentCyan}>✦ Gemini</Text>
-        <Text color={Colors.Gray}> - {query}</Text>
+        {query && <Text color={Colors.Gray}> - {query}</Text>}
         {!isActive && <Text color={Colors.Gray}> (Ctrl+O to minimize)</Text>}
       </Box>
 
