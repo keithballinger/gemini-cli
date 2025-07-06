@@ -80,10 +80,11 @@ export const CollapsibleGeminiResponse: React.FC<CollapsibleGeminiResponseProps>
           </Box>
           <MaxSizedBox 
             maxHeight={20}
-            showOverflowIndicator={true}
-            width={terminalWidth - 6} // Account for border and padding
+            maxWidth={terminalWidth - 6} // Account for border and padding
           >
-            <Text>{response}</Text>
+            <Box>
+              <Text>{response}</Text>
+            </Box>
           </MaxSizedBox>
         </Box>
       </Box>
