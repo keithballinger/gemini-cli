@@ -29,6 +29,7 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
 }) => {
   const { exit } = useApp();
   const [currentLine, setCurrentLine] = useState('');
+  const [cursorPosition, setCursorPosition] = useState(0);
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [cwd, setCwd] = useState(initialDirectory || process.cwd());
@@ -100,24 +101,124 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
     if (key.return) {
       handleExecute();
     } else if (key.backspace || key.delete) {
-      setCurrentLine(prev => prev.slice(0, -1));
+      if (key.meta) {
+        // Option + Delete - delete word before cursor
+        const beforeCursor = currentLine.slice(0, cursorPosition);
+        const words = beforeCursor.split(/\s+/);
+        if (words.length > 0 && cursorPosition > 0) {
+          // Find the start of the current word
+          let newPos = cursorPosition;
+          // Skip trailing spaces
+          while (newPos > 0 && currentLine[newPos - 1] === ' ') newPos--;
+          // Skip word characters
+          while (newPos > 0 && currentLine[newPos - 1] !== ' ') newPos--;
+          
+          setCurrentLine(currentLine.slice(0, newPos) + currentLine.slice(cursorPosition));
+          setCursorPosition(newPos);
+        }
+      } else if (cursorPosition > 0) {
+        // Regular delete
+        setCurrentLine(prev => prev.slice(0, cursorPosition - 1) + prev.slice(cursorPosition));
+        setCursorPosition(prev => prev - 1);
+      }
     } else if (key.upArrow) {
       if (historyIndex < commandHistory.length - 1) {
         const newIndex = historyIndex + 1;
         setHistoryIndex(newIndex);
-        setCurrentLine(commandHistory[commandHistory.length - 1 - newIndex]);
+        const historyCommand = commandHistory[commandHistory.length - 1 - newIndex];
+        setCurrentLine(historyCommand);
+        setCursorPosition(historyCommand.length);
       }
     } else if (key.downArrow) {
       if (historyIndex > 0) {
         const newIndex = historyIndex - 1;
         setHistoryIndex(newIndex);
-        setCurrentLine(commandHistory[commandHistory.length - 1 - newIndex]);
+        const historyCommand = commandHistory[commandHistory.length - 1 - newIndex];
+        setCurrentLine(historyCommand);
+        setCursorPosition(historyCommand.length);
       } else if (historyIndex === 0) {
         setHistoryIndex(-1);
         setCurrentLine('');
+        setCursorPosition(0);
+      }
+    } else if (key.leftArrow) {
+      if (key.meta) {
+        // Option + Left Arrow - move to previous word
+        const beforeCursor = currentLine.slice(0, cursorPosition);
+        const words = beforeCursor.split(/\s+/);
+        if (words.length > 1) {
+          words.pop(); // Remove last word
+          const newPos = words.join(' ').length;
+          setCursorPosition(newPos > 0 ? newPos + 1 : 0);
+        } else {
+          setCursorPosition(0);
+        }
+      } else {
+        // Regular left arrow
+        setCursorPosition(prev => Math.max(0, prev - 1));
+      }
+    } else if (key.rightArrow) {
+      if (key.meta) {
+        // Option + Right Arrow - move to next word
+        const remainingLine = currentLine.slice(cursorPosition);
+        const wordMatch = remainingLine.match(/^\s*\S+/);
+        if (wordMatch) {
+          setCursorPosition(cursorPosition + wordMatch[0].length);
+        } else {
+          setCursorPosition(currentLine.length);
+        }
+      } else {
+        // Regular right arrow
+        setCursorPosition(prev => Math.min(currentLine.length, prev + 1));
+      }
+    } else if (key.ctrl && input === 'a') {
+      // Ctrl+A - move to beginning of line
+      setCursorPosition(0);
+    } else if (key.ctrl && input === 'e') {
+      // Ctrl+E - move to end of line
+      setCursorPosition(currentLine.length);
+    } else if (key.ctrl && input === 'u') {
+      // Ctrl+U - delete from cursor to beginning of line
+      setCurrentLine(prev => prev.slice(cursorPosition));
+      setCursorPosition(0);
+    } else if (key.ctrl && input === 'k') {
+      // Ctrl+K - delete from cursor to end of line
+      setCurrentLine(prev => prev.slice(0, cursorPosition));
+    } else if (key.ctrl && input === 'w') {
+      // Ctrl+W - delete word before cursor (this works reliably)
+      const beforeCursor = currentLine.slice(0, cursorPosition);
+      const words = beforeCursor.split(/\s+/);
+      if (words.length > 1) {
+        const newBeforeCursor = words.slice(0, -1).join(' ');
+        const newPos = newBeforeCursor.length > 0 ? newBeforeCursor.length + 1 : 0;
+        setCurrentLine(newBeforeCursor + (newBeforeCursor.length > 0 ? ' ' : '') + currentLine.slice(cursorPosition));
+        setCursorPosition(newPos);
+      } else {
+        setCurrentLine(currentLine.slice(cursorPosition));
+        setCursorPosition(0);
+      }
+    } else if (key.ctrl && input === 'f') {
+      // Ctrl+F - move forward one word (alternative to Option+Right)
+      const remainingLine = currentLine.slice(cursorPosition);
+      const match = remainingLine.match(/\S+/);
+      if (match) {
+        const wordEnd = cursorPosition + match.index! + match[0].length;
+        setCursorPosition(Math.min(currentLine.length, wordEnd));
+      } else {
+        setCursorPosition(currentLine.length);
+      }
+    } else if (key.ctrl && input === 'b') {
+      // Ctrl+B - move backward one word (alternative to Option+Left)
+      const words = currentLine.slice(0, cursorPosition).split(/\s+/);
+      if (words.length > 1) {
+        const newPos = currentLine.lastIndexOf(words[words.length - 2], cursorPosition - 1);
+        setCursorPosition(Math.max(0, newPos));
+      } else {
+        setCursorPosition(0);
       }
     } else if (key.ctrl && input === 'c') {
       setCurrentLine('');
+      setCursorPosition(0);
     } else if (key.ctrl && input === 'd') {
       if (currentLine === '') {
         handleExit(0);
@@ -129,8 +230,38 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
     } else if (key.ctrl && input === 'o') {
       // Toggle all Gemini responses
       setAllGeminiCollapsed(prev => !prev);
+    } else if (key.meta && input === 'b') {
+      // Option+b (ESC+b) - move backward one word
+      if (cursorPosition > 0) {
+        let newPos = cursorPosition - 1;
+        // Skip any spaces
+        while (newPos > 0 && currentLine[newPos] === ' ') {
+          newPos--;
+        }
+        // Skip the word
+        while (newPos > 0 && currentLine[newPos - 1] !== ' ') {
+          newPos--;
+        }
+        setCursorPosition(newPos);
+      }
+    } else if (key.meta && input === 'f') {
+      // Option+f (ESC+f) - move forward one word
+      if (cursorPosition < currentLine.length) {
+        let newPos = cursorPosition;
+        // Skip current word
+        while (newPos < currentLine.length && currentLine[newPos] !== ' ') {
+          newPos++;
+        }
+        // Skip spaces
+        while (newPos < currentLine.length && currentLine[newPos] === ' ') {
+          newPos++;
+        }
+        setCursorPosition(newPos);
+      }
     } else if (input && !key.ctrl && !key.meta) {
-      setCurrentLine(prev => prev + input);
+      // Insert character at cursor position
+      setCurrentLine(prev => prev.slice(0, cursorPosition) + input + prev.slice(cursorPosition));
+      setCursorPosition(prev => prev + 1);
     }
   });
 
@@ -139,6 +270,7 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
     if (!command) return;
 
     setCurrentLine('');
+    setCursorPosition(0);
     setHistoryIndex(-1);
     
     // Add to shell's persistent history
@@ -319,7 +451,13 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
         {streamingState === StreamingState.Idle && (
           <Box>
             <Text color={Colors.Gray}>{getPrompt()}</Text>
-            <Text>{currentLine}</Text>
+            <Text>
+              {currentLine.slice(0, cursorPosition)}
+              <Text backgroundColor="white" color="black">
+                {cursorPosition < currentLine.length ? currentLine[cursorPosition] : ' '}
+              </Text>
+              {currentLine.slice(cursorPosition + 1)}
+            </Text>
           </Box>
         )}
       </Box>
