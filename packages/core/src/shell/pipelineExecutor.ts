@@ -4,7 +4,7 @@
  */
 
 import { spawn, ChildProcess } from 'child_process';
-import { Readable, Writable } from 'stream';
+import { Readable, Writable, PassThrough } from 'stream';
 import { ParsedCommand, Pipeline, ShellEnvironment, ShellOptions } from './types.js';
 import { ShellExecutor } from './executor.js';
 import { resolveCommand } from './pathResolver.js';
@@ -16,6 +16,16 @@ export interface PipelineResult {
   stdout: string;
   stderr: string;
   signal?: string;
+}
+
+interface BuiltinProcess {
+  stdin?: Writable;
+  stdout?: Readable;
+  stderr?: Readable;
+  isBuiltin: boolean;
+  execute: () => Promise<number>;
+  killed?: boolean;
+  kill?: (signal: string) => void;
 }
 
 /**
@@ -50,7 +60,7 @@ export class PipelineExecutor {
    * Execute a true pipeline with multiple commands
    */
   private async executePipeline(commands: ParsedCommand[]): Promise<PipelineResult> {
-    const processes: ChildProcess[] = [];
+    const processes: (ChildProcess | BuiltinProcess)[] = [];
     let lastExitCode = 0;
     let collectedStderr = '';
 
@@ -63,9 +73,9 @@ export class PipelineExecutor {
 
         // Check if it's a builtin
         if (command.executable && builtinRegistry.has(command.executable)) {
-          // TODO: Handle builtins in pipelines
-          // For now, skip builtins in pipelines
-          throw new Error(`Builtin '${command.executable}' not supported in pipelines yet`);
+          const builtinProcess = await this.createBuiltinProcess(command, isFirst, isLast);
+          processes.push(builtinProcess);
+          continue;
         }
 
         // Resolve command path
@@ -123,26 +133,76 @@ export class PipelineExecutor {
         }
 
         // Connect pipes
-        if (i > 0 && processes[i - 1].stdout && child.stdin) {
-          processes[i - 1].stdout!.pipe(child.stdin);
+        if (i > 0) {
+          const prevProcess = processes[i - 1];
+          const currProcess = child;
+          
+          if ('stdout' in prevProcess && prevProcess.stdout && currProcess.stdin) {
+            prevProcess.stdout.pipe(currProcess.stdin);
+          }
         }
       }
 
+      // Connect pipes for builtin processes
+      for (let i = 0; i < processes.length; i++) {
+        if (i > 0) {
+          const prevProcess = processes[i - 1];
+          const currProcess = processes[i];
+          
+          if ('isBuiltin' in currProcess && currProcess.isBuiltin && currProcess.stdin) {
+            if ('stdout' in prevProcess && prevProcess.stdout) {
+              prevProcess.stdout.pipe(currProcess.stdin);
+            }
+          }
+        }
+      }
+
+      // Execute builtin processes
+      const builtinPromises = processes.map((process, index) => {
+        if ('isBuiltin' in process && process.isBuiltin) {
+          return (process as BuiltinProcess).execute();
+        }
+        return null;
+      }).filter(p => p !== null);
+
       // Wait for all processes to complete
-      const exitCodes = await Promise.all(
-        processes.map(child => new Promise<number>((resolve) => {
-          child.on('exit', (code, signal) => {
+      const regularProcessPromises = processes.map((child, index) => {
+        if ('isBuiltin' in child && child.isBuiltin) {
+          return null; // Already handled above
+        }
+        
+        return new Promise<number>((resolve) => {
+          (child as ChildProcess).on('exit', (code, signal) => {
             if (signal) {
               resolve(128 + this.getSignalNumber(signal));
             } else {
               resolve(code || 0);
             }
           });
-          child.on('error', () => {
+          (child as ChildProcess).on('error', () => {
             resolve(127); // Command not found
           });
-        }))
-      );
+        });
+      }).filter(p => p !== null);
+
+      // Wait for all processes (both regular and builtin)
+      const allPromises = [...regularProcessPromises, ...builtinPromises];
+      const results = await Promise.all(allPromises);
+      
+      // Get exit codes in the correct order
+      const exitCodes: number[] = [];
+      let builtinIndex = 0;
+      let regularIndex = 0;
+      
+      for (const process of processes) {
+        if ('isBuiltin' in process && process.isBuiltin) {
+          exitCodes.push(results[regularProcessPromises.length + builtinIndex]);
+          builtinIndex++;
+        } else {
+          exitCodes.push(results[regularIndex]);
+          regularIndex++;
+        }
+      }
 
       // Pipeline exit code is the exit code of the last command
       lastExitCode = exitCodes[exitCodes.length - 1];
@@ -150,7 +210,7 @@ export class PipelineExecutor {
     } catch (error) {
       // Clean up processes on error
       processes.forEach(child => {
-        if (!child.killed) {
+        if ('killed' in child && !child.killed && 'kill' in child && child.kill) {
           child.kill('SIGTERM');
         }
       });
@@ -163,6 +223,77 @@ export class PipelineExecutor {
       stdout: '', // Stdout was piped to next command or redirected
       stderr: collectedStderr
     };
+  }
+
+  /**
+   * Create a pseudo-process for a builtin command that can participate in pipelines
+   */
+  private async createBuiltinProcess(
+    command: ParsedCommand, 
+    isFirst: boolean, 
+    isLast: boolean
+  ): Promise<BuiltinProcess> {
+    const stdin = isFirst ? undefined : new PassThrough();
+    const stdout = isLast ? undefined : new PassThrough();
+    const stderr = new PassThrough();
+
+    const execute = async (): Promise<number> => {
+      const builtin = builtinRegistry.get(command.executable!);
+      if (!builtin) {
+        return 127;
+      }
+
+      // Capture console output
+      const originalLog = console.log;
+      const originalError = console.error;
+      
+      try {
+        // Redirect console output to our streams
+        if (stdout) {
+          console.log = (...args) => {
+            const text = args.join(' ') + '\n';
+            stdout.write(text);
+          };
+        }
+        
+        console.error = (...args) => {
+          const text = args.join(' ') + '\n';
+          stderr.write(text);
+        };
+
+        // If we have stdin, collect it into a string and set as env variable
+        if (stdin) {
+          let inputData = '';
+          stdin.on('data', (chunk) => {
+            inputData += chunk.toString();
+          });
+          
+          await new Promise((resolve) => {
+            stdin.on('end', resolve);
+          });
+          
+          // Some builtins might need to access piped input
+          // We could pass this through environment or extend builtin interface
+        }
+
+        // Execute the builtin
+        const exitCode = await builtin.execute(command.args, this.env, this.options);
+        
+        // Close output streams
+        if (stdout) {
+          stdout.end();
+        }
+        stderr.end();
+        
+        return exitCode;
+      } finally {
+        // Restore console functions
+        console.log = originalLog;
+        console.error = originalError;
+      }
+    };
+
+    return { stdin, stdout, stderr, isBuiltin: true, execute, killed: false };
   }
 
   /**
