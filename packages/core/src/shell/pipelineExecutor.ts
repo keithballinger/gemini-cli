@@ -18,6 +18,12 @@ export interface PipelineResult {
   signal?: string;
 }
 
+export interface PipelineExecutionOptions {
+  onOutput?: (chunk: string) => void;
+  onError?: (chunk: string) => void;
+  abortSignal?: AbortSignal;
+}
+
 interface BuiltinProcess {
   stdin?: Writable;
   stdout?: Readable;
@@ -41,25 +47,27 @@ export class PipelineExecutor {
   /**
    * Execute a pipeline
    */
-  async execute(pipeline: Pipeline): Promise<PipelineResult> {
+  async execute(pipeline: Pipeline, options?: PipelineExecutionOptions): Promise<PipelineResult> {
     if (pipeline.commands.length === 0) {
       return { exitCode: 0, stdout: '', stderr: '' };
     }
 
     if (pipeline.commands.length === 1) {
       // Single command, no pipeline needed
-      const exitCode = await this.executor.execute(pipeline.commands[0] as ParsedCommand);
+      const exitCode = await this.executor.execute(pipeline.commands[0] as ParsedCommand, {
+        onOutput: options?.onOutput
+      });
       return { exitCode, stdout: '', stderr: '' };
     }
 
     // Execute pipeline with proper pipe setup
-    return this.executePipeline(pipeline.commands as ParsedCommand[]);
+    return this.executePipeline(pipeline.commands as ParsedCommand[], options);
   }
 
   /**
    * Execute a true pipeline with multiple commands
    */
-  private async executePipeline(commands: ParsedCommand[]): Promise<PipelineResult> {
+  private async executePipeline(commands: ParsedCommand[], options?: PipelineExecutionOptions): Promise<PipelineResult> {
     const processes: (ChildProcess | BuiltinProcess)[] = [];
     let lastExitCode = 0;
     let collectedStderr = '';
@@ -73,7 +81,7 @@ export class PipelineExecutor {
 
         // Check if it's a builtin
         if (command.executable && builtinRegistry.has(command.executable)) {
-          const builtinProcess = this.createBuiltinProcess(command, isFirst, isLast);
+          const builtinProcess = this.createBuiltinProcess(command, isFirst, isLast, options);
           processes.push(builtinProcess);
           continue;
         }
@@ -88,7 +96,7 @@ export class PipelineExecutor {
         // Set up stdio
         const stdio: any[] = [
           isFirst ? 'inherit' : 'pipe',  // stdin
-          isLast ? 'inherit' : 'pipe',   // stdout
+          isLast && !options?.onOutput ? 'inherit' : 'pipe',   // stdout - pipe if we need to capture
           'pipe'                         // stderr
         ];
 
@@ -129,6 +137,13 @@ export class PipelineExecutor {
         if (child.stderr) {
           child.stderr.on('data', (data) => {
             collectedStderr += data.toString();
+          });
+        }
+
+        // Capture output for last command if callback provided
+        if (isLast && options?.onOutput && child.stdout) {
+          child.stdout.on('data', (data) => {
+            options.onOutput!(data.toString());
           });
         }
 
@@ -228,10 +243,12 @@ export class PipelineExecutor {
   private createBuiltinProcess(
     command: ParsedCommand, 
     isFirst: boolean, 
-    isLast: boolean
+    isLast: boolean,
+    options?: PipelineExecutionOptions
   ): BuiltinProcess {
     const stdin = isFirst ? undefined : new PassThrough();
-    const stdout = isLast ? undefined : new PassThrough();
+    // Create stdout stream if not last, or if last with output callback
+    const stdout = (isLast && !options?.onOutput) ? undefined : new PassThrough();
     const stderr = new PassThrough();
 
     const execute = async (): Promise<number> => {
@@ -240,28 +257,15 @@ export class PipelineExecutor {
       const originalError = console.error;
       const originalWrite = process.stdout.write.bind(process.stdout);
       
-      // Debug: verify we're setting up capture
-      if (this.options.debugMode && stdout) {
-        originalError(`[DEBUG] Setting up stdout capture for builtin ${command.executable}`);
-      }
-      
       // Redirect console output to our streams
       if (stdout) {
         console.log = (...args) => {
           const text = args.join(' ') + '\n';
-          if (this.options.debugMode) {
-            originalError(`[DEBUG] Captured console.log: ${text.trim()}`);
-          }
           stdout.write(text);
         };
         // Also capture direct stdout writes
-        const options = this.options;
         process.stdout.write = function(chunk: any, ...args: any[]): boolean {
-          const text = String(chunk);
-          if (options.debugMode) {
-            originalError(`[DEBUG] Captured stdout.write: ${text.trim()}`);
-          }
-          stdout.write(text);
+          stdout.write(String(chunk));
           return true;
         } as any;
       }
@@ -275,11 +279,6 @@ export class PipelineExecutor {
         const builtin = builtinRegistry.get(command.executable!);
         if (!builtin) {
           return 127;
-        }
-
-        // Debug info
-        if (this.options.debugMode) {
-          originalError(`[DEBUG] Executing builtin: ${command.executable}, isLast=${isLast}, hasStdout=${!!stdout}`);
         }
 
         // If we have stdin, collect it into a string and set as env variable
@@ -314,6 +313,13 @@ export class PipelineExecutor {
         process.stdout.write = originalWrite;
       }
     };
+
+    // If this is the last command with onOutput, connect stdout to callback
+    if (isLast && options?.onOutput && stdout) {
+      stdout.on('data', (chunk) => {
+        options.onOutput!(chunk.toString());
+      });
+    }
 
     return { stdin, stdout, stderr, isBuiltin: true, execute, killed: false };
   }

@@ -35,12 +35,6 @@ export class ShellExecutor {
       // Expand variables and globs
       const expanded = await this.expandCommand(command);
       
-      // IMPORTANT: This execute method should only be called for single commands
-      // Pipelines should go through executePipeline
-      if (this.options.debugMode) {
-        console.error(`[DEBUG] ShellExecutor.execute called for: ${expanded.executable}`);
-      }
-      
       // Check if it's a builtin
       if (expanded.type === 'builtin' || builtinRegistry.has(expanded.executable || '')) {
         return this.executeBuiltin(expanded, execOptions);
@@ -61,11 +55,13 @@ export class ShellExecutor {
   /**
    * Execute multiple commands (pipeline or compound)
    */
-  async executePipeline(pipeline: Pipeline): Promise<number> {
+  async executePipeline(pipeline: Pipeline, execOptions?: { onOutput?: (chunk: string) => void }): Promise<number> {
     // Use PipelineExecutor for proper pipeline handling
     const { PipelineExecutor } = await import('./pipelineExecutor.js');
     const pipelineExecutor = new PipelineExecutor(this, this.env, this.options);
-    const result = await pipelineExecutor.execute(pipeline);
+    const result = await pipelineExecutor.execute(pipeline, {
+      onOutput: execOptions?.onOutput
+    });
     return result.exitCode;
   }
 

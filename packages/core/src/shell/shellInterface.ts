@@ -124,7 +124,9 @@ export class GeminiShell {
       if (commands.length > 1) {
         // Create a pipeline and execute it
         const pipeline: Pipeline = { commands };
-        const exitCode = await this.executor.executePipeline(pipeline);
+        const exitCode = await this.executor.executePipeline(pipeline, {
+          onOutput: options.onOutput
+        });
         result.exitCode = exitCode;
       } else {
         // Single command
