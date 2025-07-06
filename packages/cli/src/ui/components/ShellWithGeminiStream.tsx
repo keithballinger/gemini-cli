@@ -270,6 +270,8 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
                 items={group.items}
                 isActive={groupIndex === displayGroups.length - 1 && streamingState !== StreamingState.Idle}
                 terminalWidth={process.stdout.columns || 80}
+                config={config}
+                isFocused={true}
               />
             );
           } else {

@@ -5,38 +5,42 @@
 import React, { useState } from 'react';
 import { Box, Text } from 'ink';
 import { Colors } from '../colors.js';
-import { HistoryItem, MessageType } from '../types.js';
+import { HistoryItem, MessageType, ToolCallStatus } from '../types.js';
+import { ToolGroupMessage } from './messages/ToolGroupMessage.js';
+import { Config } from '@google/gemini-cli-core';
 
 interface GeminiShellResponseProps {
   items: HistoryItem[];
   isActive: boolean;
   terminalWidth: number;
+  config?: Config;
+  isFocused?: boolean;
 }
 
 export const GeminiShellResponse: React.FC<GeminiShellResponseProps> = ({
   items,
   isActive,
-  terminalWidth
+  terminalWidth,
+  config,
+  isFocused = true
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Extract the query from the first user item
   const queryItem = items.find(item => item.type === MessageType.USER);
-  const query = queryItem?.text || 'Gemini query';
+  const query = (queryItem && 'text' in queryItem) ? queryItem.text : 'Gemini query';
 
-  // Collect all response content
+  // Collect all response content and tool groups
   const responseContent: string[] = [];
-  const toolCalls: string[] = [];
+  const toolGroups: HistoryItem[] = [];
   
   items.forEach(item => {
     if (item.type === 'gemini' || item.type === 'gemini_content' || item.type === 'gemini_collapsible') {
-      if (item.text?.trim()) {
+      if ('text' in item && item.text?.trim()) {
         responseContent.push(item.text);
       }
-    } else if (item.type === 'tool_group' && item.tools) {
-      item.tools.forEach(tool => {
-        toolCalls.push(`✔ ${tool.name}`);
-      });
+    } else if (item.type === 'tool_group') {
+      toolGroups.push(item);
     }
   });
 
@@ -76,14 +80,19 @@ export const GeminiShellResponse: React.FC<GeminiShellResponseProps> = ({
         {!isActive && <Text color={Colors.Gray}> (Ctrl+O to minimize)</Text>}
       </Box>
 
-      {/* Tool calls */}
-      {toolCalls.length > 0 && (
-        <Box marginBottom={1} flexDirection="column">
-          {toolCalls.map((tool, index) => (
-            <Text key={index} color={Colors.AccentGreen}>{tool}</Text>
-          ))}
+      {/* Tool groups with confirmations */}
+      {toolGroups.map((toolGroup) => (
+        <Box key={toolGroup.id} marginBottom={1}>
+          <ToolGroupMessage
+            toolCalls={toolGroup.type === 'tool_group' ? toolGroup.tools : []}
+            groupId={toolGroup.id}
+            availableTerminalHeight={undefined}
+            terminalWidth={boxWidth - 4} // Account for padding
+            config={config}
+            isFocused={isFocused && isActive}
+          />
         </Box>
-      )}
+      ))}
 
       {/* Response */}
       {fullResponse && (
