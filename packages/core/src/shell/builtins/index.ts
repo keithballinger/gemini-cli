@@ -71,3 +71,16 @@ export class BuiltinRegistry {
 }
 
 export const builtinRegistry = new BuiltinRegistry();
+
+// Export convenience functions for compatibility
+export function registerBuiltin(name: string, command: BuiltinCommand): void {
+  builtinRegistry.register(command);
+}
+
+export function getBuiltin(name: string): BuiltinCommand | undefined {
+  return builtinRegistry.get(name);
+}
+
+export function isBuiltin(name: string): boolean {
+  return builtinRegistry.has(name);
+}
