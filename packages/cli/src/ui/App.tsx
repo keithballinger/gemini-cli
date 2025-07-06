@@ -73,6 +73,7 @@ import { OverflowProvider } from './contexts/OverflowContext.js';
 import { ShowMoreLines } from './components/ShowMoreLines.js';
 import { PrivacyNotice } from './privacy/PrivacyNotice.js';
 import { CommandRouter } from '../utils/commandRouter.js';
+import { CollapsibleResponseManager } from './components/messages/CollapsibleResponseManager.js';
 
 const CTRL_EXIT_PROMPT_DURATION_MS = 1000;
 
@@ -425,6 +426,7 @@ const App = ({ config, settings, startupWarnings = [], invocationMode = 'cli' }:
     getPreferredEditor,
     onAuthError,
     performMemoryRefresh,
+    invocationMode,
   );
   pendingHistoryItems.push(...pendingGeminiHistoryItems);
   const { elapsedTime, currentLoadingPhrase } =
@@ -601,47 +603,57 @@ const App = ({ config, settings, startupWarnings = [], invocationMode = 'cli' }:
          * content is set it'll flush content to the terminal and move the area which it's "clearing"
          * down a notch. Without Static the area which gets erased and redrawn continuously grows.
          */}
-        <Static
-          key={staticKey}
-          items={[
-            <Box flexDirection="column" key="header">
-              <Header terminalWidth={terminalWidth} />
-              {!settings.merged.hideTips && <Tips config={config} />}
-            </Box>,
-            ...history.map((h) => (
-              <HistoryItemDisplay
-                terminalWidth={mainAreaWidth}
-                availableTerminalHeight={staticAreaMaxItemHeight}
-                key={h.id}
-                item={h}
-                isPending={false}
-                config={config}
-              />
-            )),
-          ]}
-        >
-          {(item) => item}
-        </Static>
-        <OverflowProvider>
-          <Box ref={pendingHistoryItemRef} flexDirection="column">
-            {pendingHistoryItems.map((item, i) => (
-              <HistoryItemDisplay
-                key={i}
-                availableTerminalHeight={
-                  constrainHeight ? availableTerminalHeight : undefined
-                }
-                terminalWidth={mainAreaWidth}
-                // TODO(taehykim): It seems like references to ids aren't necessary in
-                // HistoryItemDisplay. Refactor later. Use a fake id for now.
-                item={{ ...item, id: 0 }}
-                isPending={true}
-                config={config}
-                isFocused={!isEditorDialogOpen}
-              />
-            ))}
-            <ShowMoreLines constrainHeight={constrainHeight} />
-          </Box>
-        </OverflowProvider>
+        <CollapsibleResponseManager>
+          {({ collapsibleStates, toggleResponse, toggleAllResponses }) => (
+            <>
+              <Static
+                key={staticKey}
+                items={[
+                  <Box flexDirection="column" key="header">
+                    <Header terminalWidth={terminalWidth} />
+                    {!settings.merged.hideTips && <Tips config={config} />}
+                  </Box>,
+                  ...history.map((h) => (
+                    <HistoryItemDisplay
+                      terminalWidth={mainAreaWidth}
+                      availableTerminalHeight={staticAreaMaxItemHeight}
+                      key={h.id}
+                      item={h}
+                      isPending={false}
+                      config={config}
+                      onToggleCollapsible={toggleResponse}
+                      isActive={false}
+                    />
+                  )),
+                ]}
+              >
+                {(item) => item}
+              </Static>
+              <OverflowProvider>
+                <Box ref={pendingHistoryItemRef} flexDirection="column">
+                  {pendingHistoryItems.map((item, i) => (
+                    <HistoryItemDisplay
+                      key={i}
+                      availableTerminalHeight={
+                        constrainHeight ? availableTerminalHeight : undefined
+                      }
+                      terminalWidth={mainAreaWidth}
+                      // TODO(taehykim): It seems like references to ids aren't necessary in
+                      // HistoryItemDisplay. Refactor later. Use a fake id for now.
+                      item={{ ...item, id: 0 }}
+                      isPending={true}
+                      config={config}
+                      isFocused={!isEditorDialogOpen}
+                      onToggleCollapsible={toggleResponse}
+                      isActive={true}
+                    />
+                  ))}
+                  <ShowMoreLines constrainHeight={constrainHeight} />
+                </Box>
+              </OverflowProvider>
+            </>
+          )}
+        </CollapsibleResponseManager>
 
         {showHelp && <Help commands={slashCommands} />}
 

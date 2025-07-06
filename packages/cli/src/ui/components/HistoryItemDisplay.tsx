@@ -14,6 +14,7 @@ import { ErrorMessage } from './messages/ErrorMessage.js';
 import { ToolGroupMessage } from './messages/ToolGroupMessage.js';
 import { GeminiMessageContent } from './messages/GeminiMessageContent.js';
 import { CompressionMessage } from './messages/CompressionMessage.js';
+import { CollapsibleGeminiResponse } from './messages/CollapsibleGeminiResponse.js';
 import { Box } from 'ink';
 import { AboutBox } from './AboutBox.js';
 import { StatsDisplay } from './StatsDisplay.js';
@@ -29,6 +30,8 @@ interface HistoryItemDisplayProps {
   isPending: boolean;
   config?: Config;
   isFocused?: boolean;
+  onToggleCollapsible?: (id: string, collapsed: boolean) => void;
+  isActive?: boolean;
 }
 
 export const HistoryItemDisplay: React.FC<HistoryItemDisplayProps> = ({
@@ -38,6 +41,8 @@ export const HistoryItemDisplay: React.FC<HistoryItemDisplayProps> = ({
   isPending,
   config,
   isFocused = true,
+  onToggleCollapsible,
+  isActive = false,
 }) => (
   <Box flexDirection="column" key={item.id}>
     {/* Render standard message types */}
@@ -57,6 +62,17 @@ export const HistoryItemDisplay: React.FC<HistoryItemDisplayProps> = ({
         isPending={isPending}
         availableTerminalHeight={availableTerminalHeight}
         terminalWidth={terminalWidth}
+      />
+    )}
+    {item.type === 'gemini_collapsible' && (
+      <CollapsibleGeminiResponse
+        response={item.text}
+        isInitiallyCollapsed={item.isCollapsed}
+        responseId={item.id.toString()}
+        terminalWidth={terminalWidth}
+        onToggle={onToggleCollapsible}
+        isActive={isActive}
+        showControls={!isPending}
       />
     )}
     {item.type === 'info' && <InfoMessage text={item.text} />}

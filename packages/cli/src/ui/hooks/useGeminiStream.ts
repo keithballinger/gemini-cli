@@ -90,6 +90,7 @@ export const useGeminiStream = (
   getPreferredEditor: () => EditorType | undefined,
   onAuthError: () => void,
   performMemoryRefresh: () => Promise<void>,
+  invocationMode: 'cli' | 'shell' = 'cli',
 ) => {
   const [initError, setInitError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -312,12 +313,17 @@ export const useGeminiStream = (
       let newGeminiMessageBuffer = currentGeminiMessageBuffer + eventValue;
       if (
         pendingHistoryItemRef.current?.type !== 'gemini' &&
-        pendingHistoryItemRef.current?.type !== 'gemini_content'
+        pendingHistoryItemRef.current?.type !== 'gemini_content' &&
+        pendingHistoryItemRef.current?.type !== 'gemini_collapsible'
       ) {
         if (pendingHistoryItemRef.current) {
           addItem(pendingHistoryItemRef.current, userMessageTimestamp);
         }
-        setPendingHistoryItem({ type: 'gemini', text: '' });
+        // Use collapsible type in shell mode
+        const messageType = invocationMode === 'shell' && shellModeActive 
+          ? 'gemini_collapsible' 
+          : 'gemini';
+        setPendingHistoryItem({ type: messageType, text: '' });
         newGeminiMessageBuffer = eventValue;
       }
       // Split large messages for better rendering performance. Ideally,
@@ -326,7 +332,7 @@ export const useGeminiStream = (
       if (splitPoint === newGeminiMessageBuffer.length) {
         // Update the existing message with accumulated content
         setPendingHistoryItem((item) => ({
-          type: item?.type as 'gemini' | 'gemini_content',
+          type: item?.type as 'gemini' | 'gemini_content' | 'gemini_collapsible',
           text: newGeminiMessageBuffer,
         }));
       } else {
@@ -344,7 +350,8 @@ export const useGeminiStream = (
           {
             type: pendingHistoryItemRef.current?.type as
               | 'gemini'
-              | 'gemini_content',
+              | 'gemini_content'
+              | 'gemini_collapsible',
             text: beforeText,
           },
           userMessageTimestamp,
@@ -354,7 +361,7 @@ export const useGeminiStream = (
       }
       return newGeminiMessageBuffer;
     },
-    [addItem, pendingHistoryItemRef, setPendingHistoryItem],
+    [addItem, pendingHistoryItemRef, setPendingHistoryItem, invocationMode, shellModeActive],
   );
 
   const handleUserCancelledEvent = useCallback(

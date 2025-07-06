@@ -118,19 +118,37 @@ When set as user's default shell or launched with `--shell`:
 - Integrated into App component handleFinalSubmit
 - Updated InputPrompt placeholder to explain prefixes in shell mode
 
-#### 0.4 Collapsible Gemini Response UI (Shell Mode Only)
-- [ ] Create `CollapsibleGeminiResponse` React/Ink component
-- [ ] Implement box drawing with cyan borders
-- [ ] Add collapse/expand state management
-- [ ] Implement Ctrl+O global toggle functionality
-- [ ] Add individual response toggle with Tab key
-- [ ] Integrate with existing `MaxSizedBox` for overflow handling
+#### 0.4 Collapsible Gemini Response UI (Shell Mode Only) ✓ COMPLETED (2025-01-06)
+- [x] Create `CollapsibleGeminiResponse` React/Ink component
+- [x] Implement box drawing with cyan borders
+- [x] Add collapse/expand state management
+- [x] Implement Ctrl+O global toggle functionality
+- [x] Add individual response toggle with Tab key
+- [x] Integrate with existing `MaxSizedBox` for overflow handling
 
-#### 0.5 Update Message Types (Shell Mode Only)
-- [ ] Add new history item types for AI-enhanced shell commands
-- [ ] Update `HistoryItemDisplay` to handle new message types
-- [ ] Implement response persistence and state tracking
-- [ ] Add configuration for default collapsed state
+**Implementation Notes:**
+- Created CollapsibleGeminiResponse component with collapsible UI
+- Added CollapsibleResponseManager for global state management
+- Supports Ctrl+O to toggle all responses, Ctrl+Shift+O to clear
+- Individual responses can be toggled with Tab/Enter when focused
+- Shows "▶ [Gemini analysis available - Ctrl+O to expand]" when collapsed
+- Integrated with existing MaxSizedBox for content overflow
+- Added new gemini_collapsible history item type
+- Modified useGeminiStream to use collapsible type in shell mode
+- Wrapped history rendering with CollapsibleResponseManager
+
+#### 0.5 Update Message Types (Shell Mode Only) ✓ COMPLETED (2025-01-06)
+- [x] Add new history item types for AI-enhanced shell commands
+- [x] Update `HistoryItemDisplay` to handle new message types
+- [x] Implement response persistence and state tracking
+- [x] Add configuration for default collapsed state
+
+**Implementation Notes:**
+- Added HistoryItemGeminiCollapsible type with text, isCollapsed, and originalCommand
+- Added GEMINI_COLLAPSIBLE to MessageType enum
+- Updated HistoryItemDisplay to render CollapsibleGeminiResponse for new type
+- State tracking handled by CollapsibleResponseManager
+- Default collapsed state configurable via isInitiallyCollapsed prop
 
 ### Deliverables
 - Invocation mode detection system
