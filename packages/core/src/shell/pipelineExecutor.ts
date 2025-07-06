@@ -79,15 +79,21 @@ export class PipelineExecutor {
         const isFirst = i === 0;
         const isLast = i === commands.length - 1;
 
+        // Expand variables in command arguments
+        const expandedCommand = {
+          ...command,
+          args: command.args.map(arg => expandVariables(arg, this.env))
+        };
+
         // Check if it's a builtin
-        if (command.executable && builtinRegistry.has(command.executable)) {
-          const builtinProcess = this.createBuiltinProcess(command, isFirst, isLast, options);
+        if (expandedCommand.executable && builtinRegistry.has(expandedCommand.executable)) {
+          const builtinProcess = this.createBuiltinProcess(expandedCommand, isFirst, isLast, options);
           processes.push(builtinProcess);
           continue;
         }
 
         // Resolve command path
-        const executable = command.executable || '';
+        const executable = expandedCommand.executable || '';
         const resolvedPath = await resolveCommand(executable, this.env.getVariable('PATH') || '');
         if (!resolvedPath) {
           throw new Error(`Command not found: ${executable}`);
@@ -100,32 +106,33 @@ export class PipelineExecutor {
           'pipe'                         // stderr
         ];
 
-        // Apply redirections
-        for (const redir of command.redirections) {
+        // Apply redirections with expanded targets
+        for (const redir of expandedCommand.redirections) {
+          const expandedTarget = expandVariables(redir.target, this.env);
           switch (redir.type) {
             case 'input':
               if (isFirst) {
-                stdio[0] = require('fs').openSync(redir.target, 'r');
+                stdio[0] = require('fs').openSync(expandedTarget, 'r');
               }
               break;
             case 'output':
               if (isLast) {
-                stdio[1] = require('fs').openSync(redir.target, 'w');
+                stdio[1] = require('fs').openSync(expandedTarget, 'w');
               }
               break;
             case 'append':
               if (isLast) {
-                stdio[1] = require('fs').openSync(redir.target, 'a');
+                stdio[1] = require('fs').openSync(expandedTarget, 'a');
               }
               break;
             case 'error':
-              stdio[2] = require('fs').openSync(redir.target, 'w');
+              stdio[2] = require('fs').openSync(expandedTarget, 'w');
               break;
           }
         }
 
-        // Spawn the process
-        const child = spawn(resolvedPath, command.args, {
+        // Spawn the process with expanded arguments
+        const child = spawn(resolvedPath, expandedCommand.args, {
           cwd: this.env.cwd,
           env: this.env.getExportedVariables(),
           stdio
