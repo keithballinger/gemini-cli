@@ -1,12 +1,17 @@
 /**
- * Shell environment management
- * Handles variables, aliases, working directory, and job tracking
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 import * as os from 'os';
 import * as path from 'path';
 import { ShellEnvironment, Job, ShellOptions } from './types.js';
 
+/**
+ * Shell environment management
+ * Handles variables, aliases, working directory, and job tracking
+ */
 export class ShellEnvironmentManager implements ShellEnvironment {
   variables: Map<string, string>;
   aliases: Map<string, string>;
@@ -121,6 +126,13 @@ export class ShellEnvironmentManager implements ShellEnvironment {
   }
 
   /**
+   * Get all variables (for PR4 compatibility)
+   */
+  getAllVariables(): Record<string, string> {
+    return this.getExportedVariables();
+  }
+
+  /**
    * Change working directory
    */
   changeDirectory(dir: string): void {
@@ -144,6 +156,41 @@ export class ShellEnvironmentManager implements ShellEnvironment {
     
     // Update process working directory
     process.chdir(newPwd);
+  }
+
+  /**
+   * Get current working directory
+   */
+  getCwd(): string {
+    return this.cwd;
+  }
+
+  /**
+   * Set current working directory (for PR4 compatibility)
+   */
+  setCwd(path: string): void {
+    this.changeDirectory(path);
+  }
+
+  /**
+   * Get aliases
+   */
+  getAliases(): Map<string, string> {
+    return new Map(this.aliases);
+  }
+
+  /**
+   * Set alias
+   */
+  setAlias(name: string, value: string): void {
+    this.aliases.set(name, value);
+  }
+
+  /**
+   * Get command history
+   */
+  getHistory(): string[] {
+    return [...this.history];
   }
 
   /**
@@ -276,3 +323,6 @@ export class ShellEnvironmentManager implements ShellEnvironment {
     return cloned;
   }
 }
+
+// Export ShellEnv as alias for backward compatibility
+export { ShellEnvironmentManager as ShellEnv };

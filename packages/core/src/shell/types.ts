@@ -1,4 +1,12 @@
 /**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { Readable, Writable } from 'stream';
+
+/**
  * Core types for the POSIX-compliant shell implementation
  */
 
@@ -50,6 +58,9 @@ export interface Job {
   exitCode?: number;
 }
 
+/**
+ * Shell environment for managing variables and state
+ */
 export interface ShellEnvironment {
   variables: Map<string, string>;
   aliases: Map<string, string>;
@@ -74,8 +85,17 @@ export interface ShellEnvironment {
   updateJobStatus(jobId: number, status: Job['status'], exitCode?: number): void;
   getJob(jobId: number): Job | undefined;
   getAllJobs(): Job[];
+  getAliases(): Map<string, string>;
+  setAlias(name: string, value: string): void;
+  getAllVariables(): Record<string, string>;
+  getCwd(): string;
+  setCwd(path: string): void;
+  getHistory(): string[];
 }
 
+/**
+ * Options for shell execution
+ */
 export interface ShellOptions {
   // Shell behavior options
   interactiveMode: boolean;
@@ -93,18 +113,46 @@ export interface ShellOptions {
   maxJobs: number;
 }
 
-export interface ExecutionResult {
+/**
+ * Shell execution result
+ */
+export interface ShellExecutionResult {
   exitCode: number;
   stdout: string;
   stderr: string;
   signal?: string;
+  error?: Error;
+  aborted: boolean;
+  finalWorkingDirectory?: string;
 }
 
+export interface ExecutionResult extends ShellExecutionResult {}
+
+/**
+ * Options for command execution
+ */
+export interface ExecutionOptions {
+  cwd?: string;
+  env?: Record<string, string>;
+  onOutput?: (chunk: string) => void;
+  onError?: (chunk: string) => void;
+  onDebug?: (message: string) => void;
+  abortSignal?: AbortSignal;
+  captureWorkingDirectory?: boolean;
+}
+
+/**
+ * Built-in command interface
+ */
 export interface BuiltinCommand {
   name: string;
   description: string;
   aliases?: string[];
-  execute: (args: string[], env: ShellEnvironment, options: ShellOptions) => Promise<number>;
+  execute: (
+    args: string[], 
+    env: ShellEnvironment, 
+    options: ShellOptions & ExecutionOptions
+  ) => Promise<number>;
   help(): string;
 }
 
