@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the implementation plan for transforming Gemini CLI from its current pass-through shell mode into a POSIX-compliant shell while maintaining its AI capabilities. The implementation will be done in phases to ensure stability and backward compatibility.
+This document outlines the implementation plan for transforming Gemini CLI from its current pass-through shell mode into a POSIX-compliant shell with seamless AI integration. The new design eliminates mode switching and provides a unified shell + AI experience with smart command routing and collapsible AI responses.
 
 ## Current State
 
@@ -13,13 +13,88 @@ The Gemini CLI currently has a basic shell mode that:
 - Shows visual feedback (yellow border and prompt)
 - Runs commands in isolation (no persistent state between commands)
 
+## New Interface Vision
+
+The updated shell interface will feature:
+- **No mode switching**: Shell commands execute directly without `!` prefix
+- **Smart routing**: Automatic detection of shell commands vs natural language
+- **AI prefixes**: Use `g ` or `_ ` to explicitly trigger Gemini analysis
+- **Collapsible responses**: AI responses appear in collapsible boxes (Ctrl+O to toggle)
+- **Seamless integration**: Natural workflow between shell and AI assistance
+
+## Development Workflow
+
+### Task Management
+1. **Before starting a task**: Review the task description and acceptance criteria
+2. **During development**: Follow TDD principles, write tests first
+3. **After completing a task**:
+   - Mark the task as complete with `[x]` in this document
+   - Add any implementation notes or decisions made
+   - Update related architecture documents if needed
+   - Run all tests to ensure nothing is broken
+   - Commit changes with descriptive message (no AI attribution)
+
+### Commit Guidelines
+- Use conventional commit format: `feat:`, `fix:`, `docs:`, `test:`, `refactor:`
+- Example: `feat: implement command router with g and _ prefix support`
+- Commit after each meaningful task or subtask completion
+- Keep commits atomic and focused
+
+### Progress Tracking
+- Update this plan document in real-time as tasks are completed
+- Add notes about any deviations from the original plan
+- Document any blocked tasks or dependencies
+- Include actual completion dates next to tasks
+
 ## Timeline
 
-- **Total Duration**: 8-10 weeks
+- **Total Duration**: 9-11 weeks (added Phase 0 for interface redesign)
 - **Team Size**: 2-3 developers
 - **Review Checkpoints**: End of each phase
 
-## Phase 1: Foundation (Weeks 1-2)
+## Phase 0: Interface Redesign (Week 1)
+
+### Goals
+- Implement the new smart shell interface without `!` mode
+- Add collapsible Gemini response boxes
+- Create command routing logic for shell vs AI
+
+### Tasks
+
+#### 0.1 Remove Shell Mode Toggle
+- [ ] Remove `!` command toggle functionality
+- [ ] Update prompt to always show shell-style prompt with current directory
+- [ ] Remove yellow border and shell mode visual indicators
+- [ ] Update input handling to process all commands directly
+
+#### 0.2 Command Router Implementation
+- [ ] Create `CommandRouter` class with routing logic
+- [ ] Implement `g ` and `_ ` prefix detection for Gemini queries
+- [ ] Add shell command parser integration for validation
+- [ ] Implement natural language detection fallback
+- [ ] Add configurable prefix patterns
+
+#### 0.3 Collapsible Gemini Response UI
+- [ ] Create `CollapsibleGeminiResponse` React/Ink component
+- [ ] Implement box drawing with cyan borders
+- [ ] Add collapse/expand state management
+- [ ] Implement Ctrl+O global toggle functionality
+- [ ] Add individual response toggle with Tab key
+- [ ] Integrate with existing `MaxSizedBox` for overflow handling
+
+#### 0.4 Update Message Types
+- [ ] Add new history item types for AI-enhanced shell commands
+- [ ] Update `HistoryItemDisplay` to handle new message types
+- [ ] Implement response persistence and state tracking
+- [ ] Add configuration for default collapsed state
+
+### Deliverables
+- Working shell interface without mode switching
+- Collapsible AI response boxes with keyboard shortcuts
+- Smart command routing between shell and AI
+- Updated documentation for new interface
+
+## Phase 1: Foundation (Weeks 2-3)
 
 ### Goals
 - Set up core shell infrastructure
@@ -84,9 +159,10 @@ The Gemini CLI currently has a basic shell mode that:
 
 #### 2.3 Integration
 - [ ] Modify `shellCommandProcessor.ts` to use new shell executor
-- [ ] Update `InputPrompt.tsx` to use POSIX shell when in shell mode
-- [ ] Maintain existing `!` toggle functionality
+- [ ] Update `InputPrompt.tsx` to use POSIX shell by default
+- [ ] Integrate with new command router from Phase 0
 - [ ] Add configuration option for POSIX vs pass-through mode
+- [ ] Ensure Gemini analysis works with shell command output
 
 ### Deliverables
 - Working built-in commands
@@ -304,16 +380,74 @@ The Gemini CLI currently has a basic shell mode that:
 - **shell-quote** - Lightweight quote parsing and escaping
 - **xterm.js** - Terminal emulation for enhanced UI (if needed)
 
+## Interface Testing Requirements
+
+### Phase 0 Testing
+- Verify `g ` and `_ ` prefixes trigger Gemini correctly
+- Test natural language detection accuracy
+- Ensure shell commands execute without `!` prefix
+- Verify Ctrl+O toggles all Gemini responses
+- Test response persistence across commands
+- Validate collapsed/expanded state management
+
+### Integration Examples
+```bash
+# Direct shell command
+$ ls -la
+
+# Explicit Gemini query
+$ g what does the ls command do
+
+# Shell command with AI analysis
+$ _ find . -name "*.log" -size +100M
+
+# Natural language detection
+$ how do I compress these files
+
+# Pipeline with AI assistance
+$ ps aux | _ grep node
+```
+
 ## Open Questions
 
 1. Should we support bash-specific extensions?
 2. How much of POSIX.1-2017 should we target?
-3. Should shell mode be opt-in or default?
-4. Integration with AI features in pipelines?
+3. Should other prefixes besides `g ` and `_ ` be configurable?
+4. Should AI analysis be automatic for certain error conditions?
+5. How should we handle ambiguous commands (valid shell command that looks like natural language)?
+
+## Implementation Notes
+
+### Phase 0 Notes
+<!-- Add implementation notes here as tasks are completed -->
+
+### Phase 1 Notes
+<!-- Add implementation notes here as tasks are completed -->
+
+### Phase 2 Notes
+<!-- Add implementation notes here as tasks are completed -->
+
+### Phase 3 Notes
+<!-- Add implementation notes here as tasks are completed -->
+
+### Phase 4 Notes
+<!-- Add implementation notes here as tasks are completed -->
+
+### Phase 5 Notes
+<!-- Add implementation notes here as tasks are completed -->
+
+### Phase 6 Notes
+<!-- Add implementation notes here as tasks are completed -->
+
+### Phase 7 Notes
+<!-- Add implementation notes here as tasks are completed -->
+
+### Phase 8 Notes
+<!-- Add implementation notes here as tasks are completed -->
 
 ## Next Steps
 
 1. Review and approve plan
 2. Assign development team
 3. Set up development environment
-4. Begin Phase 1 implementation
+4. Begin Phase 0 implementation (Interface Redesign)

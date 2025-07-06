@@ -491,7 +491,290 @@ export interface ShellConfig {
 
 This implementation will transform Gemini CLI into a full-featured POSIX shell while maintaining its AI capabilities, creating a unique hybrid experience that combines traditional shell functionality with AI assistance.
 
-## 7. Alternative Approach: Leveraging Cash Shell
+## 7. Smart Shell Interface Design
+
+After reviewing the requirements for a seamless shell experience without mode switching, this section outlines the new interface design that eliminates the need for the `!` prefix and provides an integrated shell + AI experience.
+
+### 7.1. Interface Philosophy
+
+The new interface follows these principles:
+- **Shell-first**: Default behavior is shell command execution
+- **Smart detection**: Automatically route natural language to Gemini
+- **Explicit AI prefix**: Use `g ` or `_ ` to explicitly trigger Gemini analysis
+- **Visual separation**: AI responses appear in collapsible boxes
+- **Non-intrusive**: AI enhancements don't interrupt shell workflow
+
+### 7.2. Command Routing Logic
+
+```typescript
+interface CommandRouter {
+  async route(input: string): Promise<RouteResult> {
+    // Explicit Gemini prefix - highest priority
+    if (input.startsWith('g ') || input.startsWith('_ ')) {
+      return {
+        type: 'gemini',
+        query: input.slice(2).trim(),
+        isExplicit: true
+      };
+    }
+    
+    // Legacy ? prefix support (optional)
+    if (input.startsWith('?')) {
+      return {
+        type: 'gemini',
+        query: input.slice(1).trim(),
+        isExplicit: true
+      };
+    }
+    
+    // Try parsing as shell command
+    const parseResult = await this.shellParser.parse(input);
+    if (parseResult.isValid) {
+      return {
+        type: 'shell',
+        command: parseResult
+      };
+    }
+    
+    // Natural language detection fallback
+    if (this.looksLikeNaturalLanguage(input)) {
+      return {
+        type: 'gemini',
+        query: input,
+        isExplicit: false
+      };
+    }
+    
+    // Default to shell (command not found)
+    return {
+      type: 'shell',
+      command: input
+    };
+  }
+}
+```
+
+### 7.3. Visual Interface Examples
+
+#### Standard Shell Commands
+```
+> ~/projects/gemini-cli $ ls -la
+total 48
+drwxr-xr-x   6 user  staff   192 Dec 10 14:23 .
+drwxr-xr-x  12 user  staff   384 Dec 10 14:20 ..
+-rw-r--r--   1 user  staff  1234 Dec 10 14:23 README.md
+
+> ~/projects/gemini-cli $ cd src
+> ~/projects/gemini-cli/src $ 
+```
+
+#### Explicit Gemini Query with `g ` prefix
+```
+> ~/projects $ g how do I find files modified in the last 24 hours
+╭─ ✦ Gemini ───────────────────────────────────── Ctrl+O to minimize ─╮
+│ To find files modified in the last 24 hours, you can use:           │
+│                                                                      │
+│   find . -type f -mtime -1                                          │
+│                                                                      │
+│ Or for more precise control:                                         │
+│   find . -type f -newermt "24 hours ago"                           │
+│                                                                      │
+│ To see details with timestamps:                                     │
+│   find . -type f -mtime -1 -ls                                     │
+╰──────────────────────────────────────────────────────────────────────╯
+
+> ~/projects $ find . -type f -mtime -1
+./recent-file.txt
+./updated-config.json
+```
+
+#### Shell Command with Gemini Analysis
+```
+> ~/projects $ _ grep -r "TODO" --include="*.js"
+./src/app.js:12:  // TODO: Add error handling
+./src/utils.js:45: // TODO: Optimize this function
+./tests/test.js:8: // TODO: Write more test cases
+
+╭─ ✦ Gemini Analysis ─────────────────────────── Ctrl+O to minimize ─╮
+│ Found 3 TODO comments in your JavaScript files:                     │
+│                                                                      │
+│ • app.js:12 - Missing error handling (critical for stability)       │
+│ • utils.js:45 - Performance optimization opportunity                │
+│ • test.js:8 - Incomplete test coverage                              │
+│                                                                      │
+│ Consider using a task tracking system or GitHub issues to manage    │
+│ these items. You can also search for other markers:                 │
+│   grep -r "FIXME\|HACK\|XXX" --include="*.js"                      │
+╰──────────────────────────────────────────────────────────────────────╯
+
+> ~/projects $ 
+```
+
+#### Collapsed State
+```
+> ~/projects $ _ npm audit
+found 3 vulnerabilities (1 low, 2 moderate)
+run `npm audit fix` to fix them
+
+▶ [Gemini analysis available - Ctrl+O to expand]
+
+> ~/projects $ 
+```
+
+#### Natural Language Detection
+```
+> ~/projects $ what files are in this directory
+╭─ ✦ Gemini ───────────────────────────────────── Ctrl+O to minimize ─╮
+│ I'll list the files in the current directory for you.               │
+│                                                                      │
+│ Running: ls -la                                                      │
+╰──────────────────────────────────────────────────────────────────────╯
+
+total 48
+drwxr-xr-x   6 user  staff   192 Dec 10 14:23 .
+drwxr-xr-x  12 user  staff   384 Dec 10 14:20 ..
+-rw-r--r--   1 user  staff  1234 Dec 10 14:23 README.md
+-rw-r--r--   1 user  staff  5678 Dec 10 14:23 package.json
+drwxr-xr-x   4 user  staff   128 Dec 10 14:23 src
+drwxr-xr-x   3 user  staff    96 Dec 10 14:23 tests
+```
+
+### 7.4. Collapsible Box Implementation
+
+#### React/Ink Component Structure
+```typescript
+// components/messages/CollapsibleGeminiResponse.tsx
+import { Box, Text, useInput } from 'ink';
+import { useState, useCallback } from 'react';
+import { MaxSizedBox } from '../MaxSizedBox';
+
+interface CollapsibleGeminiResponseProps {
+  response: string;
+  isInitiallyCollapsed?: boolean;
+  responseId: string;
+  terminalWidth: number;
+  onToggle?: (id: string, collapsed: boolean) => void;
+}
+
+export const CollapsibleGeminiResponse = ({
+  response,
+  isInitiallyCollapsed = false,
+  responseId,
+  terminalWidth,
+  onToggle
+}: CollapsibleGeminiResponseProps) => {
+  const [isCollapsed, setIsCollapsed] = useState(isInitiallyCollapsed);
+  
+  // Local keyboard handler for focused response
+  useInput((input, key) => {
+    if (key.return || key.tab) {
+      const newState = !isCollapsed;
+      setIsCollapsed(newState);
+      onToggle?.(responseId, newState);
+    }
+  }, { isActive: true });
+  
+  if (isCollapsed) {
+    return (
+      <Box marginTop={1}>
+        <Text color="dim">
+          {'▶ '}
+          <Text color="cyan">[Gemini analysis available - Ctrl+O to expand]</Text>
+        </Text>
+      </Box>
+    );
+  }
+  
+  return (
+    <Box flexDirection="column" marginTop={1}>
+      <Box 
+        borderStyle="round" 
+        borderColor="cyan"
+        paddingX={1}
+        paddingY={0.5}
+        width={terminalWidth - 2}
+      >
+        <Box flexDirection="column">
+          <Box justifyContent="space-between" marginBottom={1}>
+            <Text color="cyan" bold>✦ Gemini</Text>
+            <Text color="dim">Ctrl+O to minimize</Text>
+          </Box>
+          <MaxSizedBox 
+            availableHeight={20}
+            showOverflowIndicator={true}
+          >
+            <Text>{response}</Text>
+          </MaxSizedBox>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+```
+
+### 7.5. Global Keyboard Shortcuts
+
+The shell will support these global shortcuts:
+- **Ctrl+O**: Toggle all Gemini responses (collapse/expand)
+- **Ctrl+Shift+O**: Clear all Gemini responses from view
+- **Tab** (when response focused): Toggle individual response
+
+### 7.6. Integration with Shell History
+
+Shell commands and their Gemini analyses are stored together:
+```typescript
+interface ShellHistoryEntry {
+  id: string;
+  timestamp: Date;
+  command: string;
+  output?: string;
+  exitCode?: number;
+  geminiAnalysis?: {
+    response: string;
+    isCollapsed: boolean;
+    trigger: 'explicit' | 'auto' | 'natural';
+  };
+}
+```
+
+### 7.7. Configuration Options
+
+Users can customize the behavior:
+```typescript
+interface ShellInterfaceConfig {
+  // Trigger patterns
+  geminiPrefixes: string[]; // Default: ['g ', '_ ']
+  
+  // Auto-analysis
+  autoAnalyze: {
+    enabled: boolean;
+    patterns: string[]; // Commands that trigger auto-analysis
+    errorOnly: boolean; // Only analyze on non-zero exit codes
+  };
+  
+  // UI preferences  
+  defaultCollapsed: boolean;
+  maxResponseHeight: number;
+  persistCollapseState: boolean;
+  
+  // Natural language detection
+  enableNaturalLanguage: boolean;
+  naturalLanguagePatterns: RegExp[];
+}
+```
+
+### 7.8. Implementation Benefits
+
+1. **No Mode Switching**: Users stay in their natural shell workflow
+2. **Discoverable**: The `g ` and `_ ` prefixes are easy to remember
+3. **Non-Intrusive**: Collapsed responses don't clutter the terminal
+4. **Contextual**: AI can analyze command output when helpful
+5. **Flexible**: Works for both explicit queries and automatic analysis
+6. **Familiar**: Builds on existing shell conventions
+
+This design creates a seamless blend of traditional shell functionality with AI assistance, eliminating the friction of mode switching while maintaining clear separation between shell and AI interactions.
+
+## 8. Alternative Approach: Leveraging Cash Shell
 
 After analyzing the [Cash shell project](https://github.com/dthree/cash), here's an evaluation of using it as a foundation for Gemini CLI's POSIX shell features:
 
