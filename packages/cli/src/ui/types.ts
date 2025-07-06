@@ -77,6 +77,13 @@ export type HistoryItemGeminiContent = HistoryItemBase & {
   text: string;
 };
 
+export type HistoryItemGeminiCollapsible = HistoryItemBase & {
+  type: 'gemini_collapsible';
+  text: string;
+  isCollapsed?: boolean;
+  originalCommand?: string;
+};
+
 export type HistoryItemInfo = HistoryItemBase & {
   type: 'info';
   text: string;
@@ -123,6 +130,7 @@ export type HistoryItemToolGroup = HistoryItemBase & {
 export type HistoryItemUserShell = HistoryItemBase & {
   type: 'user_shell';
   text: string;
+  cwd?: string;
 };
 
 export type HistoryItemCompression = HistoryItemBase & {
@@ -139,6 +147,7 @@ export type HistoryItemWithoutId =
   | HistoryItemUserShell
   | HistoryItemGemini
   | HistoryItemGeminiContent
+  | HistoryItemGeminiCollapsible
   | HistoryItemInfo
   | HistoryItemError
   | HistoryItemAbout
@@ -162,6 +171,7 @@ export enum MessageType {
   TOOL_STATS = 'tool_stats',
   QUIT = 'quit',
   GEMINI = 'gemini',
+  GEMINI_COLLAPSIBLE = 'gemini_collapsible',
   COMPRESSION = 'compression',
 }
 
