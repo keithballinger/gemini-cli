@@ -47,9 +47,69 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn run_interactive_shell(_shell: &mut GeminiShell) -> anyhow::Result<()> {
-    println!("Interactive shell mode not yet implemented");
-    println!("This will provide a full POSIX shell experience with AI integration");
+async fn run_interactive_shell(shell: &mut GeminiShell) -> anyhow::Result<()> {
+    use std::io::{self, Write};
+    
+    println!("Type 'help' for commands, 'exit' to quit");
+    println!();
+    
+    // Try to initialize Gemini client
+    match gemini_shell::gemini::GeminiClient::new().await {
+        Ok(client) => {
+            shell.with_gemini(client).await;
+            println!("✅ Gemini AI integration enabled");
+        }
+        Err(e) => {
+            eprintln!("⚠️  Gemini AI not available: {}", e);
+            eprintln!("   Shell will work without AI features");
+        }
+    }
+    
+    println!();
+    
+    // Main shell loop
+    loop {
+        // Display prompt
+        let prompt = format!("{}$ ", shell.current_dir());
+        print!("{}", prompt);
+        io::stdout().flush()?;
+        
+        // Read input
+        let mut input = String::new();
+        match io::stdin().read_line(&mut input) {
+            Ok(0) => break, // EOF
+            Ok(_) => {
+                let input = input.trim();
+                if input.is_empty() {
+                    continue;
+                }
+                
+                // Execute command
+                match shell.execute(input).await {
+                    Ok(result) => {
+                        if !result.stdout.is_empty() {
+                            print!("{}", result.stdout);
+                        }
+                        if !result.stderr.is_empty() {
+                            eprint!("{}", result.stderr);
+                        }
+                    }
+                    Err(e) => {
+                        if e.to_string().contains("Shell exit requested") {
+                            break;
+                        }
+                        eprintln!("Error: {}", e);
+                    }
+                }
+            }
+            Err(e) => {
+                eprintln!("Error reading input: {}", e);
+                break;
+            }
+        }
+    }
+    
+    println!("Goodbye!");
     Ok(())
 }
 

@@ -10,13 +10,31 @@ use super::{GeminiResponse, UsageMetadata};
 
 #[derive(Debug, Serialize)]
 struct QueryRequest {
-    prompt: String,
+    query: String,
+    options: QueryOptions,
+}
+
+#[derive(Debug, Serialize)]
+struct QueryOptions {
+    #[serde(skip_serializing_if = "Option::is_none")]
     context: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 struct QueryResponse {
+    success: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    response: Option<QueryResponseData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct QueryResponseData {
     text: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    metadata: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     usage: Option<UsageMetadata>,
 }
 
@@ -61,25 +79,25 @@ impl GeminiClient {
         
         // Start the Node.js service
         let service_path = std::env::current_dir()?
-            .join("gemini-service")
-            .join("dist")
+            .join("nodejs-bridge")
+            .join("src")
             .join("server.js");
             
         if !service_path.exists() {
-            tracing::warn!("Gemini service not found at {:?}, running without AI integration", service_path);
+            eprintln!("Warning: Gemini service not found at {:?}, running without AI integration", service_path);
             return Ok(());
         }
         
         let mut child = Command::new("node")
             .arg(&service_path)
-            .arg("--port")
-            .arg(port.to_string())
+            .env("GEMINI_BRIDGE_PORT", port.to_string())
+            .env("GEMINI_BRIDGE_HOST", "localhost")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()?;
             
         // Give the service time to start
-        tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
+        tokio::time::sleep(tokio::time::Duration::from_millis(2000)).await;
         
         // Check if service is healthy
         if !self.is_service_healthy().await? {
@@ -88,7 +106,7 @@ impl GeminiClient {
         }
         
         self.service_process = Some(child);
-        tracing::info!("Gemini service started on port {}", port);
+        println!("Gemini service started on port {}", port);
         Ok(())
     }
     
@@ -118,13 +136,19 @@ impl GeminiClient {
     
     /// Send a query to Gemini
     pub async fn query(&self, prompt: &str) -> Result<GeminiResponse> {
+        if self.service_process.is_none() {
+            return Err(anyhow::anyhow!("Gemini service not available"));
+        }
+
         let request = QueryRequest {
-            prompt: prompt.to_string(),
-            context: None,
+            query: prompt.to_string(),
+            options: QueryOptions {
+                context: None,
+            },
         };
         
         let response = self.http
-            .post(&format!("{}/api/query", self.service_url))
+            .post(&format!("{}/query", self.service_url))
             .json(&request)
             .send()
             .await?;
@@ -135,9 +159,17 @@ impl GeminiClient {
         
         let query_response: QueryResponse = response.json().await?;
         
+        if !query_response.success {
+            return Err(anyhow::anyhow!("Gemini query failed: {}", 
+                query_response.error.unwrap_or_else(|| "Unknown error".to_string())));
+        }
+
+        let response_data = query_response.response.ok_or_else(|| 
+            anyhow::anyhow!("No response data received"))?;
+        
         Ok(GeminiResponse {
-            text: query_response.text,
-            usage: query_response.usage,
+            text: response_data.text,
+            usage: response_data.usage,
             timestamp: chrono::Utc::now(),
         })
     }
