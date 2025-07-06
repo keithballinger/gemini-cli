@@ -12,7 +12,7 @@ import { useHistory } from '../hooks/useHistoryManager.js';
 import { HistoryItemDisplay } from './HistoryItemDisplay.js';
 import { GeminiShellResponse } from './GeminiShellResponse.js';
 import { StreamingContext } from '../contexts/StreamingContext.js';
-import { MessageType, StreamingState } from '../types.js';
+import { HistoryItemWithoutId, MessageType, StreamingState } from '../types.js';
 import ansiEscapes from 'ansi-escapes';
 import process from 'node:process';
 
@@ -141,7 +141,8 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
         setIsExecutingShell(true);
         
         // Add shell command as a user_shell type so it's visible in history but not confused with Gemini queries
-        addItem({ type: 'user_shell' as const, text: command }, Date.now());
+        const shellHistoryItem: HistoryItemWithoutId = { type: 'user_shell', text: command, cwd };
+        addItem(shellHistoryItem, Date.now());
 
         // Collect output to add to Gemini history
         let shellOutput = '';

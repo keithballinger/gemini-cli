@@ -130,6 +130,7 @@ export type HistoryItemToolGroup = HistoryItemBase & {
 export type HistoryItemUserShell = HistoryItemBase & {
   type: 'user_shell';
   text: string;
+  cwd?: string;
 };
 
 export type HistoryItemCompression = HistoryItemBase & {
