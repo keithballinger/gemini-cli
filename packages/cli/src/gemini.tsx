@@ -7,7 +7,7 @@
 import React from 'react';
 import { render } from 'ink';
 import { AppWrapper } from './ui/App.js';
-import { loadCliConfig } from './config/config.js';
+import { loadCliConfig, parseArguments } from './config/config.js';
 import { readStdin } from './utils/readStdin.js';
 import { basename } from 'node:path';
 import v8 from 'node:v8';
@@ -38,6 +38,7 @@ import {
 } from '@google/gemini-cli-core';
 import { validateAuthMethod } from './config/auth.js';
 import { setMaxSizedBoxDebugging } from './ui/components/shared/MaxSizedBox.js';
+import { InvocationDetector, InvocationMode } from './utils/invocationDetector.js';
 
 function getNodeMemoryArgs(config: Config): string[] {
   const totalMemoryMB = os.totalmem() / (1024 * 1024);
@@ -98,6 +99,16 @@ export async function main() {
       console.error(`Please fix ${error.path} and try again.`);
     }
     process.exit(1);
+  }
+
+  // Parse arguments to get shell flag
+  const argv = await parseArguments();
+  
+  // Detect invocation mode
+  const invocationInfo = InvocationDetector.detect({ shell: argv.shell });
+  
+  if (argv.debug) {
+    console.debug('[Invocation]', InvocationDetector.getModeDescription(invocationInfo));
   }
 
   const extensions = loadExtensions(workspaceRoot);
@@ -180,6 +191,7 @@ export async function main() {
           config={config}
           settings={settings}
           startupWarnings={startupWarnings}
+          invocationMode={invocationInfo.mode === InvocationMode.SHELL ? 'shell' : 'cli'}
         />
       </React.StrictMode>,
       { exitOnCtrlC: false },

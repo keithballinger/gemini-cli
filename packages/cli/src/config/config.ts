@@ -39,7 +39,7 @@ const logger = {
   error: (...args: any[]) => console.error('[ERROR]', ...args),
 };
 
-interface CliArgs {
+export interface CliArgs {
   model: string | undefined;
   sandbox: boolean | string | undefined;
   'sandbox-image': string | undefined;
@@ -53,9 +53,10 @@ interface CliArgs {
   telemetryTarget: string | undefined;
   telemetryOtlpEndpoint: string | undefined;
   telemetryLogPrompts: boolean | undefined;
+  shell: boolean | undefined;
 }
 
-async function parseArguments(): Promise<CliArgs> {
+export async function parseArguments(): Promise<CliArgs> {
   const argv = await yargs(hideBin(process.argv))
     .option('model', {
       alias: 'm',
@@ -126,6 +127,11 @@ async function parseArguments(): Promise<CliArgs> {
       alias: 'c',
       type: 'boolean',
       description: 'Enables checkpointing of file edits',
+      default: false,
+    })
+    .option('shell', {
+      type: 'boolean',
+      description: 'Launch in shell mode (POSIX-compliant shell)',
       default: false,
     })
     .version(await getCliVersion()) // This will enable the --version flag based on package.json

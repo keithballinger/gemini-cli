@@ -79,6 +79,7 @@ interface AppProps {
   config: Config;
   settings: LoadedSettings;
   startupWarnings?: string[];
+  invocationMode?: 'cli' | 'shell';
 }
 
 export const AppWrapper = (props: AppProps) => (

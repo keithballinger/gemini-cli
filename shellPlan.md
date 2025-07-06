@@ -72,13 +72,20 @@ When set as user's default shell or launched with `--shell`:
 
 ### Tasks
 
-#### 0.1 Invocation Mode Detection
-- [ ] Create `InvocationDetector` class to determine launch mode
-- [ ] Check for `--shell` command line flag
-- [ ] Detect if running as login shell (check SHELL env var)
-- [ ] Check parent process (ppid === 1 or login process)
-- [ ] Check argv[0] for leading dash (login shell convention)
-- [ ] Add configuration flag to force shell mode
+#### 0.1 Invocation Mode Detection ✓ COMPLETED (2025-01-06)
+- [x] Create `InvocationDetector` class to determine launch mode
+- [x] Check for `--shell` command line flag
+- [x] Detect if running as login shell (check SHELL env var)
+- [x] Check parent process (ppid === 1 or login process)
+- [x] Check argv[0] for leading dash (login shell convention)
+- [x] Add configuration flag to force shell mode
+
+**Implementation Notes:**
+- Created `/packages/cli/src/utils/invocationDetector.ts` with full detection logic
+- Added comprehensive test suite in `__tests__/invocationDetector.test.ts`
+- Added `--shell` flag to CLI args in `config.ts`
+- Integrated detection into `gemini.tsx` main function
+- Passed invocation mode to AppWrapper component
 
 #### 0.2 Conditional Interface Loading
 - [ ] In CLI mode: Preserve existing `!` toggle functionality
