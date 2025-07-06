@@ -46,6 +46,9 @@ import { DetailedMessagesDisplay } from './components/DetailedMessagesDisplay.js
 import { HistoryItemDisplay } from './components/HistoryItemDisplay.js';
 import { ContextSummaryDisplay } from './components/ContextSummaryDisplay.js';
 import { useHistory } from './hooks/useHistoryManager.js';
+import { ShellInterface } from './components/ShellInterface.js';
+import { ShellInterfaceV2 } from './components/ShellInterfaceV2.js';
+import { ShellWithGeminiStream } from './components/ShellWithGeminiStream.js';
 import process from 'node:process';
 import {
   getErrorMessage,
@@ -586,6 +589,18 @@ const App = ({ config, settings, startupWarnings = [], invocationMode = 'cli' }:
   // Arbitrary threshold to ensure that items in the static area are large
   // enough but not too large to make the terminal hard to use.
   const staticAreaMaxItemHeight = Math.max(terminalHeight * 4, 100);
+  
+  // If in shell mode and it's initially active, use the ShellInterface
+  if (invocationMode === 'shell' && shellModeActive) {
+    return (
+      <ShellWithGeminiStream
+        initialDirectory={process.cwd()}
+        onExit={(code) => process.exit(code)}
+        config={config}
+      />
+    );
+  }
+  
   return (
     <StreamingContext.Provider value={streamingState}>
       <Box flexDirection="column" marginBottom={1} width="90%">

@@ -5,7 +5,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Box, Text, useInput, useApp } from 'ink';
-import { GeminiShell } from '@google/gemini-cli-core';
+import { GeminiShell, Config, GeminiClient } from '@google/gemini-cli-core';
 import { Colors } from '../colors.js';
 import { CommandRouter } from '../../utils/commandRouter.js';
 import { CollapsibleGeminiResponse } from './messages/CollapsibleGeminiResponse.js';
@@ -13,11 +13,15 @@ import { CollapsibleGeminiResponse } from './messages/CollapsibleGeminiResponse.
 interface ShellInterfaceProps {
   initialDirectory?: string;
   onExit?: (code: number) => void;
+  config: Config;
+  geminiClient: GeminiClient;
 }
 
 export const ShellInterface: React.FC<ShellInterfaceProps> = ({
   initialDirectory,
-  onExit
+  onExit,
+  config,
+  geminiClient
 }) => {
   const { exit } = useApp();
   const [currentLine, setCurrentLine] = useState('');
@@ -129,13 +133,51 @@ export const ShellInterface: React.FC<ShellInterfaceProps> = ({
       if (route.type === 'gemini') {
         // Handle Gemini query
         const responseId = `gemini-${outputIdRef.current++}`;
-        setOutput(prev => [...prev, { 
-          id: responseId, 
-          type: 'gemini', 
-          content: `[Gemini processing: ${route.query}]`,
-          collapsed: false
-        }]);
-        // TODO: Actually process Gemini query
+        
+        try {
+          // Show processing message
+          setOutput(prev => [...prev, { 
+            id: responseId, 
+            type: 'gemini', 
+            content: `Processing: "${route.query}"...`,
+            collapsed: false
+          }]);
+          
+          // Send query to Gemini
+          const response = await geminiClient.getChat().sendMessage({
+            message: route.query || ''
+          });
+          
+          // Extract text from response
+          let responseText = 'No response received';
+          if (response.candidates && response.candidates.length > 0) {
+            const candidate = response.candidates[0];
+            if (candidate.content && candidate.content.parts) {
+              responseText = candidate.content.parts
+                .map(part => part.text || '')
+                .join('');
+            }
+          }
+          
+          // Update with actual response
+          setOutput(prev => {
+            const newOutput = [...prev];
+            const responseIndex = newOutput.findIndex(item => item.id === responseId);
+            if (responseIndex >= 0) {
+              newOutput[responseIndex] = {
+                ...newOutput[responseIndex],
+                content: responseText || 'No response received'
+              };
+            }
+            return newOutput;
+          });
+        } catch (error) {
+          setOutput(prev => [...prev, { 
+            id: `error-${outputIdRef.current++}`, 
+            type: 'error', 
+            content: `Gemini error: ${error instanceof Error ? error.message : String(error)}` 
+          }]);
+        }
       } else {
         // Execute shell command
         const result = await shellRef.current!.execute(command, {

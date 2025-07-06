@@ -228,20 +228,25 @@ export class JobControlManager {
    * Set up signal handlers for job control
    */
   private setupSignalHandlers(): void {
-    // Handle Ctrl+Z (SIGTSTP)
-    process.on('SIGTSTP', () => {
-      if (this.currentForegroundJob !== null) {
-        this.stopJob(this.currentForegroundJob);
-        console.log('\n[Job stopped]');
-      }
-    });
+    // Check if we're in a Node.js environment with signal support
+    if (typeof process !== 'undefined' && typeof process.on === 'function') {
+      // Handle Ctrl+Z (SIGTSTP)
+      process.on('SIGTSTP', () => {
+        if (this.currentForegroundJob !== null) {
+          this.stopJob(this.currentForegroundJob);
+          console.log('\n[Job stopped]');
+        }
+      });
 
-    // Handle Ctrl+C (SIGINT)
-    process.on('SIGINT', () => {
-      if (this.currentForegroundJob !== null) {
-        this.killJob(this.currentForegroundJob, 'SIGINT');
-      }
-    });
+      // Handle Ctrl+C (SIGINT)
+      process.on('SIGINT', () => {
+        if (this.currentForegroundJob !== null) {
+          this.killJob(this.currentForegroundJob, 'SIGINT');
+        }
+      });
+    }
+    // In environments without signal support (like Ink), job control signals
+    // need to be handled at a higher level or are not available
   }
 
   /**
