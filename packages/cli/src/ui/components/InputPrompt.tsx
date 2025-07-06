@@ -52,6 +52,10 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
   setShellModeActive,
   invocationMode = 'cli',
 }) => {
+  // Override placeholder for shell mode
+  const effectivePlaceholder = invocationMode === 'shell' 
+    ? '  Type a command, or use "g " or "_ " for AI assistance'
+    : placeholder;
   const [justNavigatedHistory, setJustNavigatedHistory] = useState(false);
 
   const completion = useCompletion(
@@ -407,14 +411,14 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
           }
         </Text>
         <Box flexGrow={1} flexDirection="column">
-          {buffer.text.length === 0 && placeholder ? (
+          {buffer.text.length === 0 && effectivePlaceholder ? (
             focus ? (
               <Text>
-                {chalk.inverse(placeholder.slice(0, 1))}
-                <Text color={Colors.Gray}>{placeholder.slice(1)}</Text>
+                {chalk.inverse(effectivePlaceholder.slice(0, 1))}
+                <Text color={Colors.Gray}>{effectivePlaceholder.slice(1)}</Text>
               </Text>
             ) : (
-              <Text color={Colors.Gray}>{placeholder}</Text>
+              <Text color={Colors.Gray}>{effectivePlaceholder}</Text>
             )
           ) : (
             linesToRender.map((lineText, visualIdxInRenderedSet) => {

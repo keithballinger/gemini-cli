@@ -102,12 +102,21 @@ When set as user's default shell or launched with `--shell`:
 - Hide ShellModeIndicator (yellow indicator) when in shell mode
 - Shell mode now starts active when invoked with --shell flag
 
-#### 0.3 Command Router Implementation (Shell Mode Only)
-- [ ] Create `CommandRouter` class with routing logic
-- [ ] Implement `g ` and `_ ` prefix detection for Gemini queries
-- [ ] Add shell command parser integration for validation
-- [ ] Implement natural language detection fallback
-- [ ] Add configurable prefix patterns
+#### 0.3 Command Router Implementation (Shell Mode Only) ✓ COMPLETED (2025-01-06)
+- [x] Create `CommandRouter` class with routing logic
+- [x] Implement `g ` and `_ ` prefix detection for Gemini queries
+- [x] Add shell command parser integration for validation
+- [x] Implement natural language detection fallback
+- [x] Add configurable prefix patterns
+
+**Implementation Notes:**
+- Created `/packages/cli/src/utils/commandRouter.ts` with full routing logic
+- Supports `g `, `_ `, and `?` prefixes for explicit Gemini queries
+- Detects common shell commands and patterns (pipes, redirects, paths)
+- Natural language detection for questions and polite phrases
+- Comprehensive test suite with edge cases
+- Integrated into App component handleFinalSubmit
+- Updated InputPrompt placeholder to explain prefixes in shell mode
 
 #### 0.4 Collapsible Gemini Response UI (Shell Mode Only)
 - [ ] Create `CollapsibleGeminiResponse` React/Ink component

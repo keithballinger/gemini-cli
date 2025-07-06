@@ -72,6 +72,7 @@ import ansiEscapes from 'ansi-escapes';
 import { OverflowProvider } from './contexts/OverflowContext.js';
 import { ShowMoreLines } from './components/ShowMoreLines.js';
 import { PrivacyNotice } from './privacy/PrivacyNotice.js';
+import { CommandRouter } from '../utils/commandRouter.js';
 
 const CTRL_EXIT_PROMPT_DURATION_MS = 1000;
 
@@ -92,6 +93,9 @@ const App = ({ config, settings, startupWarnings = [], invocationMode = 'cli' }:
   useBracketedPaste();
   const [updateMessage, setUpdateMessage] = useState<string | null>(null);
   const { stdout } = useStdout();
+  
+  // Initialize CommandRouter for shell mode
+  const commandRouter = useMemo(() => new CommandRouter(), []);
 
   useEffect(() => {
     checkForUpdates().then(setUpdateMessage);
@@ -428,13 +432,27 @@ const App = ({ config, settings, startupWarnings = [], invocationMode = 'cli' }:
   const showAutoAcceptIndicator = useAutoAcceptIndicator({ config });
 
   const handleFinalSubmit = useCallback(
-    (submittedValue: string) => {
+    async (submittedValue: string) => {
       const trimmedValue = submittedValue.trim();
       if (trimmedValue.length > 0) {
-        submitQuery(trimmedValue);
+        // In shell mode, use CommandRouter to determine handling
+        if (invocationMode === 'shell' && shellModeActive) {
+          const routeResult = await commandRouter.route(submittedValue);
+          
+          if (routeResult.type === 'gemini') {
+            // Route to Gemini with the extracted query
+            submitQuery(routeResult.query || routeResult.originalInput);
+          } else {
+            // Execute as shell command
+            submitQuery(routeResult.command || routeResult.originalInput);
+          }
+        } else {
+          // In CLI mode or when not in shell mode, submit directly
+          submitQuery(trimmedValue);
+        }
       }
     },
-    [submitQuery],
+    [submitQuery, invocationMode, shellModeActive, commandRouter],
   );
 
   const logger = useLogger();
