@@ -491,11 +491,59 @@ export interface ShellConfig {
 
 This implementation will transform Gemini CLI into a full-featured POSIX shell while maintaining its AI capabilities, creating a unique hybrid experience that combines traditional shell functionality with AI assistance.
 
-## 7. Smart Shell Interface Design
+## 7. Invocation Mode Detection
 
-After reviewing the requirements for a seamless shell experience without mode switching, this section outlines the new interface design that eliminates the need for the `!` prefix and provides an integrated shell + AI experience.
+The Gemini CLI will operate in two distinct modes based on how it's invoked:
 
-### 7.1. Interface Philosophy
+### 7.1. CLI Mode (Traditional Behavior)
+When invoked as a regular command from another shell (e.g., `gemini` from bash):
+- **Current behavior preserved**: The `!` toggle for shell mode remains
+- **Default mode**: AI conversation mode with `?` prefix support
+- **Shell mode**: Activated with `!` command, shows yellow border
+- **Use case**: Quick AI queries and interactions from existing shell
+
+### 7.2. Shell Mode (Login Shell)
+When set as the user's default shell (e.g., in `/etc/shells` and `chsh`):
+- **POSIX-compliant shell**: Full shell functionality without mode switching
+- **Smart routing**: Automatic detection of shell commands vs natural language
+- **AI integration**: `g ` and `_ ` prefixes for explicit AI queries
+- **Use case**: Primary shell for daily development work
+
+### 7.3. Detection Implementation
+```typescript
+export class InvocationDetector {
+  static isLoginShell(): boolean {
+    // Check if we're running as a login shell
+    if (process.env.SHELL === process.argv[0]) {
+      return true;
+    }
+    
+    // Check if parent process is init or login
+    const ppid = process.ppid;
+    if (ppid === 1 || this.isLoginProcess(ppid)) {
+      return true;
+    }
+    
+    // Check argv[0] for leading dash (login shell convention)
+    if (process.argv[0].startsWith('-')) {
+      return true;
+    }
+    
+    // Check if explicitly launched with --shell flag
+    if (process.argv.includes('--shell')) {
+      return true;
+    }
+    
+    return false;
+  }
+}
+```
+
+## 8. Smart Shell Interface Design (Shell Mode Only)
+
+When running as a login shell, this section outlines the new interface design that eliminates the need for the `!` prefix and provides an integrated shell + AI experience.
+
+### 8.1. Interface Philosophy
 
 The new interface follows these principles:
 - **Shell-first**: Default behavior is shell command execution
@@ -504,7 +552,7 @@ The new interface follows these principles:
 - **Visual separation**: AI responses appear in collapsible boxes
 - **Non-intrusive**: AI enhancements don't interrupt shell workflow
 
-### 7.2. Command Routing Logic
+### 8.2. Command Routing Logic
 
 ```typescript
 interface CommandRouter {
@@ -554,7 +602,7 @@ interface CommandRouter {
 }
 ```
 
-### 7.3. Visual Interface Examples
+### 8.3. Visual Interface Examples
 
 #### Standard Shell Commands
 ```
@@ -639,7 +687,7 @@ drwxr-xr-x   4 user  staff   128 Dec 10 14:23 src
 drwxr-xr-x   3 user  staff    96 Dec 10 14:23 tests
 ```
 
-### 7.4. Collapsible Box Implementation
+### 8.4. Collapsible Box Implementation
 
 #### React/Ink Component Structure
 ```typescript
@@ -712,14 +760,14 @@ export const CollapsibleGeminiResponse = ({
 };
 ```
 
-### 7.5. Global Keyboard Shortcuts
+### 8.5. Global Keyboard Shortcuts
 
 The shell will support these global shortcuts:
 - **Ctrl+O**: Toggle all Gemini responses (collapse/expand)
 - **Ctrl+Shift+O**: Clear all Gemini responses from view
 - **Tab** (when response focused): Toggle individual response
 
-### 7.6. Integration with Shell History
+### 8.6. Integration with Shell History
 
 Shell commands and their Gemini analyses are stored together:
 ```typescript
@@ -737,7 +785,7 @@ interface ShellHistoryEntry {
 }
 ```
 
-### 7.7. Configuration Options
+### 8.7. Configuration Options
 
 Users can customize the behavior:
 ```typescript
@@ -763,7 +811,7 @@ interface ShellInterfaceConfig {
 }
 ```
 
-### 7.8. Implementation Benefits
+### 8.8. Implementation Benefits
 
 1. **No Mode Switching**: Users stay in their natural shell workflow
 2. **Discoverable**: The `g ` and `_ ` prefixes are easy to remember
@@ -774,11 +822,11 @@ interface ShellInterfaceConfig {
 
 This design creates a seamless blend of traditional shell functionality with AI assistance, eliminating the friction of mode switching while maintaining clear separation between shell and AI interactions.
 
-## 8. Alternative Approach: Leveraging Cash Shell
+## 9. Alternative Approach: Leveraging Cash Shell
 
 After analyzing the [Cash shell project](https://github.com/dthree/cash), here's an evaluation of using it as a foundation for Gemini CLI's POSIX shell features:
 
-### 7.1. Cash Overview
+### 9.1. Cash Overview
 
 Cash is a cross-platform Unix shell command implementation written in pure JavaScript (ES6). Key characteristics:
 
@@ -788,7 +836,7 @@ Cash is a cross-platform Unix shell command implementation written in pure JavaS
 - **Dependencies**: vorpal, chalk, lodash, minimist, fs-extra
 - **Commands**: Implements 24 basic Unix commands (ls, cd, cat, grep, etc.)
 
-### 7.2. Cash vs POSIX Requirements Gap Analysis
+### 9.2. Cash vs POSIX Requirements Gap Analysis
 
 #### What Cash Provides:
 - ✅ Basic command execution
@@ -807,7 +855,7 @@ Cash is a cross-platform Unix shell command implementation written in pure JavaS
 - ❌ **Signal Handling**: Basic SIGINT only
 - ❌ **Subshells**: No command substitution or subshell execution
 
-### 7.3. Integration Approach
+### 9.3. Integration Approach
 
 Given Cash's limitations, there are three potential approaches:
 
@@ -832,7 +880,7 @@ Given Cash's limitations, there are three potential approaches:
   - Optimized for AI integration
 - **Cons**: More initial development work
 
-### 7.4. Lessons from Cash
+### 9.4. Lessons from Cash
 
 While Cash isn't suitable as a foundation, it provides valuable insights:
 
@@ -841,7 +889,7 @@ While Cash isn't suitable as a foundation, it provides valuable insights:
 3. **Interactive Features**: History and configuration management
 4. **Vorpal Limitations**: Shows why a custom parser is needed for true shell features
 
-### 7.5. Recommended Path Forward
+### 9.5. Recommended Path Forward
 
 Instead of using Cash, we should:
 
@@ -854,7 +902,7 @@ Instead of using Cash, we should:
    - Review Cash's command implementations for algorithms
    - Rewrite them to work with our architecture if useful
 
-### 7.6. Key Advantages of Custom Implementation
+### 9.6. Key Advantages of Custom Implementation
 
 1. **True POSIX Compliance**: Full support for pipes, redirection, job control
 2. **AI Integration**: Seamless switching between shell and AI modes
@@ -862,13 +910,13 @@ Instead of using Cash, we should:
 4. **Performance**: Optimized for Gemini's use cases
 5. **Maintainability**: Full control over codebase and features
 
-### 7.7. Conclusion
+### 9.7. Conclusion
 
 While Cash demonstrates that JavaScript-based shells are viable, its architecture and feature set are insufficient for Gemini CLI's POSIX shell requirements. The custom implementation approach outlined in Section 6 remains the best path forward, ensuring full POSIX compliance while maintaining tight integration with Gemini's AI capabilities.
 
-## 8. Library Selection
+## 10. Library Selection
 
-### 8.1. Primary Parser: sh-syntax
+### 10.1. Primary Parser: sh-syntax
 
 After further research, we will use `sh-syntax` (https://www.npmjs.com/package/sh-syntax) as our primary shell parser:
 
@@ -884,7 +932,7 @@ After further research, we will use `sh-syntax` (https://www.npmjs.com/package/s
 - Build our command executor on top of the AST
 - Handle runtime concerns (variable expansion, globbing) separately
 
-### 8.2. Alternative: bash-parser (Fallback Option)
+### 10.2. Alternative: bash-parser (Fallback Option)
 
 The `bash-parser` library (https://github.com/vorpaljs/bash-parser) could serve as a fallback:
 
@@ -895,7 +943,7 @@ The `bash-parser` library (https://github.com/vorpaljs/bash-parser) could serve 
 
 **Note:** Given its age, we should prioritize sh-syntax for better long-term maintainability.
 
-### 8.3. Additional Libraries to Consider
+### 10.3. Additional Libraries to Consider
 
 Based on the requirements, we should evaluate these additional libraries:
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the implementation plan for transforming Gemini CLI from its current pass-through shell mode into a POSIX-compliant shell with seamless AI integration. The new design eliminates mode switching and provides a unified shell + AI experience with smart command routing and collapsible AI responses.
+This document outlines the implementation plan for transforming Gemini CLI from its current pass-through shell mode into a POSIX-compliant shell with seamless AI integration. The implementation will maintain backward compatibility when run as a regular CLI command while providing a full shell experience when set as the user's default shell.
 
 ## Current State
 
@@ -13,9 +13,18 @@ The Gemini CLI currently has a basic shell mode that:
 - Shows visual feedback (yellow border and prompt)
 - Runs commands in isolation (no persistent state between commands)
 
-## New Interface Vision
+## Invocation Modes
 
-The updated shell interface will feature:
+The Gemini CLI will operate in two distinct modes:
+
+### CLI Mode (Traditional)
+When invoked as `gemini` from another shell:
+- **Preserved behavior**: Current `!` toggle functionality remains
+- **Default**: AI conversation mode
+- **Shell access**: Via `!` command with yellow border indicator
+
+### Shell Mode (Login Shell)
+When set as user's default shell or launched with `--shell`:
 - **No mode switching**: Shell commands execute directly without `!` prefix
 - **Smart routing**: Automatic detection of shell commands vs natural language
 - **AI prefixes**: Use `g ` or `_ ` to explicitly trigger Gemini analysis
@@ -52,29 +61,40 @@ The updated shell interface will feature:
 - **Team Size**: 2-3 developers
 - **Review Checkpoints**: End of each phase
 
-## Phase 0: Interface Redesign (Week 1)
+## Phase 0: Invocation Mode Detection & Interface Redesign (Week 1)
 
 ### Goals
-- Implement the new smart shell interface without `!` mode
-- Add collapsible Gemini response boxes
-- Create command routing logic for shell vs AI
+- Implement invocation mode detection (CLI vs Shell mode)
+- For Shell mode: Implement the new smart shell interface without `!` mode
+- For Shell mode: Add collapsible Gemini response boxes
+- For Shell mode: Create command routing logic for shell vs AI
+- Maintain backward compatibility for CLI mode
 
 ### Tasks
 
-#### 0.1 Remove Shell Mode Toggle
-- [ ] Remove `!` command toggle functionality
-- [ ] Update prompt to always show shell-style prompt with current directory
-- [ ] Remove yellow border and shell mode visual indicators
-- [ ] Update input handling to process all commands directly
+#### 0.1 Invocation Mode Detection
+- [ ] Create `InvocationDetector` class to determine launch mode
+- [ ] Check for `--shell` command line flag
+- [ ] Detect if running as login shell (check SHELL env var)
+- [ ] Check parent process (ppid === 1 or login process)
+- [ ] Check argv[0] for leading dash (login shell convention)
+- [ ] Add configuration flag to force shell mode
 
-#### 0.2 Command Router Implementation
+#### 0.2 Conditional Interface Loading
+- [ ] In CLI mode: Preserve existing `!` toggle functionality
+- [ ] In Shell mode: Remove `!` command toggle functionality
+- [ ] In Shell mode: Update prompt to always show shell-style prompt with current directory
+- [ ] In Shell mode: Remove yellow border and shell mode visual indicators
+- [ ] In Shell mode: Update input handling to process all commands directly
+
+#### 0.3 Command Router Implementation (Shell Mode Only)
 - [ ] Create `CommandRouter` class with routing logic
 - [ ] Implement `g ` and `_ ` prefix detection for Gemini queries
 - [ ] Add shell command parser integration for validation
 - [ ] Implement natural language detection fallback
 - [ ] Add configurable prefix patterns
 
-#### 0.3 Collapsible Gemini Response UI
+#### 0.4 Collapsible Gemini Response UI (Shell Mode Only)
 - [ ] Create `CollapsibleGeminiResponse` React/Ink component
 - [ ] Implement box drawing with cyan borders
 - [ ] Add collapse/expand state management
@@ -82,17 +102,19 @@ The updated shell interface will feature:
 - [ ] Add individual response toggle with Tab key
 - [ ] Integrate with existing `MaxSizedBox` for overflow handling
 
-#### 0.4 Update Message Types
+#### 0.5 Update Message Types (Shell Mode Only)
 - [ ] Add new history item types for AI-enhanced shell commands
 - [ ] Update `HistoryItemDisplay` to handle new message types
 - [ ] Implement response persistence and state tracking
 - [ ] Add configuration for default collapsed state
 
 ### Deliverables
-- Working shell interface without mode switching
-- Collapsible AI response boxes with keyboard shortcuts
-- Smart command routing between shell and AI
-- Updated documentation for new interface
+- Invocation mode detection system
+- Preserved CLI mode behavior with `!` toggle
+- Shell mode: Working shell interface without mode switching
+- Shell mode: Collapsible AI response boxes with keyboard shortcuts
+- Shell mode: Smart command routing between shell and AI
+- Updated documentation for both modes
 
 ## Phase 1: Foundation (Weeks 2-3)
 
@@ -383,14 +405,33 @@ The updated shell interface will feature:
 ## Interface Testing Requirements
 
 ### Phase 0 Testing
-- Verify `g ` and `_ ` prefixes trigger Gemini correctly
-- Test natural language detection accuracy
-- Ensure shell commands execute without `!` prefix
-- Verify Ctrl+O toggles all Gemini responses
-- Test response persistence across commands
-- Validate collapsed/expanded state management
+- Verify invocation mode detection works correctly
+- Test CLI mode preserves existing `!` toggle behavior
+- In Shell mode: Verify `g ` and `_ ` prefixes trigger Gemini correctly
+- In Shell mode: Test natural language detection accuracy
+- In Shell mode: Ensure shell commands execute without `!` prefix
+- In Shell mode: Verify Ctrl+O toggles all Gemini responses
+- In Shell mode: Test response persistence across commands
+- In Shell mode: Validate collapsed/expanded state management
 
 ### Integration Examples
+
+#### CLI Mode (traditional behavior)
+```bash
+# Start gemini from bash
+$ gemini
+> ? how do I list files
+[AI response about ls command]
+
+> !
+> ! ls -la
+[shell output]
+
+> ! exit
+> [back to AI mode]
+```
+
+#### Shell Mode (as login shell)
 ```bash
 # Direct shell command
 $ ls -la
@@ -415,6 +456,7 @@ $ ps aux | _ grep node
 3. Should other prefixes besides `g ` and `_ ` be configurable?
 4. Should AI analysis be automatic for certain error conditions?
 5. How should we handle ambiguous commands (valid shell command that looks like natural language)?
+6. Should the `--shell` flag be the primary way to force shell mode, or should we also check `/etc/shells`?
 
 ## Implementation Notes
 
