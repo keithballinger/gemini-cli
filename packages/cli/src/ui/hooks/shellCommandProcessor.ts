@@ -7,8 +7,9 @@
 import { spawn } from 'child_process';
 import { StringDecoder } from 'string_decoder';
 import type { HistoryItemWithoutId } from '../types.js';
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { Config, GeminiClient } from '@google/gemini-cli-core';
+import { GeminiShell } from '@google/gemini-cli-core';
 import { type PartListUnion } from '@google/genai';
 import { formatMemoryUsage } from '../utils/formatters.js';
 import { isBinary } from '../utils/textUtils.js';
@@ -213,7 +214,28 @@ export const useShellCommandProcessor = (
   onDebugMessage: (message: string) => void,
   config: Config,
   geminiClient: GeminiClient,
+  usePosixShell: boolean = false,
 ) => {
+  // Create a persistent shell instance for POSIX mode
+  const shellRef = useRef<GeminiShell | null>(null);
+
+  useEffect(() => {
+    if (usePosixShell && !shellRef.current) {
+      shellRef.current = new GeminiShell({
+        interactiveMode: true,
+        enableHistory: true,
+        enableAliases: true,
+        enableJobControl: true,
+        historySize: 1000
+      });
+    }
+
+    return () => {
+      if (shellRef.current) {
+        shellRef.current.saveState();
+      }
+    };
+  }, [usePosixShell]);
   const handleShellCommand = useCallback(
     (rawQuery: PartListUnion, abortSignal: AbortSignal): boolean => {
       if (typeof rawQuery !== 'string' || rawQuery.trim() === '') {
@@ -243,11 +265,32 @@ export const useShellCommandProcessor = (
         commandToExecute = `{ ${command} }; __code=$?; pwd > "${pwdFilePath}"; exit $__code`;
       }
 
-      const execPromise = new Promise<void>((resolve) => {
+      const execPromise = new Promise<void>(async (resolve) => {
         let lastUpdateTime = 0;
 
         onDebugMessage(`Executing in ${targetDir}: ${commandToExecute}`);
-        executeShellCommand(
+
+        // Use new POSIX shell or legacy implementation
+        const executeFunc = usePosixShell && shellRef.current
+          ? (cmd: string, cwd: string, signal: AbortSignal, onOutput: (chunk: string) => void, onDebug: (msg: string) => void) =>
+              shellRef.current!.execute(cmd, {
+                cwd,
+                abortSignal: signal,
+                onOutput,
+                onDebug,
+                captureWorkingDirectory: true
+              }).then((result: any) => ({
+                rawOutput: Buffer.from(result.stdout + result.stderr),
+                output: result.stdout + (result.stderr ? '\n' + result.stderr : ''),
+                exitCode: result.exitCode,
+                signal: result.signal as NodeJS.Signals | null,
+                error: result.error || null,
+                aborted: result.aborted,
+                finalWorkingDirectory: result.finalWorkingDirectory
+              }))
+          : executeShellCommand;
+
+        executeFunc(
           commandToExecute,
           targetDir,
           abortSignal,
@@ -260,7 +303,7 @@ export const useShellCommandProcessor = (
           },
           onDebugMessage,
         )
-          .then((result) => {
+          .then((result: any) => {
             // TODO(abhipatel12) - Consider updating pending item and using timeout to ensure
             // there is no jump where intermediate output is skipped.
             setPendingHistoryItem(null);
@@ -294,7 +337,15 @@ export const useShellCommandProcessor = (
               finalOutput = `Command exited with code ${result.exitCode}.\n${finalOutput}`;
             }
 
-            if (pwdFilePath && fs.existsSync(pwdFilePath)) {
+            // Handle working directory changes
+            if (usePosixShell && shellRef.current && 'finalWorkingDirectory' in result) {
+              const finalPwd = (result as any).finalWorkingDirectory;
+              if (finalPwd && finalPwd !== targetDir) {
+                // TODO: Add setTargetDir method to Config or use a different approach
+                const notice = `[Working directory changed to: ${finalPwd}]`;
+                finalOutput = `${notice}\n\n${finalOutput}`;
+              }
+            } else if (pwdFilePath && fs.existsSync(pwdFilePath)) {
               const finalPwd = fs.readFileSync(pwdFilePath, 'utf8').trim();
               if (finalPwd && finalPwd !== targetDir) {
                 const warning = `WARNING: shell mode is stateless; the directory change to '${finalPwd}' will not persist.`;
@@ -311,7 +362,7 @@ export const useShellCommandProcessor = (
             // Add the same complete, contextual result to the LLM's history.
             addShellCommandToGeminiHistory(geminiClient, rawQuery, finalOutput);
           })
-          .catch((err) => {
+          .catch((err: any) => {
             setPendingHistoryItem(null);
             const errorMessage =
               err instanceof Error ? err.message : String(err);

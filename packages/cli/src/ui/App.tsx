@@ -46,6 +46,9 @@ import { DetailedMessagesDisplay } from './components/DetailedMessagesDisplay.js
 import { HistoryItemDisplay } from './components/HistoryItemDisplay.js';
 import { ContextSummaryDisplay } from './components/ContextSummaryDisplay.js';
 import { useHistory } from './hooks/useHistoryManager.js';
+import { ShellInterface } from './components/ShellInterface.js';
+import { ShellInterfaceV2 } from './components/ShellInterfaceV2.js';
+import { ShellWithGeminiStream } from './components/ShellWithGeminiStream.js';
 import process from 'node:process';
 import {
   getErrorMessage,
@@ -72,6 +75,8 @@ import ansiEscapes from 'ansi-escapes';
 import { OverflowProvider } from './contexts/OverflowContext.js';
 import { ShowMoreLines } from './components/ShowMoreLines.js';
 import { PrivacyNotice } from './privacy/PrivacyNotice.js';
+import { CommandRouter } from '../utils/commandRouter.js';
+import { CollapsibleResponseManager } from './components/messages/CollapsibleResponseManager.js';
 
 const CTRL_EXIT_PROMPT_DURATION_MS = 1000;
 
@@ -79,6 +84,7 @@ interface AppProps {
   config: Config;
   settings: LoadedSettings;
   startupWarnings?: string[];
+  invocationMode?: 'cli' | 'shell';
 }
 
 export const AppWrapper = (props: AppProps) => (
@@ -87,10 +93,13 @@ export const AppWrapper = (props: AppProps) => (
   </SessionStatsProvider>
 );
 
-const App = ({ config, settings, startupWarnings = [] }: AppProps) => {
+const App = ({ config, settings, startupWarnings = [], invocationMode = 'cli' }: AppProps) => {
   useBracketedPaste();
   const [updateMessage, setUpdateMessage] = useState<string | null>(null);
   const { stdout } = useStdout();
+  
+  // Initialize CommandRouter for shell mode
+  const commandRouter = useMemo(() => new CommandRouter(), []);
 
   useEffect(() => {
     checkForUpdates().then(setUpdateMessage);
@@ -119,7 +128,7 @@ const App = ({ config, settings, startupWarnings = [] }: AppProps) => {
   const [footerHeight, setFooterHeight] = useState<number>(0);
   const [corgiMode, setCorgiMode] = useState(false);
   const [currentModel, setCurrentModel] = useState(config.getModel());
-  const [shellModeActive, setShellModeActive] = useState(false);
+  const [shellModeActive, setShellModeActive] = useState(invocationMode === 'shell');
   const [showErrorDetails, setShowErrorDetails] = useState<boolean>(false);
   const [showToolDescriptions, setShowToolDescriptions] =
     useState<boolean>(false);
@@ -420,6 +429,7 @@ const App = ({ config, settings, startupWarnings = [] }: AppProps) => {
     getPreferredEditor,
     onAuthError,
     performMemoryRefresh,
+    invocationMode,
   );
   pendingHistoryItems.push(...pendingGeminiHistoryItems);
   const { elapsedTime, currentLoadingPhrase } =
@@ -427,13 +437,27 @@ const App = ({ config, settings, startupWarnings = [] }: AppProps) => {
   const showAutoAcceptIndicator = useAutoAcceptIndicator({ config });
 
   const handleFinalSubmit = useCallback(
-    (submittedValue: string) => {
+    async (submittedValue: string) => {
       const trimmedValue = submittedValue.trim();
       if (trimmedValue.length > 0) {
-        submitQuery(trimmedValue);
+        // In shell mode, use CommandRouter to determine handling
+        if (invocationMode === 'shell' && shellModeActive) {
+          const routeResult = await commandRouter.route(submittedValue);
+          
+          if (routeResult.type === 'gemini') {
+            // Route to Gemini with the extracted query
+            submitQuery(routeResult.query || routeResult.originalInput);
+          } else {
+            // Execute as shell command
+            submitQuery(routeResult.command || routeResult.originalInput);
+          }
+        } else {
+          // In CLI mode or when not in shell mode, submit directly
+          submitQuery(trimmedValue);
+        }
       }
     },
-    [submitQuery],
+    [submitQuery, invocationMode, shellModeActive, commandRouter],
   );
 
   const logger = useLogger();
@@ -565,6 +589,18 @@ const App = ({ config, settings, startupWarnings = [] }: AppProps) => {
   // Arbitrary threshold to ensure that items in the static area are large
   // enough but not too large to make the terminal hard to use.
   const staticAreaMaxItemHeight = Math.max(terminalHeight * 4, 100);
+  
+  // If in shell mode and it's initially active, use the ShellInterface
+  if (invocationMode === 'shell' && shellModeActive) {
+    return (
+      <ShellWithGeminiStream
+        initialDirectory={process.cwd()}
+        onExit={(code) => process.exit(code)}
+        config={config}
+      />
+    );
+  }
+  
   return (
     <StreamingContext.Provider value={streamingState}>
       <Box flexDirection="column" marginBottom={1} width="90%">
