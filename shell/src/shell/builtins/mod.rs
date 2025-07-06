@@ -5,12 +5,20 @@ pub mod pwd;
 pub mod echo;
 pub mod export;
 pub mod exit;
+pub mod jobs;
+pub mod history;
+pub mod alias;
+pub mod unalias;
 
 pub use cd::CdCommand;
 pub use pwd::PwdCommand;
 pub use echo::EchoCommand;
 pub use export::ExportCommand;
 pub use exit::ExitCommand;
+pub use jobs::JobsCommand;
+pub use history::HistoryCommand;
+pub use alias::AliasCommand;
+pub use unalias::UnaliasCommand;
 
 use crate::shell::types::*;
 use std::collections::HashMap;
@@ -32,6 +40,10 @@ impl BuiltinRegistry {
         registry.register(Box::new(EchoCommand));
         registry.register(Box::new(ExportCommand));
         registry.register(Box::new(ExitCommand));
+        registry.register(Box::new(JobsCommand));
+        registry.register(Box::new(HistoryCommand));
+        registry.register(Box::new(AliasCommand));
+        registry.register(Box::new(UnaliasCommand));
         
         registry
     }
@@ -45,7 +57,7 @@ impl BuiltinRegistry {
         
         // Also register aliases if any
         for alias in aliases {
-            self.commands.insert(alias, Box::new(AliasCommand {
+            self.commands.insert(alias, Box::new(AliasRedirectCommand {
                 target: name.clone(),
             }));
         }
@@ -92,12 +104,12 @@ impl Default for BuiltinRegistry {
 }
 
 /// Alias command that redirects to another command
-struct AliasCommand {
+struct AliasRedirectCommand {
     target: String,
 }
 
 #[async_trait::async_trait]
-impl BuiltinCommand for AliasCommand {
+impl BuiltinCommand for AliasRedirectCommand {
     fn name(&self) -> &str {
         "alias"
     }

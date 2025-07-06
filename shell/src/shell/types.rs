@@ -221,6 +221,23 @@ impl ShellEnvironment {
     pub fn get_all_jobs(&self) -> Vec<&Job> {
         self.jobs.values().collect()
     }
+
+    // Alias methods
+    pub fn set_alias(&mut self, name: String, value: String) {
+        self.aliases.insert(name, value);
+    }
+
+    pub fn get_alias(&self, name: &str) -> Option<&String> {
+        self.aliases.get(name)
+    }
+
+    pub fn remove_alias(&mut self, name: &str) -> bool {
+        self.aliases.remove(name).is_some()
+    }
+
+    pub fn get_all_aliases(&self) -> &HashMap<String, String> {
+        &self.aliases
+    }
 }
 
 impl Default for ShellEnvironment {
@@ -241,6 +258,9 @@ pub struct ShellOptions {
     pub enable_history: bool,
     pub enable_aliases: bool,
     pub enable_globbing: bool,
+    
+    // Pipeline behavior
+    pub ignore_pipeline_errors: bool,
 
     // Limits
     pub history_size: usize,
@@ -257,6 +277,7 @@ impl Default for ShellOptions {
             enable_history: true,
             enable_aliases: true,
             enable_globbing: true,
+            ignore_pipeline_errors: false,
             history_size: 1000,
             max_jobs: 100,
         }

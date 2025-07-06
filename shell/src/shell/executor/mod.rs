@@ -1,7 +1,11 @@
 //! Command execution module
 
+pub mod pipeline;
+pub mod jobs;
+
 use crate::shell::types::*;
 use crate::shell::builtins::BuiltinRegistry;
+use pipeline::PipelineExecutor;
 use std::process::Stdio;
 use tokio::process::Command as TokioCommand;
 use anyhow::Result;
@@ -41,6 +45,62 @@ impl ShellExecutor {
                 self.execute_simple(cmd, env, options).await
             }
         }
+    }
+
+    /// Execute multiple commands as a pipeline
+    pub async fn execute_pipeline(
+        &self,
+        commands: &[ParsedCommand],
+        env: &mut ShellEnvironment,
+        options: &ShellOptions,
+    ) -> Result<ExecutionResult> {
+        // Check if any commands are built-ins that need special handling
+        let mut has_builtins = false;
+        for cmd in commands {
+            if let Some(ref executable) = cmd.command.executable {
+                if self.builtins.is_builtin(executable) {
+                    has_builtins = true;
+                    break;
+                }
+            }
+        }
+
+        if has_builtins {
+            // Handle mixed pipeline with built-ins (more complex)
+            self.execute_mixed_pipeline(commands, env, options).await
+        } else {
+            // All external commands, use efficient pipeline executor
+            PipelineExecutor::execute_pipeline(commands, env, options).await
+        }
+    }
+
+    /// Execute a pipeline that contains built-in commands
+    async fn execute_mixed_pipeline(
+        &self,
+        commands: &[ParsedCommand],
+        env: &mut ShellEnvironment,
+        options: &ShellOptions,
+    ) -> Result<ExecutionResult> {
+        if commands.is_empty() {
+            return Ok(ExecutionResult::success(String::new()));
+        }
+
+        if commands.len() == 1 {
+            return self.execute(&commands[0], env, options).await;
+        }
+
+        // For now, execute each command sequentially
+        // TODO: Implement proper piping with built-ins
+        let mut last_result = ExecutionResult::success(String::new());
+        
+        for cmd in commands {
+            last_result = self.execute(cmd, env, options).await?;
+            if last_result.exit_code != 0 && !options.ignore_pipeline_errors {
+                break;
+            }
+        }
+
+        Ok(last_result)
     }
 
     /// Execute a simple command
