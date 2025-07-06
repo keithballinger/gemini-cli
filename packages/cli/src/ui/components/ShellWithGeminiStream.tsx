@@ -74,6 +74,14 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
         enableJobControl: true,
         enableGlobbing: true
       });
+      
+      // Load existing history from the shell (with a small delay to ensure it's loaded from disk)
+      setTimeout(() => {
+        if (shellRef.current) {
+          const shellHistory = shellRef.current.getEnvironment().history || [];
+          setCommandHistory(shellHistory);
+        }
+      }, 100);
     }
 
     if (!commandRouterRef.current) {
@@ -132,7 +140,16 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
 
     setCurrentLine('');
     setHistoryIndex(-1);
-    setCommandHistory(prev => [...prev, command]);
+    
+    // Add to shell's persistent history
+    if (shellRef.current) {
+      shellRef.current.getEnvironment().addToHistory(command);
+      // Update local history state to match
+      setCommandHistory(shellRef.current.getEnvironment().history.slice());
+    } else {
+      // Fallback to local history
+      setCommandHistory(prev => [...prev, command]);
+    }
 
     try {
       const route = await commandRouterRef.current!.route(command);
