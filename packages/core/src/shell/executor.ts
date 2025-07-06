@@ -35,6 +35,12 @@ export class ShellExecutor {
       // Expand variables and globs
       const expanded = await this.expandCommand(command);
       
+      // IMPORTANT: This execute method should only be called for single commands
+      // Pipelines should go through executePipeline
+      if (this.options.debugMode) {
+        console.error(`[DEBUG] ShellExecutor.execute called for: ${expanded.executable}`);
+      }
+      
       // Check if it's a builtin
       if (expanded.type === 'builtin' || builtinRegistry.has(expanded.executable || '')) {
         return this.executeBuiltin(expanded, execOptions);
@@ -120,20 +126,26 @@ export class ShellExecutor {
     }
     
     try {
-      // Capture console output for builtins if callback provided
+      // Capture output for single commands (pipelines handle their own capture)
       if (execOptions?.onOutput) {
         const originalLog = console.log;
         const originalError = console.error;
+        const originalWrite = process.stdout.write.bind(process.stdout);
         
         console.log = (...args) => {
-          const text = args.join(' ');
-          execOptions.onOutput!(text + '\n');
+          const text = args.join(' ') + '\n';
+          execOptions.onOutput!(text);
         };
         
         console.error = (...args) => {
-          const text = args.join(' ');
-          execOptions.onOutput!(text + '\n');
+          const text = args.join(' ') + '\n';
+          execOptions.onOutput!(text);
         };
+        
+        process.stdout.write = function(chunk: any): boolean {
+          execOptions.onOutput!(String(chunk));
+          return true;
+        } as any;
         
         try {
           const exitCode = await builtin.execute(command.args, this.env, this.options);
@@ -142,6 +154,7 @@ export class ShellExecutor {
         } finally {
           console.log = originalLog;
           console.error = originalError;
+          process.stdout.write = originalWrite;
         }
       } else {
         const exitCode = await builtin.execute(command.args, this.env, this.options);

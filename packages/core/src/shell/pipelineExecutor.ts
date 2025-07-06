@@ -73,7 +73,7 @@ export class PipelineExecutor {
 
         // Check if it's a builtin
         if (command.executable && builtinRegistry.has(command.executable)) {
-          const builtinProcess = await this.createBuiltinProcess(command, isFirst, isLast);
+          const builtinProcess = this.createBuiltinProcess(command, isFirst, isLast);
           processes.push(builtinProcess);
           continue;
         }
@@ -132,35 +132,32 @@ export class PipelineExecutor {
           });
         }
 
-        // Connect pipes
-        if (i > 0) {
-          const prevProcess = processes[i - 1];
-          const currProcess = child;
-          
-          if ('stdout' in prevProcess && prevProcess.stdout && currProcess.stdin) {
+      }
+
+      // Connect all pipes after all processes are created
+      for (let i = 1; i < processes.length; i++) {
+        const prevProcess = processes[i - 1];
+        const currProcess = processes[i];
+        
+        // Connect stdout of previous to stdin of current
+        if ('stdout' in prevProcess && prevProcess.stdout) {
+          if ('stdin' in currProcess && currProcess.stdin) {
             prevProcess.stdout.pipe(currProcess.stdin);
           }
         }
       }
 
-      // Connect pipes for builtin processes
-      for (let i = 0; i < processes.length; i++) {
-        if (i > 0) {
-          const prevProcess = processes[i - 1];
-          const currProcess = processes[i];
-          
-          if ('isBuiltin' in currProcess && currProcess.isBuiltin && currProcess.stdin) {
-            if ('stdout' in prevProcess && prevProcess.stdout) {
-              prevProcess.stdout.pipe(currProcess.stdin);
-            }
-          }
-        }
-      }
-
-      // Execute builtin processes
+      // Start all external processes first (they'll wait for input)
+      // Then execute builtin processes
       const builtinPromises = processes.map((process, index) => {
         if ('isBuiltin' in process && process.isBuiltin) {
-          return (process as BuiltinProcess).execute();
+          // Delay builtin execution slightly to ensure pipes are ready
+          return new Promise<number>(resolve => {
+            setImmediate(async () => {
+              const exitCode = await (process as BuiltinProcess).execute();
+              resolve(exitCode);
+            });
+          });
         }
         return null;
       }).filter(p => p !== null);
@@ -228,38 +225,62 @@ export class PipelineExecutor {
   /**
    * Create a pseudo-process for a builtin command that can participate in pipelines
    */
-  private async createBuiltinProcess(
+  private createBuiltinProcess(
     command: ParsedCommand, 
     isFirst: boolean, 
     isLast: boolean
-  ): Promise<BuiltinProcess> {
+  ): BuiltinProcess {
     const stdin = isFirst ? undefined : new PassThrough();
     const stdout = isLast ? undefined : new PassThrough();
     const stderr = new PassThrough();
 
     const execute = async (): Promise<number> => {
-      const builtin = builtinRegistry.get(command.executable!);
-      if (!builtin) {
-        return 127;
-      }
-
-      // Capture console output
+      // Set up output redirection FIRST, before any builtin code runs
       const originalLog = console.log;
       const originalError = console.error;
+      const originalWrite = process.stdout.write.bind(process.stdout);
       
-      try {
-        // Redirect console output to our streams
-        if (stdout) {
-          console.log = (...args) => {
-            const text = args.join(' ') + '\n';
-            stdout.write(text);
-          };
-        }
-        
-        console.error = (...args) => {
+      // Debug: verify we're setting up capture
+      if (this.options.debugMode && stdout) {
+        originalError(`[DEBUG] Setting up stdout capture for builtin ${command.executable}`);
+      }
+      
+      // Redirect console output to our streams
+      if (stdout) {
+        console.log = (...args) => {
           const text = args.join(' ') + '\n';
-          stderr.write(text);
+          if (this.options.debugMode) {
+            originalError(`[DEBUG] Captured console.log: ${text.trim()}`);
+          }
+          stdout.write(text);
         };
+        // Also capture direct stdout writes
+        const options = this.options;
+        process.stdout.write = function(chunk: any, ...args: any[]): boolean {
+          const text = String(chunk);
+          if (options.debugMode) {
+            originalError(`[DEBUG] Captured stdout.write: ${text.trim()}`);
+          }
+          stdout.write(text);
+          return true;
+        } as any;
+      }
+      
+      console.error = (...args) => {
+        const text = args.join(' ') + '\n';
+        stderr.write(text);
+      };
+
+      try {
+        const builtin = builtinRegistry.get(command.executable!);
+        if (!builtin) {
+          return 127;
+        }
+
+        // Debug info
+        if (this.options.debugMode) {
+          originalError(`[DEBUG] Executing builtin: ${command.executable}, isLast=${isLast}, hasStdout=${!!stdout}`);
+        }
 
         // If we have stdin, collect it into a string and set as env variable
         if (stdin) {
@@ -290,6 +311,7 @@ export class PipelineExecutor {
         // Restore console functions
         console.log = originalLog;
         console.error = originalError;
+        process.stdout.write = originalWrite;
       }
     };
 
