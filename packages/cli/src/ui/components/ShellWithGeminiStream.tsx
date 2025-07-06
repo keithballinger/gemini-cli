@@ -141,6 +141,17 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
 
   // Handle input
   useKeypress((key) => {
+    // Always allow Ctrl+O regardless of streaming state
+    if (key.ctrl && key.name === 'o') {
+      setAllGeminiCollapsed(prev => !prev);
+      return;
+    }
+
+    // For other keys, only process when idle
+    if (streamingState !== StreamingState.Idle) {
+      return;
+    }
+
     // Handle complete paste at once
     if (key.paste) {
       setCurrentLine(prev => prev.slice(0, cursorPosition) + key.sequence + prev.slice(cursorPosition));
@@ -313,7 +324,7 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
       setCurrentLine(prev => prev.slice(0, cursorPosition) + key.sequence + prev.slice(cursorPosition));
       setCursorPosition(prev => prev + key.sequence.length);
     }
-  }, { isActive: streamingState === StreamingState.Idle });
+  }, { isActive: true }); // Always active to allow Ctrl+O during streaming
 
   const handleExecute = useCallback(async () => {
     const command = currentLine.trim();
