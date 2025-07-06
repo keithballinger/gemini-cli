@@ -36,18 +36,13 @@ export function useKeypress(
 ) {
   const { stdin, setRawMode } = useStdin();
   const onKeypressRef = useRef(onKeypress);
-  
-  console.error('[DEBUG useKeypress] Hook called:', { isActive, stdin: !!stdin, setRawMode: !!setRawMode });
 
   useEffect(() => {
     onKeypressRef.current = onKeypress;
   }, [onKeypress]);
 
   useEffect(() => {
-    console.error('[DEBUG useKeypress] Effect running:', { isActive, isTTY: stdin?.isTTY });
-    
     if (!isActive || !stdin.isTTY) {
-      console.error('[DEBUG useKeypress] Early return:', { isActive, isTTY: stdin?.isTTY });
       return;
     }
 
