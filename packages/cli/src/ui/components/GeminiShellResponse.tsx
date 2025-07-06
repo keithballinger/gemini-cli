@@ -15,6 +15,8 @@ interface GeminiShellResponseProps {
   terminalWidth: number;
   config?: Config;
   isFocused?: boolean;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export const GeminiShellResponse: React.FC<GeminiShellResponseProps> = ({
@@ -22,9 +24,14 @@ export const GeminiShellResponse: React.FC<GeminiShellResponseProps> = ({
   isActive,
   terminalWidth,
   config,
-  isFocused = true
+  isFocused = true,
+  isCollapsed: controlledIsCollapsed,
+  onToggleCollapse
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [localIsCollapsed, setLocalIsCollapsed] = useState(false);
+  
+  // Use controlled state if provided, otherwise use local state
+  const isCollapsed = controlledIsCollapsed !== undefined ? controlledIsCollapsed : localIsCollapsed;
 
   // Extract the query from the first user item
   const queryItem = items.find(item => item.type === MessageType.USER);

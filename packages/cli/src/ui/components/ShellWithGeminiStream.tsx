@@ -34,6 +34,7 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
   const [cwd, setCwd] = useState(initialDirectory || process.cwd());
   const [isExecutingShell, setIsExecutingShell] = useState(false);
   const [debugMessage, setDebugMessage] = useState('');
+  const [allGeminiCollapsed, setAllGeminiCollapsed] = useState(false);
 
   const shellRef = useRef<GeminiShell | null>(null);
   const commandRouterRef = useRef<CommandRouter | null>(null);
@@ -117,6 +118,9 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
       // Clear screen
       process.stdout.write(ansiEscapes.clearTerminal);
       clearItems();
+    } else if (key.ctrl && input === 'o') {
+      // Toggle all Gemini responses
+      setAllGeminiCollapsed(prev => !prev);
     } else if (input && !key.ctrl && !key.meta) {
       setCurrentLine(prev => prev + input);
     }
@@ -273,6 +277,7 @@ export const ShellWithGeminiStream: React.FC<ShellWithGeminiStreamProps> = ({
                 terminalWidth={process.stdout.columns || 80}
                 config={config}
                 isFocused={true}
+                isCollapsed={allGeminiCollapsed}
               />
             );
           } else {
