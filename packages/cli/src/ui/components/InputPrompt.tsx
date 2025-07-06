@@ -402,7 +402,7 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
           }
         >
           {invocationMode === 'shell' 
-            ? '$ '  // Show $ prompt in shell mode
+            ? '✦ '  // Show star prompt in shell mode
             : (shellModeActive ? '! ' : '> ')
           }
         </Text>
