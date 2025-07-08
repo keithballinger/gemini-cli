@@ -24,21 +24,83 @@ impl PipelineExecutor {
             return Self::execute_single_command(&commands[0], env, options).await;
         }
 
-        // For now, implement a simplified pipeline that executes commands sequentially
-        // TODO: Implement proper async pipeline with stdin/stdout chaining
-        let mut final_result = ExecutionResult::success(String::new());
+        // For pipelines, build the full pipeline command and execute via sh
+        let mut pipeline_cmd = String::new();
         
-        for cmd in commands {
-            let result = Self::execute_single_command(cmd, env, options).await?;
-            final_result = result;
+        for (i, parsed_cmd) in commands.iter().enumerate() {
+            if i > 0 {
+                pipeline_cmd.push_str(" | ");
+            }
             
-            // If command fails and we're not ignoring errors, stop pipeline
-            if final_result.exit_code != 0 && !options.ignore_pipeline_errors {
-                break;
+            // Reconstruct the command
+            let cmd = &parsed_cmd.command;
+            if let Some(executable) = &cmd.executable {
+                pipeline_cmd.push_str(executable);
+                for arg in &cmd.args {
+                    pipeline_cmd.push(' ');
+                    // Quote args that contain spaces or special characters
+                    if arg.contains(char::is_whitespace) || arg.contains('$') || arg.contains('*') {
+                        pipeline_cmd.push('\'');
+                        pipeline_cmd.push_str(&arg.replace("'", "'\"'\"'"));
+                        pipeline_cmd.push('\'');
+                    } else {
+                        pipeline_cmd.push_str(arg);
+                    }
+                }
+            }
+            
+            // Handle redirections
+            for redirection in &cmd.redirections {
+                match redirection.redirection_type {
+                    RedirectionType::Output => {
+                        pipeline_cmd.push_str(" > ");
+                        pipeline_cmd.push_str(&redirection.target);
+                    }
+                    RedirectionType::Append => {
+                        pipeline_cmd.push_str(" >> ");
+                        pipeline_cmd.push_str(&redirection.target);
+                    }
+                    RedirectionType::Input => {
+                        pipeline_cmd.push_str(" < ");
+                        pipeline_cmd.push_str(&redirection.target);
+                    }
+                    RedirectionType::Error => {
+                        pipeline_cmd.push_str(" 2> ");
+                        pipeline_cmd.push_str(&redirection.target);
+                    }
+                }
             }
         }
 
-        Ok(final_result)
+        // Execute the pipeline using sh -c
+        let mut command = TokioCommand::new("sh");
+        command.arg("-c");
+        command.arg(&pipeline_cmd);
+        
+        // Set up environment variables
+        for (key, value) in &env.variables {
+            command.env(key, value);
+        }
+        command.current_dir(&env.cwd);
+        
+        // Execute the command
+        match command.output().await {
+            Ok(output) => {
+                let exit_code = output.status.code().unwrap_or(-1);
+                env.last_exit_code = exit_code;
+
+                Ok(ExecutionResult {
+                    exit_code,
+                    stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+                    stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+                    signal: None,
+                })
+            }
+            Err(e) => {
+                env.last_exit_code = 127;
+                Ok(ExecutionResult::error(127, format!("Pipeline execution failed: {}", e)))
+            }
+        }
     }
 
     /// Execute a single command (helper for non-pipeline execution)

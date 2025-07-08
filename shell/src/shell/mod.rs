@@ -108,9 +108,14 @@ impl GeminiShell {
             return Ok(ExecutionResult::success(String::new()));
         }
         
-        // For now, execute the first command
-        // TODO: Handle multiple commands (compound commands)
-        let result = self.executor.execute(&parsed_commands[0], &mut self.environment, &self.options).await?;
+        // Check if this is a pipeline (multiple commands)
+        let result = if parsed_commands.len() > 1 {
+            // Execute as pipeline
+            self.executor.execute_pipeline(&parsed_commands, &mut self.environment, &self.options).await?
+        } else {
+            // Execute single command
+            self.executor.execute(&parsed_commands[0], &mut self.environment, &self.options).await?
+        };
         
         // Add command to history
         self.environment.add_to_history(command.to_string());
