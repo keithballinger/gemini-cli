@@ -31,8 +31,11 @@ pub struct GeminiResponse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UsageMetadata {
+    #[serde(default)]
     pub total_tokens: u32,
+    #[serde(default)]
     pub prompt_tokens: u32,
+    #[serde(default)]
     pub completion_tokens: u32,
 }
 

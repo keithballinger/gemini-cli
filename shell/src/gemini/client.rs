@@ -73,7 +73,16 @@ impl GeminiClient {
     
     /// Start the Node.js Gemini service
     async fn start_service(&mut self) -> Result<()> {
-        // Find an available port
+        // First check if service is already running on default port 3001
+        let default_port = 3001;
+        self.service_url = format!("http://localhost:{}", default_port);
+        
+        if self.is_service_healthy().await? {
+            println!("✅ Connected to existing Gemini service on port {}", default_port);
+            return Ok(());
+        }
+        
+        // If not, find an available port and start our own
         let port = self.find_available_port().await?;
         self.service_url = format!("http://localhost:{}", port);
         
@@ -106,7 +115,7 @@ impl GeminiClient {
         }
         
         self.service_process = Some(child);
-        println!("Gemini service started on port {}", port);
+        println!("Started new Gemini service on port {}", port);
         Ok(())
     }
     
@@ -136,7 +145,8 @@ impl GeminiClient {
     
     /// Send a query to Gemini
     pub async fn query(&self, prompt: &str) -> Result<GeminiResponse> {
-        if self.service_process.is_none() {
+        // Check if service is healthy instead of checking service_process
+        if !self.is_service_healthy().await? {
             return Err(anyhow::anyhow!("Gemini service not available"));
         }
 
@@ -203,7 +213,8 @@ impl GeminiClient {
     
     /// Check if Gemini integration is available
     pub fn is_available(&self) -> bool {
-        self.service_process.is_some()
+        // We might be connected to an external service
+        true
     }
 }
 
