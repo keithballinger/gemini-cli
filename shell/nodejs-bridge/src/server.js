@@ -85,30 +85,44 @@ app.post('/query', async (req, res) => {
       return res.status(503).json({ error: 'Gemini Client not initialized' });
     }
 
+
     // Use the Gemini CLI streaming API and collect all content
     const controller = new AbortController();
-    const messageStream = geminiClient.sendMessageStream([{ text: query }], controller.signal);
     
-    let responseText = '';
-    let usageMetadata = {};
+    // Set timeout for the request
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, options.timeout || 30000);
     
-    for await (const event of messageStream) {
-      if (event.type === 'content' && event.value) {
-        responseText += event.value;
+    try {
+      const messageStream = geminiClient.sendMessageStream([{ text: query }], controller.signal);
+      
+      let responseText = '';
+      let usageMetadata = {};
+      
+      for await (const event of messageStream) {
+        if (event.type === 'content' && event.value) {
+          responseText += event.value;
+        }
       }
+      
+      clearTimeout(timeout);
+      
+      res.json({
+        success: true,
+        response: {
+          text: responseText || 'No response received',
+          metadata: {
+            model: config.getModel(),
+            timestamp: new Date().toISOString()
+          },
+          usage: usageMetadata
+        }
+      });
+    } catch (innerError) {
+      clearTimeout(timeout);
+      throw innerError;
     }
-    
-    res.json({
-      success: true,
-      response: {
-        text: responseText || 'No response received',
-        metadata: {
-          model: config.getModel(),
-          timestamp: new Date().toISOString()
-        },
-        usage: usageMetadata
-      }
-    });
 
   } catch (error) {
     console.error('Query error:', error);
@@ -292,6 +306,17 @@ process.on('SIGINT', () => {
   server.close(() => {
     process.exit(0);
   });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+  console.error('Stack:', error.stack);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled rejection at:', promise, 'reason:', reason);
 });
 
 start().catch(console.error);

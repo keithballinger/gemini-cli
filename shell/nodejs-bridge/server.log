@@ -1,0 +1,20 @@
+Data collection is disabled.
+Gemini Client initialized successfully
+Gemini Shell Bridge running on http://localhost:3001
+WebSocket endpoint: ws://localhost:3001
+Processing query: Say hi
+Creating message stream...
+Processing events...
+Event 1: type=content
+Event 2: type=content
+Processed 2 events, response length: 4
+Processing query: What tools do you have available? List just the names.
+Creating message stream...
+Processing events...
+Event 1: type=content
+Event 2: type=content
+Event 3: type=content
+Event 4: type=content
+Processed 4 events, response length: 154
+WebSocket client connected
+WebSocket client disconnected
