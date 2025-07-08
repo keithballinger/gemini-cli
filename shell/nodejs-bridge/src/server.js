@@ -4,7 +4,14 @@ import express from 'express';
 import cors from 'cors';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
-import { GoogleGenAI } from '@google/genai';
+import { 
+  GeminiClient, 
+  Config, 
+  AuthType,
+  FileDiscoveryService,
+  ToolRegistry,
+  sessionId
+} from '@google/gemini-cli-core';
 
 const app = express();
 const server = createServer(app);
@@ -18,8 +25,9 @@ const HOST = process.env.GEMINI_BRIDGE_HOST || 'localhost';
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Initialize Gemini Client using GoogleGenAI directly
-let genAI;
+// Initialize Gemini Client using @google/gemini-cli-core
+let geminiClient;
+let config;
 
 async function initializeGeminiClient() {
   try {
@@ -30,12 +38,27 @@ async function initializeGeminiClient() {
       process.exit(1);
     }
     
-    // Initialize GoogleGenAI directly
-    genAI = new GoogleGenAI(apiKey);
+    // Create Config with minimal required parameters
+    config = new Config({
+      sessionId: sessionId,
+      targetDir: process.cwd(),
+      cwd: process.cwd(),
+      debugMode: false,
+      model: 'gemini-1.5-flash-002',
+      usageStatisticsEnabled: false, // Disable for bridge service
+      telemetry: { enabled: false }, // Disable telemetry for bridge service
+    });
+    
+    // Initialize authentication and tools
+    await config.refreshAuth(AuthType.USE_GEMINI);
+    
+    // Get the initialized client
+    geminiClient = config.getGeminiClient();
     
     console.log('Gemini Client initialized successfully');
   } catch (error) {
     console.error('Failed to initialize Gemini Client:', error);
+    console.error('Error details:', error.stack);
     process.exit(1);
   }
 }
@@ -45,7 +68,7 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy', 
     service: 'gemini-shell-bridge',
-    geminiReady: !!genAI 
+    geminiReady: !!geminiClient 
   });
 });
 
@@ -58,32 +81,32 @@ app.post('/query', async (req, res) => {
       return res.status(400).json({ error: 'Query is required' });
     }
 
-    if (!genAI) {
+    if (!geminiClient) {
       return res.status(503).json({ error: 'Gemini Client not initialized' });
     }
 
-    // Generate content using the correct API
-    const result = await genAI.models.generateContent({
-      model: 'gemini-1.5-flash-002',
-      contents: [{ role: 'user', parts: [{ text: query }] }],
-      generationConfig: {
-        temperature: 0.7,
-        topP: 1,
-        maxOutputTokens: 8192,
-      },
-    });
+    // Use the Gemini CLI streaming API and collect all content
+    const controller = new AbortController();
+    const messageStream = geminiClient.sendMessageStream([{ text: query }], controller.signal);
     
-    const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received';
+    let responseText = '';
+    let usageMetadata = {};
+    
+    for await (const event of messageStream) {
+      if (event.type === 'content' && event.value) {
+        responseText += event.value;
+      }
+    }
     
     res.json({
       success: true,
       response: {
-        text: responseText,
+        text: responseText || 'No response received',
         metadata: {
-          model: 'gemini-1.5-flash-002',
+          model: config.getModel(),
           timestamp: new Date().toISOString()
         },
-        usage: result.usageMetadata || {}
+        usage: usageMetadata
       }
     });
 
@@ -100,13 +123,16 @@ app.post('/query', async (req, res) => {
 // Tools endpoint for listing available tools
 app.get('/tools', async (req, res) => {
   try {
-    if (!genAI) {
+    if (!geminiClient) {
       return res.status(503).json({ error: 'Gemini Client not initialized' });
     }
 
-    // For this simple bridge, we'll return an empty tools list
-    // In a full implementation, you'd load the actual tool registry
-    const tools = [];
+    // Get available tools from the tool registry
+    const toolRegistry = await config.getToolRegistry();
+    const tools = toolRegistry.getAllTools().map(tool => ({
+      name: tool.name,
+      description: tool.description
+    }));
     res.json({ tools });
   } catch (error) {
     console.error('Tools error:', error);
@@ -120,12 +146,20 @@ app.post('/tools/:toolName', async (req, res) => {
     const { toolName } = req.params;
     const { parameters = {} } = req.body;
 
-    if (!genAI) {
+    if (!geminiClient) {
       return res.status(503).json({ error: 'Gemini Client not initialized' });
     }
 
-    // For this simple bridge, tools are not implemented
-    return res.status(501).json({ error: 'Tool execution not implemented in simple bridge' });
+    // Get tool registry and execute tool
+    const toolRegistry = await config.getToolRegistry();
+    const tool = toolRegistry.getTool(toolName);
+    
+    if (!tool) {
+      return res.status(404).json({ error: `Tool '${toolName}' not found` });
+    }
+    
+    const controller = new AbortController();
+    const result = await tool.execute(parameters, controller.signal);
     res.json({ success: true, result });
   } catch (error) {
     console.error('Tool execution error:', error);
@@ -182,7 +216,7 @@ async function handleStreamingQuery(ws, message) {
     return;
   }
 
-  if (!genAI) {
+  if (!geminiClient) {
     ws.send(JSON.stringify({ 
       type: 'error', 
       error: 'Gemini Client not initialized' 
@@ -197,25 +231,19 @@ async function handleStreamingQuery(ws, message) {
       query 
     }));
 
-    // Use streaming API
-    const streamResult = await genAI.models.generateContentStream({
-      model: 'gemini-1.5-flash-002',
-      contents: [{ role: 'user', parts: [{ text: query }] }],
-      generationConfig: {
-        temperature: 0.7,
-        topP: 1,
-        maxOutputTokens: 8192,
-      },
-    });
+    // Use Gemini CLI streaming API
+    const controller = new AbortController();
+    const messageStream = geminiClient.sendMessageStream([{ text: query }], controller.signal);
     
     let responseText = '';
-    for await (const chunk of streamResult) {
-      const chunkText = chunk.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      if (chunkText) {
-        responseText += chunkText;
+    let usageMetadata = {};
+    
+    for await (const event of messageStream) {
+      if (event.type === 'content' && event.value) {
+        responseText += event.value;
         ws.send(JSON.stringify({ 
           type: 'chunk', 
-          data: chunkText 
+          data: event.value 
         }));
       }
     }
@@ -226,10 +254,10 @@ async function handleStreamingQuery(ws, message) {
       response: {
         text: responseText || 'No response received',
         metadata: {
-          model: 'gemini-1.5-flash-002',
+          model: config.getModel(),
           timestamp: new Date().toISOString()
         },
-        usage: {} // Usage metadata not available in streaming
+        usage: usageMetadata
       }
     }));
 
