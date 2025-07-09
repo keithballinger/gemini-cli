@@ -54,11 +54,6 @@ impl EnhancedShell {
 
     pub async fn run(&mut self) -> Result<()> {
         // Initialize terminal
-        terminal::enable_raw_mode()?;
-        if self.mouse_enabled {
-            execute!(io::stdout(), crossterm::event::EnableMouseCapture)?;
-        }
-        
         execute!(io::stdout(), Clear(ClearType::All), MoveTo(0, 0))?;
         
         println!("Type 'help' for commands, 'exit' to quit");
@@ -79,22 +74,32 @@ impl EnhancedShell {
         
         println!();
         
-        // Main loop
+        // Main loop - use line-based input instead of raw mode
         loop {
-            self.render()?;
+            // Display prompt
+            let prompt = self.get_prompt();
+            print!("\x1b[38;5;8m{}\x1b[0m", prompt);
+            io::stdout().flush()?;
             
-            if let Ok(should_exit) = self.handle_event().await {
-                if should_exit {
+            // Read line
+            let mut input = String::new();
+            match io::stdin().read_line(&mut input) {
+                Ok(0) => break, // EOF
+                Ok(_) => {
+                    let input = input.trim();
+                    if input.is_empty() {
+                        continue;
+                    }
+                    
+                    self.current_line = input.to_string();
+                    self.handle_execute().await?;
+                }
+                Err(e) => {
+                    eprintln!("Error reading input: {}", e);
                     break;
                 }
             }
         }
-        
-        // Cleanup
-        if self.mouse_enabled {
-            execute!(io::stdout(), crossterm::event::DisableMouseCapture)?;
-        }
-        terminal::disable_raw_mode()?;
         
         println!("\nGoodbye!");
         Ok(())

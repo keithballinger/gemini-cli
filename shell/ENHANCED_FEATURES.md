@@ -1,6 +1,6 @@
-# Gemini Shell Enhanced UI Features
+# Gemini Shell Enhanced Features
 
-The enhanced UI mode provides a rich terminal experience with mouse support and advanced keybindings inspired by popular shells and editors.
+The enhanced mode provides additional shell features for improved productivity while maintaining clean, readable output.
 
 ## Activation
 
@@ -9,108 +9,72 @@ Run the shell with the `--enhanced` flag:
 ./gemini-shell --enhanced
 ```
 
-## Mouse Support
+## Enhanced Features
 
-- **Click to position cursor**: Click anywhere in the command line to move the cursor
-- **Drag to select text**: Click and drag to select text (with visual highlighting)
-- **Scroll wheel**: Use mouse wheel to navigate through command history
+### Command History
+- Type `history` to view all previous commands with numbers
+- Use `!!` to execute the last command
+- Use `!n` to execute command number n from history
+- History is preserved across shell sessions
 
-## Keyboard Shortcuts
+### Aliases
+- Create aliases with `alias name='command'`
+- View all aliases with `alias`
+- View specific alias with `alias name`
+- Aliases expand automatically when used
 
-### Navigation
-- `Ctrl+A` - Move to beginning of line
-- `Ctrl+E` - Move to end of line
-- `Alt+B` - Move backward one word
-- `Alt+F` - Move forward one word
-- `←/→` - Move cursor left/right
-- `Home/End` - Jump to beginning/end of line
+Examples:
+```bash
+alias ll='ls -la'
+alias gc='git commit'
+alias gs='git status'
+```
 
-### Editing
-- `Ctrl+K` - Kill (cut) from cursor to end of line
-- `Ctrl+U` - Kill (cut) from beginning to cursor
-- `Ctrl+W` - Delete word backward
-- `Ctrl+Y` - Yank (paste) previously killed text
-- `Backspace` - Delete character before cursor
-- `Delete` - Delete character at cursor
+### History Expansion
+- `!!` - Execute the previous command
+- `!5` - Execute the 5th command from history
+- `!-2` - Execute the command before last
 
-### History
-- `Ctrl+R` - Reverse incremental search through history
-  - Type to search
-  - `Ctrl+R` again to find next match
-  - `Enter` to accept
-  - `Esc` or `Ctrl+C` to cancel
-- `↑/↓` - Navigate through command history
-
-### Selection
-- `Ctrl+Space` - Set mark for selection
-- Move cursor to extend selection
-- Selected text is highlighted
-
-### Completion
-- `Tab` - Command and history completion
-  - Shows available completions
-  - Tab again to cycle through options
-
-### Control
-- `Ctrl+C` - Cancel current line or exit if empty
-- `Ctrl+D` - Exit shell if line is empty
-
-## Visual Features
-
-### Syntax Highlighting
-- Commands are highlighted in purple when executed
-- Prompt path is shown in gray
-- Errors are displayed in red
-- Gemini responses are shown in cyan boxes
-
-### Search Interface
-When in search mode (`Ctrl+R`):
-- Yellow prompt shows `(reverse-i-search)`
-- Matching commands are displayed as you type
-- Visual feedback for search results
-
-### Completion Display
-When completions are active:
-- Available options shown below command line
-- Current selection highlighted in green
-- Navigate with Tab
+### Clean Output
+- Minimal ANSI color codes for better readability
+- Gray prompt with diamond (✦) separator
+- Red error messages
+- Cyan boxes for Gemini responses
+- No terminal control sequences cluttering output
 
 ## Gemini Integration
 
-The enhanced UI maintains all standard Gemini features:
+The enhanced mode maintains all standard Gemini features:
 - `g <query>` - Send queries to Gemini
 - `_ <command>` - Analyze command output
 - Natural language detection
-- Response piping with `%%`
+- Clean formatted responses in cyan boxes
 
-## Comparison with Standard UI
+## Examples
 
-| Feature | Standard UI | Enhanced UI |
-|---------|------------|-------------|
-| Basic editing | ✓ | ✓ |
-| History navigation | ✓ | ✓ |
-| Mouse support | ✗ | ✓ |
-| Reverse search | ✗ | ✓ |
-| Word navigation | ✗ | ✓ |
-| Kill/yank | ✗ | ✓ |
-| Tab completion | ✗ | ✓ |
-| Text selection | ✗ | ✓ |
+```bash
+# Create useful aliases
+alias ll='ls -la'
+alias ..='cd ..'
+alias ...='cd ../..'
 
-## Technical Details
+# Use history expansion
+echo "Hello World"
+!!  # Runs: echo "Hello World"
 
-The enhanced UI uses:
-- `crossterm` for advanced terminal control
-- Raw mode for character-by-character input
-- Mouse event capture and processing
-- Async event handling for responsive UI
-- Non-blocking input polling
+# View command history
+history
+!3  # Execute the 3rd command
 
-## Future Enhancements
+# Gemini integration
+g explain the ls command
+g what is the weather today
+```
 
-Planned features:
-- Multi-line editing
-- Syntax highlighting for commands
-- Custom keybinding configuration
-- Persistent completion history
-- Integration with system clipboard
-- Vi mode keybindings option
+## Benefits
+
+1. **Clean Output** - No terminal control sequences or escape codes
+2. **Simple Interface** - Standard readline-based input
+3. **Productivity Features** - Aliases and history expansion
+4. **Gemini Integration** - Clean, formatted AI responses
+5. **Compatibility** - Works in all terminals without special support

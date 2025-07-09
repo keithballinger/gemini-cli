@@ -1,5 +1,5 @@
 use clap::Parser;
-use gemini_shell::{GeminiShell, ShellConfig, cli, ui::{SimpleShell, EnhancedShell}};
+use gemini_shell::{GeminiShell, ShellConfig, cli, ui::{SimpleShell, CleanShell}};
 use tracing_subscriber;
 
 #[tokio::main]
@@ -57,8 +57,8 @@ async fn run_unified_shell(shell: GeminiShell) -> anyhow::Result<()> {
 }
 
 async fn run_enhanced_shell(shell: GeminiShell) -> anyhow::Result<()> {
-    let mut enhanced_shell = EnhancedShell::new(shell);
-    enhanced_shell.run().await
+    let mut clean_shell = CleanShell::new(shell);
+    clean_shell.run().await
 }
 
 async fn execute_single_command(_shell: &mut GeminiShell, command: &str) -> anyhow::Result<()> {
