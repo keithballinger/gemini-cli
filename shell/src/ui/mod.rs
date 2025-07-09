@@ -6,12 +6,14 @@ pub mod events;
 pub mod renderer;
 pub mod unified;
 pub mod simple_shell;
+pub mod enhanced_shell;
 
 pub use terminal::TerminalUI;
 pub use events::{UIEvent, EventHandler};
 pub use components::{ShellPrompt, ResponsePanel, StatusBar};
 pub use unified::UnifiedShell;
 pub use simple_shell::SimpleShell;
+pub use enhanced_shell::EnhancedShell;
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 

@@ -15,6 +15,10 @@ pub struct Args {
     #[arg(long)]
     pub ui: bool,
     
+    /// Enable enhanced UI with mouse support and advanced keybindings
+    #[arg(long)]
+    pub enhanced: bool,
+    
     /// Enable debug mode
     #[arg(long)]
     pub debug: bool,
