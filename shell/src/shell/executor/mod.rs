@@ -2,10 +2,10 @@
 
 pub mod pipeline;
 pub mod jobs;
+pub mod real_pipeline;
 
 use crate::shell::types::*;
 use crate::shell::builtins::BuiltinRegistry;
-use pipeline::PipelineExecutor;
 use std::process::Stdio;
 use tokio::process::Command as TokioCommand;
 use anyhow::Result;
@@ -69,8 +69,11 @@ impl ShellExecutor {
             // Handle mixed pipeline with built-ins (more complex)
             self.execute_mixed_pipeline(commands, env, options).await
         } else {
-            // All external commands, use efficient pipeline executor
-            PipelineExecutor::execute_pipeline(commands, env, options).await
+            // All external commands, use real pipeline executor with true process piping
+            match real_pipeline::execute_real_pipeline(commands, env, options).await {
+                Ok(result) => Ok(result),
+                Err(e) => Err(anyhow::anyhow!("Pipeline error: {}", e)),
+            }
         }
     }
 
@@ -89,18 +92,108 @@ impl ShellExecutor {
             return self.execute(&commands[0], env, options).await;
         }
 
-        // For now, execute each command sequentially
-        // TODO: Implement proper piping with built-ins
-        let mut last_result = ExecutionResult::success(String::new());
-        
-        for cmd in commands {
-            last_result = self.execute(cmd, env, options).await?;
-            if last_result.exit_code != 0 && !options.ignore_pipeline_errors {
-                break;
+        // Advanced mixed pipeline handling with true piping
+        let mut previous_output = String::new();
+        let mut final_result = ExecutionResult::success(String::new());
+
+        for (i, cmd) in commands.iter().enumerate() {
+            let is_first = i == 0;
+            let is_last = i == commands.len() - 1;
+            
+            // Check if this command is a built-in
+            let is_builtin = if let Some(ref executable) = cmd.command.executable {
+                self.builtins.is_builtin(executable)
+            } else {
+                false
+            };
+
+            if is_builtin {
+                // For built-ins, we need to handle piping manually
+                // Create a modified environment that captures output
+                let mut temp_env = env.clone();
+                
+                // If not the first command, provide previous output as input
+                if !is_first && !previous_output.is_empty() {
+                    // Built-ins will need to handle stdin data
+                    // For now, we'll pass it through environment
+                    temp_env.variables.insert("_PIPE_INPUT".to_string(), previous_output.clone());
+                }
+                
+                let result = self.execute(cmd, &mut temp_env, options).await?;
+                
+                // Update the real environment with any changes
+                env.variables = temp_env.variables;
+                env.cwd = temp_env.cwd;
+                env.last_exit_code = temp_env.last_exit_code;
+                
+                if result.exit_code != 0 && !options.ignore_pipeline_errors {
+                    return Ok(result);
+                }
+                
+                // Save output for next command
+                previous_output = result.stdout.clone();
+                
+                if is_last {
+                    final_result = result;
+                }
+            } else {
+                // External command - we can use real pipes
+                if is_last && previous_output.is_empty() {
+                    // Last command with no built-in input - execute normally
+                    final_result = self.execute(cmd, env, options).await?;
+                } else {
+                    // Need to provide input from previous built-in
+                    let mut command = TokioCommand::new(cmd.command.executable.as_ref().unwrap());
+                    command.args(&cmd.command.args);
+                    command.envs(&env.variables);
+                    command.current_dir(&env.cwd);
+                    
+                    // Provide previous output as stdin
+                    if !previous_output.is_empty() {
+                        command.stdin(Stdio::piped());
+                    }
+                    
+                    // Capture output if not last
+                    if !is_last {
+                        command.stdout(Stdio::piped());
+                    }
+                    
+                    let mut child = command.spawn()
+                        .map_err(|e| anyhow::anyhow!("Failed to spawn command: {}", e))?;
+                    
+                    // Write previous output to stdin
+                    if !previous_output.is_empty() {
+                        if let Some(mut stdin) = child.stdin.take() {
+                            use tokio::io::AsyncWriteExt;
+                            stdin.write_all(previous_output.as_bytes()).await?;
+                            stdin.shutdown().await?;
+                        }
+                    }
+                    
+                    let output = child.wait_with_output().await?;
+                    let exit_code = output.status.code().unwrap_or(-1);
+                    
+                    let result = ExecutionResult {
+                        exit_code,
+                        stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+                        stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+                        signal: None,
+                    };
+                    
+                    if exit_code != 0 && !options.ignore_pipeline_errors {
+                        return Ok(result);
+                    }
+                    
+                    previous_output = result.stdout.clone();
+                    
+                    if is_last {
+                        final_result = result;
+                    }
+                }
             }
         }
 
-        Ok(last_result)
+        Ok(final_result)
     }
 
     /// Execute a simple command
