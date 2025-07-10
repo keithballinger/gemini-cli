@@ -10,7 +10,8 @@ import {
   AuthType,
   FileDiscoveryService,
   ToolRegistry,
-  sessionId
+  sessionId,
+  executeToolCall
 } from '@google/gemini-cli-core';
 
 const app = express();
@@ -38,7 +39,7 @@ async function initializeGeminiClient() {
       process.exit(1);
     }
     
-    // Create Config with minimal required parameters
+    // Create Config with tool support enabled
     config = new Config({
       sessionId: sessionId,
       targetDir: process.cwd(),
@@ -47,10 +48,17 @@ async function initializeGeminiClient() {
       model: 'gemini-1.5-flash-002',
       usageStatisticsEnabled: false, // Disable for bridge service
       telemetry: { enabled: false }, // Disable telemetry for bridge service
+      enableTools: true, // Enable tool support
+      toolDiscoveryCommands: [], // Will use built-in tools
     });
     
-    // Initialize authentication and tools
+    // Initialize authentication
     await config.refreshAuth(AuthType.USE_GEMINI);
+    
+    // Initialize tool registry with built-in tools
+    const toolRegistry = await config.getToolRegistry();
+    const toolDeclarations = toolRegistry.getFunctionDeclarations();
+    console.log('Available tools:', toolDeclarations.map(t => t.name));
     
     // Get the initialized client
     geminiClient = config.getGeminiClient();
@@ -72,10 +80,86 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Helper function to process query with automatic tool execution
+async function processQueryWithTools(query, controller) {
+  const toolRegistry = await config.getToolRegistry();
+  let allContent = '';
+  let allUsage = {};
+  let hasTools = false;
+  
+  async function sendAndProcess(message) {
+    console.log('Sending message:', message);
+    const messageStream = geminiClient.sendMessageStream(message, controller.signal);
+    
+    let responseText = '';
+    let pendingToolCalls = [];
+    let turn = null;
+    
+    for await (const event of messageStream) {
+      console.log('Event:', event.type);
+      
+      if (event.type === 'content' && event.value) {
+        responseText += event.value;
+      } else if (event.type === 'tool_call_request') {
+        hasTools = true;
+        pendingToolCalls.push(event.value);
+        console.log('Tool requested:', event.value.name);
+      } else if (event.type === 'usage' && event.usage) {
+        allUsage = event.usage;
+      } else if (event.type === 'turn_complete') {
+        turn = event.value;
+      }
+    }
+    
+    allContent += responseText;
+    
+    // Execute pending tools and continue conversation
+    if (pendingToolCalls.length > 0) {
+      console.log('Executing', pendingToolCalls.length, 'tools');
+      const toolResponses = [];
+      
+      for (const toolCall of pendingToolCalls) {
+        try {
+          const result = await executeToolCall(config, toolCall, toolRegistry, controller.signal);
+          console.log('Tool executed:', toolCall.name);
+          
+          // Collect tool responses in the format Gemini expects
+          if (result.responseParts && Array.isArray(result.responseParts)) {
+            toolResponses.push(...result.responseParts);
+          } else if (result.responseParts) {
+            toolResponses.push(result.responseParts);
+          }
+        } catch (error) {
+          console.error('Tool error:', error);
+          toolResponses.push({
+            functionResponse: {
+              id: toolCall.callId,
+              name: toolCall.name,
+              response: { error: error.message }
+            }
+          });
+        }
+      }
+      
+      // Send tool responses back to Gemini for final answer
+      if (toolResponses.length > 0) {
+        console.log('Sending tool responses back to Gemini');
+        return await sendAndProcess(toolResponses);
+      }
+    }
+    
+    return { text: allContent, usage: allUsage, hasTools };
+  }
+  
+  // Start the conversation
+  return await sendAndProcess([{ text: query }]);
+}
+
 // Query endpoint for HTTP requests
 app.post('/query', async (req, res) => {
   try {
     const { query, options = {} } = req.body;
+    const { cwd } = options;
     
     if (!query) {
       return res.status(400).json({ error: 'Query is required' });
@@ -85,38 +169,27 @@ app.post('/query', async (req, res) => {
       return res.status(503).json({ error: 'Gemini Client not initialized' });
     }
 
+    console.log('Processing query:', query);
 
-    // Use the Gemini CLI streaming API and collect all content
     const controller = new AbortController();
-    
-    // Set timeout for the request
     const timeout = setTimeout(() => {
       controller.abort();
     }, options.timeout || 30000);
     
     try {
-      const messageStream = geminiClient.sendMessageStream([{ text: query }], controller.signal);
-      
-      let responseText = '';
-      let usageMetadata = {};
-      
-      for await (const event of messageStream) {
-        if (event.type === 'content' && event.value) {
-          responseText += event.value;
-        }
-      }
-      
+      const result = await processQueryWithTools(query, controller);
       clearTimeout(timeout);
       
       res.json({
         success: true,
         response: {
-          text: responseText || 'No response received',
+          text: result.text || 'No response received',
           metadata: {
             model: config.getModel(),
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            toolsUsed: result.hasTools
           },
-          usage: usageMetadata
+          usage: result.usage || {}
         }
       });
     } catch (innerError) {

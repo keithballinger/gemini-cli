@@ -82,41 +82,12 @@ impl GeminiClient {
             return Ok(());
         }
         
-        // If not, find an available port and start our own
-        let port = self.find_available_port().await?;
-        self.service_url = format!("http://localhost:{}", port);
-        
-        // Start the Node.js service
-        let service_path = std::env::current_dir()?
-            .join("nodejs-bridge")
-            .join("src")
-            .join("server.js");
-            
-        if !service_path.exists() {
-            eprintln!("Warning: Gemini service not found at {:?}, running without AI integration", service_path);
-            return Ok(());
-        }
-        
-        let mut child = Command::new("node")
-            .arg(&service_path)
-            .env("GEMINI_BRIDGE_PORT", port.to_string())
-            .env("GEMINI_BRIDGE_HOST", "localhost")
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()?;
-            
-        // Give the service time to start
-        tokio::time::sleep(tokio::time::Duration::from_millis(2000)).await;
-        
-        // Check if service is healthy
-        if !self.is_service_healthy().await? {
-            child.kill().await?;
-            return Err(anyhow::anyhow!("Failed to start Gemini service"));
-        }
-        
-        self.service_process = Some(child);
-        println!("Started new Gemini service on port {}", port);
-        Ok(())
+        // If not running on default port, don't start a new one - just fail
+        // The bridge should be started separately
+        return Err(anyhow::anyhow!(
+            "Gemini bridge service not running on port {}. Please start it with: cd nodejs-bridge && npm start", 
+            default_port
+        ));
     }
     
     /// Find an available port for the service
