@@ -111,6 +111,11 @@ export class CommandRouter {
   private looksLikeNaturalLanguage(input: string): boolean {
     if (!input || input.length < 3) return false;
 
+    const firstWord = input.split(' ')[0];
+    if (firstWord.length === 1) {
+      return false;
+    }
+
     // Check against natural language patterns
     if (this.naturalLanguagePatterns.some(pattern => pattern.test(input))) {
       return true;

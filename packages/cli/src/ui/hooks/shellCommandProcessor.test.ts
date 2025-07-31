@@ -17,9 +17,15 @@ vi.mock('fs');
 vi.mock('os', () => ({
   default: {
     platform: () => 'linux',
+    homedir: () => '/home/user',
+    arch: () => 'x64',
+    type: () => 'Linux',
     tmpdir: () => '/tmp',
   },
   platform: () => 'linux',
+  homedir: () => '/home/user',
+  arch: () => 'x64',
+  type: () => 'Linux',
   tmpdir: () => '/tmp',
 }));
 vi.mock('@google/gemini-cli-core');

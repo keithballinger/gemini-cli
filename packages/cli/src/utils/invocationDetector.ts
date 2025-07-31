@@ -1,6 +1,7 @@
 import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
+import { execSync } from 'child_process';
 
 export enum InvocationMode {
   CLI = 'cli',
@@ -113,7 +114,6 @@ export class InvocationDetector {
     try {
       if (os.platform() === 'darwin') {
         // macOS: Use ps command
-        const { execSync } = require('child_process');
         const output = execSync(`ps -p ${ppid} -o comm=`, { encoding: 'utf8' });
         return output.trim();
       } else if (os.platform() === 'linux') {
