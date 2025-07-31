@@ -21,7 +21,7 @@ import fs from 'fs';
 import stripAnsi from 'strip-ansi';
 
 const OUTPUT_UPDATE_INTERVAL_MS = 1000;
-const MAX_OUTPUT_LENGTH = 10000;
+const MAX_OUTPUT_LENGTH = Number.MAX_SAFE_INTEGER; // No truncation
 
 /**
  * A structured result from a shell command execution.
@@ -253,16 +253,17 @@ export const useShellCommandProcessor = (
       let commandToExecute = rawQuery;
       let pwdFilePath: string | undefined;
 
-      // On non-windows, wrap the command to capture the final working directory.
-      if (!isWindows) {
+      // When using POSIX shell, don't wrap the command - GeminiShell handles pwd capture
+      if (!usePosixShell && !isWindows) {
+        // Legacy mode: wrap the command to capture the final working directory.
         let command = rawQuery.trim();
         const pwdFileName = `shell_pwd_${crypto.randomBytes(6).toString('hex')}.tmp`;
         pwdFilePath = path.join(os.tmpdir(), pwdFileName);
-        // Ensure command ends with a separator before adding our own.
-        if (!command.endsWith(';') && !command.endsWith('&')) {
-          command += ';';
+        // Ensure command doesn't end with a separator before adding our own
+        if (command.endsWith(';') || command.endsWith('&')) {
+          command = command.slice(0, -1).trim();
         }
-        commandToExecute = `{ ${command} }; __code=$?; pwd > "${pwdFilePath}"; exit $__code`;
+        commandToExecute = `${command}; __code=$?; pwd > "${pwdFilePath}"; exit $__code`;
       }
 
       const execPromise = new Promise<void>(async (resolve) => {
@@ -272,22 +273,31 @@ export const useShellCommandProcessor = (
 
         // Use new POSIX shell or legacy implementation
         const executeFunc = usePosixShell && shellRef.current
-          ? (cmd: string, cwd: string, signal: AbortSignal, onOutput: (chunk: string) => void, onDebug: (msg: string) => void) =>
-              shellRef.current!.execute(cmd, {
+          ? (cmd: string, cwd: string, signal: AbortSignal, onOutput: (chunk: string) => void, onDebug: (msg: string) => void) => {
+              // Capture output since GeminiShell doesn't populate stdout/stderr in result
+              let capturedOutput = '';
+              return shellRef.current!.execute(cmd, {
                 cwd,
                 abortSignal: signal,
-                onOutput,
+                onOutput: (chunk: string) => {
+                  capturedOutput += chunk;
+                  onOutput(chunk); // Pass through to original callback
+                },
                 onDebug,
                 captureWorkingDirectory: true
-              }).then((result: any) => ({
-                rawOutput: Buffer.from(result.stdout + result.stderr),
-                output: result.stdout + (result.stderr ? '\n' + result.stderr : ''),
-                exitCode: result.exitCode,
-                signal: result.signal as NodeJS.Signals | null,
-                error: result.error || null,
-                aborted: result.aborted,
-                finalWorkingDirectory: result.finalWorkingDirectory
-              }))
+              }).then((result: any) => {
+                // Use captured output since GeminiShell doesn't populate stdout
+                return {
+                  rawOutput: Buffer.from(capturedOutput),
+                  output: capturedOutput,
+                  exitCode: result.exitCode || 0,
+                  signal: result.signal as NodeJS.Signals | null,
+                  error: result.error || null,
+                  aborted: result.aborted || false,
+                  finalWorkingDirectory: result.finalWorkingDirectory
+                };
+              });
+            }
           : executeShellCommand;
 
         executeFunc(

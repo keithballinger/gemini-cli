@@ -38,7 +38,7 @@ export class CommandRouter {
   /**
    * Route a command based on its content
    */
-  async route(input: string): Promise<RouteResult> {
+  route(input: string): RouteResult {
     const trimmedInput = input.trim();
     
     // Check for explicit Gemini prefixes

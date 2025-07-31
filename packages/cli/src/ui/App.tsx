@@ -593,10 +593,11 @@ const App = ({ config, settings, startupWarnings = [], invocationMode = 'cli' }:
   // If in shell mode and it's initially active, use the ShellInterface
   if (invocationMode === 'shell' && shellModeActive) {
     return (
-      <ShellWithGeminiStream
+      <ShellInterfaceV2
         initialDirectory={process.cwd()}
         onExit={(code) => process.exit(code)}
         config={config}
+        geminiClient={config.getGeminiClient()}
       />
     );
   }
