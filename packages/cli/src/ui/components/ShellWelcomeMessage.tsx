@@ -68,7 +68,7 @@ export const ShellWelcomeMessage: React.FC<ShellWelcomeMessageProps> = ({
       
       <Box marginTop={1}>
         <Text color={Colors.LightBlue}>
-          💡 Tip: Use Ctrl+C to cancel, Ctrl+D to exit, Ctrl+L to clear screen
+          💡 Tip: Use Ctrl+C to cancel, Ctrl+D to exit
         </Text>
       </Box>
       

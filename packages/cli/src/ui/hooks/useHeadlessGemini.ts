@@ -5,6 +5,8 @@
  */
 
 import { useCallback, useRef } from 'react';
+import { useStateAndRef } from './useStateAndRef.js';
+import { findLastSafeSplitPoint } from '../utils/markdownUtilities.js';
 import { Config } from '@google/gemini-cli-core';
 import { Extension } from '../../config/extension.js';
 import { runNonInteractive } from '../../nonInteractiveCli.js';
@@ -29,6 +31,7 @@ export const useHeadlessGemini = (
   extensions: Extension[],
 ) => {
   const abortControllerRef = useRef<AbortController | null>(null);
+  const [pendingHistoryItemRef, setPendingHistoryItemState] = useStateAndRef<HistoryItemWithoutId | null>(null);
 
   const executeHeadlessGemini = useCallback(
     (query: string, abortSignal: AbortSignal): boolean => {
@@ -46,8 +49,8 @@ export const useHeadlessGemini = (
         try {
           onDebugMessage(`Executing headless Gemini query: ${query}`);
           
-          // Don't set pending item here - it causes re-renders
-          // setPendingHistoryItem({ type: 'info', text: 'Processing query with Gemini...' });
+          // Don't show loading message to avoid render loops
+          // The loading indicator in the prompt is sufficient
 
           // Create a headless-compatible configuration
           const headlessConfig = await createHeadlessConfig(config, extensions);
@@ -67,12 +70,49 @@ export const useHeadlessGemini = (
           const originalWrite = process.stdout.write;
           const originalError = process.stderr.write;
           
-          // Override stdout/stderr to capture output
+          // Initialize streaming pending item - only use the ref version
+          setPendingHistoryItemState({
+            type: 'info',
+            text: ''
+          });
+
+          // Override stdout/stderr to capture output with smart splitting like main CLI
+          let lastUpdateLength = 0;
+          const MIN_UPDATE_INTERVAL = 100; // Minimum chars between updates
+          
           process.stdout.write = function(chunk: any) {
             if (typeof chunk === 'string') {
               output += chunk;
-              // Don't update pending item during streaming to avoid infinite re-renders
-              // We'll add the complete output to history at the end
+              
+              // Only update if we have enough new content (throttling like main CLI)
+              if (output.length - lastUpdateLength >= MIN_UPDATE_INTERVAL) {
+                const trimmedOutput = output.trim();
+                const splitPoint = findLastSafeSplitPoint(trimmedOutput);
+                
+                if (splitPoint === trimmedOutput.length) {
+                  // Safe to update entire content
+                  setPendingHistoryItemState({
+                    type: 'info',
+                    text: trimmedOutput
+                  });
+                  lastUpdateLength = output.length;
+                } else if (splitPoint > 0 && pendingHistoryItemRef.current) {
+                  // Split content: add completed part to history, keep rest pending
+                  const completedText = trimmedOutput.substring(0, splitPoint);
+                  const remainingText = trimmedOutput.substring(splitPoint);
+                  
+                  addItemToHistory(
+                    { type: 'info', text: completedText },
+                    Date.now()
+                  );
+                  
+                  setPendingHistoryItemState({
+                    type: 'info',
+                    text: remainingText
+                  });
+                  lastUpdateLength = output.length;
+                }
+              }
             }
             return true;
           } as any;
@@ -80,7 +120,14 @@ export const useHeadlessGemini = (
           process.stderr.write = function(chunk: any) {
             if (typeof chunk === 'string') {
               output += chunk;
-              // Don't update during streaming to avoid re-render issues
+              // Same throttling for stderr
+              if (output.length - lastUpdateLength >= MIN_UPDATE_INTERVAL) {
+                setPendingHistoryItemState({
+                  type: 'info',
+                  text: output.trim()
+                });
+                lastUpdateLength = output.length;
+              }
             }
             return true;
           } as any;
@@ -100,11 +147,12 @@ export const useHeadlessGemini = (
             // Execute using the headless mode
             await runNonInteractive(headlessConfig, query);
             
-            const finalOutput = output.trim();
-            if (finalOutput) {
-              // Never truncate output
+            // Finalize the streaming - add to history if we have content
+            if (pendingHistoryItemRef.current) {
+              addItemToHistory(pendingHistoryItemRef.current, Date.now());
+            } else if (output.trim()) {
               addItemToHistory(
-                { type: 'info', text: finalOutput },
+                { type: 'info', text: output.trim() },
                 Date.now(),
               );
             } else {
@@ -115,7 +163,8 @@ export const useHeadlessGemini = (
               );
             }
             
-            // Clear pending item after adding to history
+            // Clear pending items
+            setPendingHistoryItemState(null);
             setPendingHistoryItem(null);
 
           } finally {
@@ -125,7 +174,6 @@ export const useHeadlessGemini = (
           }
 
         } catch (err) {
-          setPendingHistoryItem(null);
           const errorMessage = err instanceof Error ? err.message : String(err);
           console.error('Headless Gemini error:', err);
           onDebugMessage(`Headless Gemini error: ${errorMessage}`);
@@ -136,6 +184,9 @@ export const useHeadlessGemini = (
             },
             userMessageTimestamp,
           );
+          // Clear pending items
+          setPendingHistoryItemState(null);
+          setPendingHistoryItem(null);
         } finally {
           resolve();
         }

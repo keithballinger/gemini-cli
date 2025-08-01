@@ -1,0 +1,9 @@
+/Users/keithballinger/Desktop/projects/gemini-cli-shell/shell/target/debug/deps/libtokio_test-12f5184216a5e87f.rmeta: /Users/keithballinger/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-test-0.4.4/src/lib.rs /Users/keithballinger/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-test-0.4.4/src/io.rs /Users/keithballinger/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-test-0.4.4/src/stream_mock.rs /Users/keithballinger/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-test-0.4.4/src/macros.rs /Users/keithballinger/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-test-0.4.4/src/task.rs
+
+/Users/keithballinger/Desktop/projects/gemini-cli-shell/shell/target/debug/deps/tokio_test-12f5184216a5e87f.d: /Users/keithballinger/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-test-0.4.4/src/lib.rs /Users/keithballinger/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-test-0.4.4/src/io.rs /Users/keithballinger/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-test-0.4.4/src/stream_mock.rs /Users/keithballinger/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-test-0.4.4/src/macros.rs /Users/keithballinger/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-test-0.4.4/src/task.rs
+
+/Users/keithballinger/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-test-0.4.4/src/lib.rs:
+/Users/keithballinger/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-test-0.4.4/src/io.rs:
+/Users/keithballinger/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-test-0.4.4/src/stream_mock.rs:
+/Users/keithballinger/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-test-0.4.4/src/macros.rs:
+/Users/keithballinger/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-test-0.4.4/src/task.rs:

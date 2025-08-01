@@ -91,6 +91,7 @@
     "yargs": "^17.7.2"
   },
   "dependencies": {
+    "ink-spinner": "^5.0.0",
     "sh-syntax": "^0.5.8"
   }
 }

@@ -4,16 +4,18 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { Box, Text, useInput, useApp } from 'ink';
+import { Box, Text, useInput, useApp, Static } from 'ink';
 import { GeminiShell, Config, GeminiClient } from '@google/gemini-cli-core';
 import { Extension } from '../../config/extension.js';
 import { Colors } from '../colors.js';
 import { CommandRouter } from '../../utils/commandRouter.js';
 import { useEnhancedShellProcessor } from '../hooks/useEnhancedShellProcessor.js';
+import { useGeminiStream } from '../hooks/useGeminiStream.js';
 import { useHistory } from '../hooks/useHistoryManager.js';
 import { HistoryItem, HistoryItemWithoutId } from '../types.js';
 import { HistoryItemDisplay } from './HistoryItemDisplay.js';
 import { SimpleLoadingIndicator } from './SimpleLoadingIndicator.js';
+import Spinner from 'ink-spinner';
 import { ShellWelcomeMessage } from './ShellWelcomeMessage.js';
 import ansiEscapes from 'ansi-escapes';
 import { StreamingContext } from '../contexts/StreamingContext.js';
@@ -41,7 +43,7 @@ export const ShellInterfaceV2: React.FC<ShellInterfaceV2Props> = ({
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [cwd, setCwd] = useState(initialDirectory || process.cwd());
-  const [isExecuting, setIsExecuting] = useState(false);
+  // Remove isExecuting state - we'll use streaming state instead
   const [showWelcome, setShowWelcome] = useState(true);
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -50,24 +52,38 @@ export const ShellInterfaceV2: React.FC<ShellInterfaceV2Props> = ({
   const { history, addItem } = useHistory();
   const [pendingHistoryItem, setPendingHistoryItem] = useState<HistoryItemWithoutId | null>(null);
   
-  // Enhanced shell processor with headless Gemini integration
-  const { processCommand } = useEnhancedShellProcessor(
-    addItem,
-    setPendingHistoryItem,
-    (execPromise) => {
-      setIsExecuting(true);
-      execPromise.finally(() => setIsExecuting(false));
-    },
-    (message) => {
-      console.error(`[DEBUG] ${message}`); // Use console.error to ensure it's visible
-    }, // Debug messages
-    config,
+  // Use the real Gemini streaming system, not headless mode
+  const getPreferredEditor = useCallback(() => {
+    // Simple fallback for shell mode
+    return 'vim' as const;
+  }, []);
+
+  const onAuthError = useCallback(() => {
+    console.error('Authentication error in shell mode');
+  }, []);
+
+  const {
+    streamingState,
+    submitQuery,
+    initError,
+    pendingHistoryItems: pendingGeminiHistoryItems,
+  } = useGeminiStream(
     geminiClient,
-    extensions,
-    true // Use POSIX shell
+    history,
+    addItem,
+    () => {}, // setShowHelp
+    config,
+    () => {}, // setDebugMessage
+    async () => false, // handleSlashCommand
+    false, // shellModeActive - don't use shell mode for streaming
+    getPreferredEditor,
+    onAuthError,
+    async () => {}, // performMemoryRefresh
+    'shell' // invocationMode
   );
 
   // Simple tool handling - the enhanced processor manages tool execution
+
 
   // Cleanup on unmount
   useEffect(() => {
@@ -138,9 +154,21 @@ export const ShellInterfaceV2: React.FC<ShellInterfaceV2Props> = ({
     setHistoryIndex(-1);
     setCommandHistory(prev => [...prev, command]);
 
-    // Use the enhanced shell processor with headless mode integration
-    abortControllerRef.current = new AbortController();
-    processCommand(command, abortControllerRef.current.signal);
+    // Route the command: shell commands vs AI queries
+    const router = new CommandRouter();
+    const routeResult = router.route(command);
+    
+    if (routeResult.type === 'gemini') {
+      // Use real Gemini streaming for AI queries
+      submitQuery(routeResult.query || command);
+    } else {
+      // Handle shell commands normally (without streaming issues)
+      // For now, just add them to history - we can enhance this later
+      addItem({
+        type: 'info',
+        text: `Shell command: ${command}\n(Shell execution will be implemented)`
+      }, Date.now());
+    }
     
     // Handle exit commands
     if (command === 'exit' || command.startsWith('exit ')) {
@@ -148,7 +176,7 @@ export const ShellInterfaceV2: React.FC<ShellInterfaceV2Props> = ({
         parseInt(command.split(' ')[1]) || 0 : 0;
       handleExit(exitCode);
     }
-  }, [currentLine, processCommand, showWelcome]);
+  }, [currentLine, showWelcome, submitQuery, addItem]);
 
   const handleExit = useCallback((code: number) => {
     if (onExit) {
@@ -164,20 +192,15 @@ export const ShellInterfaceV2: React.FC<ShellInterfaceV2Props> = ({
     return `${displayPath} ✦ `;
   };
 
-  // Use the history from the enhanced processor
+  // Use the history from the enhanced processor - avoid re-renders during streaming
   const displayItems = useMemo(() => {
     const allItems = [...history];
-    if (pendingHistoryItem) {
-      allItems.push({
-        id: Date.now(),
-        ...pendingHistoryItem
-      });
-    }
+    // Don't add pendingHistoryItem to avoid re-renders during streaming
     return allItems;
-  }, [history, pendingHistoryItem]);
+  }, [history]);
 
-  // Determine streaming state for context  
-  const streamingState = isExecuting ? StreamingState.Responding : StreamingState.Idle;
+  // Use actual streaming state from useGeminiStream
+  const isExecuting = streamingState !== StreamingState.Idle;
 
   return (
     <StreamingContext.Provider value={streamingState}>
@@ -187,33 +210,53 @@ export const ShellInterfaceV2: React.FC<ShellInterfaceV2Props> = ({
         <ShellWelcomeMessage terminalWidth={process.stdout.columns || 80} />
       )}
       
-      {/* Output history - filter out user messages in shell mode */}
-      {displayItems
-        .filter(item => item.type !== 'user') // Don't show user query boxes in shell mode
-        .map((item, index) => (
-          <Box key={`${item.id}-${index}`} marginBottom={0}>
+      {/* Output history using Static to prevent re-renders - filter out user messages in shell mode */}
+      <Static items={displayItems.filter(item => item.type !== 'user')}>
+        {(item, index) => (
+          <Box key={item.id} marginBottom={0}>
             <HistoryItemDisplay
               item={item}
               isPending={false}
               config={config}
               terminalWidth={process.stdout.columns || 80}
-              isActive={index === displayItems.length - 1 && isExecuting}
+              isActive={false}
               isFocused={true}
             />
           </Box>
-        ))}
+        )}
+      </Static>
+
+      {/* Show only the latest pending item to avoid duplication */}
+      {pendingGeminiHistoryItems.length > 0 && (
+        <Box marginBottom={0}>
+          <HistoryItemDisplay
+            item={{
+              id: 0, // Use stable ID to prevent re-renders
+              ...pendingGeminiHistoryItems[pendingGeminiHistoryItems.length - 1]
+            }}
+            isPending={true}
+            config={config}
+            terminalWidth={process.stdout.columns || 80}
+            isActive={isExecuting}
+            isFocused={true}
+          />
+        </Box>
+      )}
 
 
       {/* Enhanced processor handles tool display through history */}
 
-      {/* Current prompt */}
+      {/* Current prompt - spinner integrated into single Text component */}
       <Box>
-        <Text color={Colors.Gray}>{getPrompt()}</Text>
-        <Text>{currentLine}</Text>
-        {isExecuting && (
-          <Box marginLeft={1}>
-            <SimpleLoadingIndicator />
-          </Box>
+        {isExecuting ? (
+          <Text>
+            <Text color={Colors.Gray}>{getPrompt()}{currentLine} </Text>
+            <Text color={Colors.AccentPurple}><Spinner type="dots" /></Text>
+          </Text>
+        ) : (
+          <Text color={Colors.Gray}>
+            {getPrompt()}{currentLine}
+          </Text>
         )}
       </Box>
     </Box>

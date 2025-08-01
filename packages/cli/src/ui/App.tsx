@@ -114,10 +114,16 @@ const App = ({ config, settings, startupWarnings = [], invocationMode = 'cli' }:
   const { stats: sessionStats } = useSessionStats();
   const [staticNeedsRefresh, setStaticNeedsRefresh] = useState(false);
   const [staticKey, setStaticKey] = useState(0);
+  const [shellModeActive, setShellModeActive] = useState(invocationMode === 'shell');
+  
   const refreshStatic = useCallback(() => {
+    // Don't clear screen in shell mode
+    if (invocationMode === 'shell' && shellModeActive) {
+      return;
+    }
     stdout.write(ansiEscapes.clearTerminal);
     setStaticKey((prev) => prev + 1);
-  }, [setStaticKey, stdout]);
+  }, [setStaticKey, stdout, invocationMode, shellModeActive]);
 
   const [geminiMdFileCount, setGeminiMdFileCount] = useState<number>(0);
   const [debugMessage, setDebugMessage] = useState<string>('');
@@ -128,7 +134,6 @@ const App = ({ config, settings, startupWarnings = [], invocationMode = 'cli' }:
   const [footerHeight, setFooterHeight] = useState<number>(0);
   const [corgiMode, setCorgiMode] = useState(false);
   const [currentModel, setCurrentModel] = useState(config.getModel());
-  const [shellModeActive, setShellModeActive] = useState(invocationMode === 'shell');
   const [showErrorDetails, setShowErrorDetails] = useState<boolean>(false);
   const [showToolDescriptions, setShowToolDescriptions] =
     useState<boolean>(false);
