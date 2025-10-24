@@ -5,4 +5,4 @@
 cd "$(dirname "$0")"
 
 # Run the shell
-exec ./packages/cli/dist/index.js --shell
+exec node ./packages/cli/dist/index.js --shell
